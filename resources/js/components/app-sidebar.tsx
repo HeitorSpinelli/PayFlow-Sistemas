@@ -1,5 +1,17 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid } from 'lucide-react';
+import { 
+    LayoutGrid, 
+    Users, 
+    FileText, 
+    Receipt, 
+    CreditCard, 
+    Calendar, 
+    UploadCloud, 
+    MessageSquare, 
+    Settings,
+    BookOpen,
+    FolderGit2
+} from 'lucide-react'; 
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -16,25 +28,57 @@ import {
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 
+// Aqui estão os ícones seguindo a ordem da sua imagem
 const mainNavItems: NavItem[] = [
     {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
+        title: 'Dashboard', //titulo do item
+        href: dashboard(), //rota do item
+        icon: LayoutGrid, // Ícone 1 (Quadradinhos)
+    },
+    {
+        title: 'Usuários', //titulo do item
+        href: '/clientes', //rota do item
+        icon: Users, // Ícone 2 (Pessoas)
+    },
+    {
+        title: 'Apólices',
+        href: '/apolices',
+        icon: FileText, // Ícone 3 (Documento)
+    },
+    {
+        title: 'Cobranças',
+        href: '/cobrancas',
+        icon: Receipt, // Ícone 4 (Cifrão/Recibo)
+    },
+    {
+        title: 'Pagamentos',
+        href: '/pagamentos',
+        icon: CreditCard, // Ícone 5 (Cartão)
+    },
+    {
+        title: 'Agenda',
+        href: '/agenda',
+        icon: Calendar, // Ícone 6 (Calendário)
+    },
+    {
+        title: 'Importar',
+        href: '/importar',
+        icon: UploadCloud, // Ícone 7 (Upload)
+    },
+    {
+        title: 'Notificações',
+        href: '/notificacoes',
+        icon: MessageSquare, // Ícone 8 (Balão de chat)
+    },
+    {
+        title: 'Produtos',
+        href: '/produtos',
+        icon: Settings, // Ícone 9 (Engrenagem)
     },
 ];
 
 const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: FolderGit2,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
-    },
+    
 ];
 
 export function AppSidebar() {
@@ -52,7 +96,8 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent>
+            <SidebarContent className="[&_svg]:size-6">
+                {/* Basta chamar o NavMain uma vez, ele vai ler toda a lista mainNavItems */}
                 <NavMain items={mainNavItems} />
             </SidebarContent>
 

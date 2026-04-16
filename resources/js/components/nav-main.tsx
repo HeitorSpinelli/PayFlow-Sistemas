@@ -13,7 +13,7 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
     const { isCurrentUrl } = useCurrentUrl();
 
     return (
-        <SidebarGroup className="px-2 py-0">
+        <SidebarGroup className="px-2 py-5">
             <SidebarGroupLabel>Platform</SidebarGroupLabel>
             <SidebarMenu>
                 {items.map((item) => (
@@ -22,10 +22,15 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                             asChild
                             isActive={isCurrentUrl(item.href)}
                             tooltip={{ children: item.title }}
+                            className="py-5" // Aumenta um pouco a altura da linha para caber o ícone maior
                         >
-                            <Link href={item.href} prefetch>
-                                {item.icon && <item.icon />}
-                                <span>{item.title}</span>
+                            <Link href={item.href} prefetch className="flex items-center gap-3">
+                                {item.icon && (
+                                    <item.icon 
+                                        className="!size-5 shrink-0" // O "!" garante que o tamanho seja aplicado
+                                    />
+                                )}
+                                <span className="text-base">{item.title}</span> 
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
