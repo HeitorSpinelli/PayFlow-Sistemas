@@ -71,8 +71,8 @@ const mainNavItems: NavItem[] = [
         icon: MessageSquare, // Ícone 8 (Balão de chat)
     },
     {
-        title: 'Produtos',
-        href: '/produtos',
+        title: 'Configurações',
+        href: '/configurações',
         icon: Settings, // Ícone 9 (Engrenagem)
     },
 ];
