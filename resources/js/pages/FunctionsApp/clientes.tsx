@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Head } from "@inertiajs/react";
 import { Plus, ScrollText, Search, MoreHorizontal, Download, Filter, Check, ChevronDown } from "lucide-react";
+import Profile from "../settings/profile";
+import { UserRound } from 'lucide-react';
 
 export default function Clientes() {
     // Estado para controlar o Dropdown de Filtro
@@ -35,25 +37,25 @@ export default function Clientes() {
                     <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 p-6 bg-card shadow-sm">
                         <div className="flex flex-col gap-1">
                             <h2 className="text-sm font-medium text-muted-foreground">Total de Clientes</h2>
-                            <p className="text-3xl font-bold tracking-tight">2</p>
+                            <p className="text-3xl font-bold tracking-tight text-green-500">2</p>
                         </div>
-                        <ScrollText className="size-8 text-[#2D5A43]/20 shrink-0" />
+                        <UserRound className="size-10"/>
                     </div>
 
                     <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 p-6 bg-card shadow-sm">
                         <div className="flex flex-col gap-1">
                             <h2 className="text-sm font-medium text-muted-foreground">Clientes Ativos</h2>
-                            <p className="text-3xl font-bold tracking-tight">2</p>
+                            <p className="text-3xl font-bold tracking-tight text-green-500">2</p>
                         </div>
-                        <ScrollText className="size-8 text-[#2D5A43]/20 shrink-0" />
+                        <ScrollText className="size-10" />
                     </div>
 
                     <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 p-6 bg-card shadow-sm">
                         <div className="flex flex-col gap-1">
                             <h2 className="text-sm font-medium text-muted-foreground">Inativos</h2>
-                            <p className="text-3xl font-bold tracking-tight">0</p>
+                            <p className="text-3xl font-bold tracking-tight text-red-500">0</p>
                         </div>
-                        <ScrollText className="size-8 text-muted-foreground/20 shrink-0" />
+                        <ScrollText className="size-10" />
                     </div>
                 </div>
 
