@@ -36,7 +36,7 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid, // Ícone 1 (Quadradinhos)
     },
     {
-        title: 'Usuários', //titulo do item
+        title: 'Clientes', //titulo do item
         href: '/clientes', //rota do item
         icon: Users, // Ícone 2 (Pessoas)
     },
