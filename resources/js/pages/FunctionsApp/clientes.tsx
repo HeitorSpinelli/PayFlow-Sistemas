@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Head } from "@inertiajs/react";
-import { Plus, ScrollText, Search, MoreHorizontal, Download, Filter, Check, ChevronDown } from "lucide-react";
+import { Plus, ScrollText, Search, MoreHorizontal, Download, Filter, Check, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import Profile from "../settings/profile";
 import { UserRound } from 'lucide-react';
+{/*import {CSVLink} from 'react-csv';*/}
 
 export default function Clientes() {
-    // Estado para controlar o Dropdown de Filtro
     const [filtroAberto, setFiltroAberto] = useState(false);
     const [filtroSelecionado, setFiltroSelecionado] = useState("Todos");
 
@@ -39,14 +39,14 @@ export default function Clientes() {
                             <h2 className="text-sm font-medium text-muted-foreground">Total de Clientes</h2>
                             <p className="text-3xl font-bold tracking-tight text-green-500">2</p>
                         </div>
-                        <UserRound className="size-10"/>
+                        <UserRound className="size-10 text-muted-foreground/50"/>
                     </div>
                     <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 p-6 bg-card shadow-sm">
                         <div className="flex flex-col gap-1">
                             <h2 className="text-sm font-medium text-muted-foreground">Clientes Ativos</h2>
                             <p className="text-3xl font-bold tracking-tight text-green-500">2</p>
                         </div>
-                        <ScrollText className="size-10" />
+                        <ScrollText className="size-10 text-muted-foreground/50" />
                     </div>
 
                     <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 p-6 bg-card shadow-sm">
@@ -54,14 +54,14 @@ export default function Clientes() {
                             <h2 className="text-sm font-medium text-muted-foreground">Inativos</h2>
                             <p className="text-3xl font-bold tracking-tight text-red-500">0</p>
                         </div>
-                        <ScrollText className="size-10" />
+                        <ScrollText className="size-10 text-muted-foreground/50" />
                     </div>
                 </div>
 
-                {/* 3. Seção da Tabela e Filtros */}
+                {/* 3. Seção da Tabela */}
                 <div className="rounded-xl border border-sidebar-border bg-card shadow-sm overflow-hidden">
                     
-                    {/* Toolbar da Tabela */}
+                    {/* Toolbar */}
                     <div className="p-4 border-b border-sidebar-border flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <h3 className="text-lg font-semibold">Lista de Clientes</h3>
@@ -69,17 +69,15 @@ export default function Clientes() {
                         </div>
 
                         <div className="flex items-center gap-2">
-                            {/* Busca */}
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                                 <input 
                                     type="text" 
-                                    placeholder="Buscar por nome, CPF ou e-mail" 
+                                    placeholder="Buscar por nome, CPF..." 
                                     className="h-9 w-64 rounded-md border border-sidebar-border bg-background pl-9 pr-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                 />
                             </div>
                             
-                            {/* Dropdown de Filtro */}
                             <div className="relative">
                                 <button 
                                     onClick={() => setFiltroAberto(!filtroAberto)}
@@ -113,7 +111,6 @@ export default function Clientes() {
                                 )}
                             </div>
 
-                            {/* Botão Exportar */}
                             <button className="inline-flex h-9 items-center justify-center rounded-md border border-sidebar-border bg-background px-3 text-sm font-medium gap-2 hover:bg-muted transition-colors">
                                 <Download className="size-4 text-muted-foreground" />
                                 Exportar
@@ -125,13 +122,13 @@ export default function Clientes() {
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="border-b border-sidebar-border bg-muted/30 text-muted-foreground">
-                                    <th className="h-12 px-4 text-left font-medium">Cliente</th>
-                                    <th className="h-12 px-4 text-left font-medium">CPF/CNPJ</th>
-                                    <th className="h-12 px-4 text-left font-medium">Contato</th>
-                                    <th className="h-12 px-4 text-left font-medium">Localização</th>
-                                    <th className="h-12 px-4 text-left font-medium">Status</th>
-                                    <th className="h-12 px-4 text-right font-medium"></th>
+                                <tr className="border-b border-sidebar-border bg-muted/30 text-muted-foreground font-medium">
+                                    <th className="h-12 px-4 text-left">Cliente</th>
+                                    <th className="h-12 px-4 text-left">CPF/CNPJ</th>
+                                    <th className="h-12 px-4 text-left">Contato</th>
+                                    <th className="h-12 px-4 text-left">Localização</th>
+                                    <th className="h-12 px-4 text-left">Status</th>
+                                    <th className="h-12 px-4"></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-sidebar-border">
@@ -145,9 +142,9 @@ export default function Clientes() {
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="p-4 text-muted-foreground">1234567891025</td>
+                                    <td className="p-4 text-muted-foreground">123.456.789-00</td>
                                     <td className="p-4 text-xs text-muted-foreground">
-                                        heitorspinelli85@gmail.com<br/>19997221083
+                                        simon@email.com<br/>(19) 99722-1083
                                     </td>
                                     <td className="p-4 text-muted-foreground text-xs">Amparo, SP</td>
                                     <td className="p-4">
@@ -156,13 +153,30 @@ export default function Clientes() {
                                         </span>
                                     </td>
                                     <td className="p-4 text-right">
-                                        <button className="p-2 hover:bg-muted rounded-md transition-colors">
-                                            <MoreHorizontal className="size-4 text-muted-foreground" />
+                                        <button className="p-2 hover:bg-muted rounded-md transition-colors text-muted-foreground">
+                                            <MoreHorizontal className="size-4" />
                                         </button>
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+
+                    {/* 4. Paginação (Ajustada) */}
+                    <div className="flex items-center justify-between px-4 py-4 border-t border-sidebar-border bg-muted/10">
+                        <div className="text-sm text-muted-foreground">
+                            Mostrando <span className="font-medium text-foreground">1</span> de <span className="font-medium text-foreground">1</span> resultados
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button className="inline-flex h-8 items-center justify-center rounded-md border border-sidebar-border bg-background px-3 text-xs font-medium gap-1 hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                <ChevronLeft className="size-3" />
+                                Anterior
+                            </button>
+                            <button className="inline-flex h-8 items-center justify-center rounded-md border border-sidebar-border bg-background px-3 text-xs font-medium gap-1 hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                Próxima
+                                <ChevronRight className="size-3" />
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
