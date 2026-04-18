@@ -5,16 +5,16 @@ import Profile from "../settings/profile";
 import { UserRound } from 'lucide-react';
 {/*import {CSVLink} from 'react-csv';*/}
 
-export default function Apolices() {
+export default function Importar() {
     const [filtroSelecionado, setFiltroSelecionado] = useState("Todos");
-    const [tipoSelecionado, setTipoSelecionado] = useState("Todos os Tipos");
-
-    const opcoesFiltro = ["Todos", "Ativas", "Vencidas", "Canceladas", "Renovadas"];
-    const tipoapolice = ["Todos os Tipos", "Carro", "Vida", "Residencial", "Empresarial", "Saúde", "Viagem", "Outros"];
+    const [tipoSelecionado, setTipoSelecionado] = useState("Todos os Tipos, vencimento, renovação, atraso");
+    
+    const opcoesFiltro = ["Todos", "Vencimento", "Renovação", "Atraso"];
+    const tipoAgenda = ["Todos os Tipos", "Vencimento", "Renovação", "Atraso"];
 
     return (
         <>
-            <Head title="Apólices" />
+            <Head title="Importar"/>
         </>
     );
 }
