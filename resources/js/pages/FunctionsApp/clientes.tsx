@@ -41,7 +41,6 @@ export default function Clientes() {
                         </div>
                         <UserRound className="size-10"/>
                     </div>
-
                     <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 p-6 bg-card shadow-sm">
                         <div className="flex flex-col gap-1">
                             <h2 className="text-sm font-medium text-muted-foreground">Clientes Ativos</h2>
