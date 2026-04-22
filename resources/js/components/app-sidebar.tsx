@@ -72,7 +72,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Configurações',
-        href: '/configurações',
+        href: '/configuracoes',
         icon: Settings, // Ícone 9 (Engrenagem)
     },
 ];

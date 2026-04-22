@@ -3,9 +3,8 @@ import { useState } from "react";
 import { Plus, ScrollText, Search, MoreHorizontal, Download, Filter, Check, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import Profile from "../settings/profile";
 import { UserRound } from 'lucide-react';
-{/*import {CSVLink} from 'react-csv';*/}
 
-export default function Produtos() {
+export default function Configuracoes() {
     const [filtroSelecionado, setFiltroSelecionado] = useState("Todos");
     const [tipoSelecionado, setTipoSelecionado] = useState("Todos os Tipos");
 
@@ -14,7 +13,7 @@ export default function Produtos() {
 
     return (
         <>
-            <Head title="Produtos" />
+            <Head title="configuracoes"/>
         </>
     );
 }  

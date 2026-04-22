@@ -20,7 +20,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('/agenda', 'FunctionsApp/agenda')->name('agenda');
     Route::inertia('/importar', 'FunctionsApp/importar')->name('importar');
     Route::inertia('/notificacoes', 'FunctionsApp/notificacoes')->name('notificacoes');
-    Route::inertia('/produtos', 'FunctionsApp/')->name('produtos');
+    Route::inertia('/configuracoes', 'FunctionsApp/configuracoes')->name('configuracoes');
 
 });
 
