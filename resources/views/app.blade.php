@@ -44,6 +44,6 @@
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">
-        <x-inertia::app />
+        <x-inertia::app/>
     </body>
 </html>
