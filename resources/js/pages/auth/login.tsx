@@ -17,40 +17,7 @@ export default function Login({ status, canResetPassword, canRegister }: any) {
     return (
         <>
             <Head title="Log in" />
-
-            <div className="flex min-h-screen flex-col lg:grid lg:grid-cols-[1fr_450px] xl:grid-cols-[1fr_550px] bg-[#FDFDFC] dark:bg-[#0a0a0a]">
-                
-                {/* Lado Esquerdo: Imagem (Escondida em mobile, ou você pode definir uma altura fixa se quiser exibir) */}
-                <div className="relative hidden lg:block overflow-hidden bg-emerald-900">
-                    <img 
-                        src="/images/happy-people.jpg" 
-                        alt="Login PayFlow" 
-                        className="absolute inset-0 h-full w-full object-cover opacity-60"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/80 via-transparent to-transparent"></div>
-                    
-                    {/* Card de Depoimento - Ajustado para não "bugar" */}
-                    <div className="absolute inset-x-0 bottom-0 flex justify-center p-12">
-                        <div className="w-full max-w-md bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 text-white shadow-2xl">
-                            <h3 className="text-xl font-medium italic leading-relaxed">
-                                "O PayFlow simplificou nossa rotina. O controle de clientes nunca foi tão intuitivo."
-                            </h3>
-                            <div className="mt-6 flex items-center gap-4 border-t border-white/10 pt-6">
-                                <div className="h-12 w-12 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg">
-                                    <UserRound size={24} className="text-white" />
-                                </div>
-                                <div>
-                                    <p className="text-base font-bold leading-none">Equipe Financeira</p>
-                                    <p className="text-sm text-emerald-300 mt-1">Gestão Corporativa</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Lado Direito: Formulário */}
-                <div className="flex flex-1 flex-col justify-center px-6 py-12 sm:px-12 lg:px-16 xl:px-24">
-                    <div className="mx-auto w-full max-w-sm lg:max-w-none">
+            <div className="mx-auto w-full max-w-sm lg:max-w-none">
                         
                         {/* Header do Form */}
                         <div className="mb-10">
@@ -117,23 +84,20 @@ export default function Login({ status, canResetPassword, canRegister }: any) {
                                         className="h-12 w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98]"
                                         disabled={processing}
                                     >
-                                        {processing && <Spinner className="mr-2 h-4 w-4" />}
-                                        Entrar no Sistema
-                                    </Button>
-
-                                    {canRegister && (
-                                        <div className="mt-8 text-center text-sm text-muted-foreground">
-                                            Não tem uma conta?{' '}
-                                            <TextLink href={register()} className="font-bold text-emerald-600 hover:text-emerald-500">
-                                                Cadastre-se agora
-                                            </TextLink>
-                                        </div>
-                                    )}
-                                </>
+                            {processing && <Spinner className="mr-2 h-4 w-4" />}
+                                Entrar no Sistema
+                                </Button>
+                            {canRegister && (
+                                <div className="mt-8 text-center text-sm text-muted-foreground">
+                                        Não tem uma conta?{' '}
+                                    <TextLink href={register()} className="font-bold text-emerald-600 hover:text-emerald-500">
+                                        Cadastre-se agora
+                                    </TextLink>
+                                </div>
                             )}
-                        </Form>
-                    </div>
-                </div>
+                        </>
+                    )}
+                </Form>
             </div>
         </>
     );

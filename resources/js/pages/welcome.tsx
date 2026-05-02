@@ -2,6 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { dashboard, login, register } from '@/routes';
 import React from 'react';
 import { UserRound, ArrowRight, LayoutDashboard, LogIn, UserPlus } from 'lucide-react';
+import AppLogoIcon from '@/components/app-logo-icon';
 
 export default function Welcome({
     canRegister = true,
@@ -30,7 +31,7 @@ export default function Welcome({
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#FDFDFC] dark:to-[#0a0a0a] opacity-30"></div>
                     
                     {/* Card de Depoimento Flutuante */}
-                    <div className="absolute inset-0 flex items-end justify-start p-12">
+                    <div className="absolute bottom-10 left-10 right-10 max-w-md mx-auto">
                         <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 text-white max-w-sm shadow-2xl">
                             <div className="flex gap-1 mb-3">
                                 {[...Array(5)].map((_, i) => (
@@ -58,7 +59,7 @@ export default function Welcome({
                     <div className="w-full max-w-xl mb-auto">
                         <div className="flex items-center gap-2 mb-6">
                             <div className="h-8 w-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                                <div className="h-4 w-4 border-2 border-white rounded-sm rotate-45"></div>
+                                <AppLogoIcon className="h-8 w-5 fill-current text-white" />
                             </div>
                             <span className="text-sm font-black tracking-tighter text-emerald-600 dark:text-emerald-500 uppercase italic">
                                 PayFlow-Sistemas
