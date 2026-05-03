@@ -3,13 +3,15 @@ import { Head } from "@inertiajs/react";
 import { Plus, ScrollText, Search, MoreHorizontal, Download, Filter, Check, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import Profile from "../settings/profile";
 import { UserRound } from 'lucide-react';
-{/*import {CSVLink} from 'react-csv';*/}
+import { CreateClientModal } from "@/components/clientes/create-cliente-modal";
+import { Button } from "@/components/ui/button";
 
 export default function Clientes() {
     const [filtroAberto, setFiltroAberto] = useState(false);
     const [filtroSelecionado, setFiltroSelecionado] = useState("Todos");
-
     const opcoesFiltro = ["Todos", "Ativos", "Inativos"];
+    // Modal de Criação de Cliente
+    const [openModal, setOpenModal] = useState(false);
 
     return (
         <>
@@ -25,11 +27,10 @@ export default function Clientes() {
                             Gerencie os clientes e segurados cadastrados
                         </p>
                     </div>
-
-                    <button className="inline-flex items-center justify-center gap-2 rounded-md bg-[#2D5A43] px-4 py-2 text-sm font-medium text-white hover:bg-[#244835] transition-colors shadow-sm">
-                        <Plus className="size-5"/>
+                    <Button onClick={() => setOpenModal(true)}>
+                        <Plus className="size-4" />
                         Novo Cliente
-                    </button>
+                    </Button>
                 </div>
 
                 {/* 2. Cards de Estatísticas */}
@@ -180,6 +181,7 @@ export default function Clientes() {
                     </div>
                 </div>
             </div>
+            <CreateClientModal open={openModal} setOpen={setOpenModal} />
         </>
     );
 }

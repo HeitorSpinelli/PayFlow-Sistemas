@@ -2,25 +2,51 @@
 
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
+use App\Http\Controllers\ClientController;
 
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
-});
 
-Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/dashboard', function () {
+        return inertia('dashboard');
+    })->name('dashboard');
 
-    Route::inertia('/clientes', 'FunctionsApp/clientes')->name('clientes');
-    Route::inertia('/apolices', 'FunctionsApp/apolices')->name('apolices');
-    Route::inertia('/cobrancas', 'FunctionsApp/cobrancas')->name('cobrancas');
-    Route::inertia('/pagamentos', 'FunctionsApp/pagamentos')->name('pagamentos');
-    Route::inertia('/agenda', 'FunctionsApp/agenda')->name('agenda');
-    Route::inertia('/importar', 'FunctionsApp/importar')->name('importar');
-    Route::inertia('/notificacoes', 'FunctionsApp/notificacoes')->name('notificacoes');
-    Route::inertia('/configuracoes', 'FunctionsApp/configuracoes')->name('configuracoes');
+    Route::get('/clientes', function () {
+        return inertia('FunctionsApp/clientes');
+    })->name('clientes');
+
+    Route::post('/clientes', [ClientController::class, 'store'])->name('clientes.store');
+
+    Route::get('/apolices', function () {
+        return inertia('FunctionsApp/apolices');
+    })->name('apolices');
+
+    Route::get('/cobrancas', function () {
+        return inertia('FunctionsApp/cobrancas');
+    })->name('cobrancas');
+
+    Route::get('/pagamentos', function () {
+        return inertia('FunctionsApp/pagamentos');
+    })->name('pagamentos');
+
+    Route::get('/agenda', function () {
+        return inertia('FunctionsApp/agenda');
+    })->name('agenda');
+
+    Route::get('/importar', function () {
+        return inertia('FunctionsApp/importar');
+    })->name('importar');
+
+    Route::get('/notificacoes', function () {
+        return inertia('FunctionsApp/notificacoes');
+    })->name('notificacoes');
+
+    Route::get('/configuracoes', function () {
+        return inertia('FunctionsApp/configuracoes');
+    })->name('configuracoes');
 
 });
 
