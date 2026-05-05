@@ -132,33 +132,7 @@ export default function Clientes() {
                                     <th className="h-12 px-4"></th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-sidebar-border">
-                                <tr className="hover:bg-muted/50 transition-colors">
-                                    <td className="p-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="size-9 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center font-bold text-xs text-zinc-500">S</div>
-                                            <div className="flex flex-col">
-                                                <span className="font-medium">Simon</span>
-                                                <span className="text-[10px] text-muted-foreground uppercase">PJ</span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="p-4 text-muted-foreground">123.456.789-00</td>
-                                    <td className="p-4 text-xs text-muted-foreground">
-                                        simon@email.com<br/>(19) 99722-1083
-                                    </td>
-                                    <td className="p-4 text-muted-foreground text-xs">Amparo, SP</td>
-                                    <td className="p-4">
-                                        <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                            Ativo
-                                        </span>
-                                    </td>
-                                    <td className="p-4 text-right">
-                                        <button className="p-2 hover:bg-muted rounded-md transition-colors text-muted-foreground">
-                                            <MoreHorizontal className="size-4" />
-                                        </button>
-                                    </td>
-                                </tr>
+                            <tbody>
                             </tbody>
                         </table>
                     </div>
@@ -170,7 +144,7 @@ export default function Clientes() {
                         </div>
                         <div className="flex items-center gap-2">
                             <button className="inline-flex h-8 items-center justify-center rounded-md border border-sidebar-border bg-background px-3 text-xs font-medium gap-1 hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                                <ChevronLeft className="size-3" />
+                                <ChevronLeft className="size-3"/>
                                 Anterior
                             </button>
                             <button className="inline-flex h-8 items-center justify-center rounded-md border border-sidebar-border bg-background px-3 text-xs font-medium gap-1 hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed">

@@ -9,13 +9,16 @@ class Client extends Model
     //Modelo do cliente, com os campos necessários para pessoa física e jurídica
 
     protected $fillable = [
-        'tipo_cliente',
         'nome',
+        'tipo_pessoa',
+        'cpf_cnpj',
+        'data_fundacao',
         'email',
         'telefone',
-        'cpf',
-        'data_nascimento',
-        'cnpj',
-        'data_fundacao',
+        'endereco',
+        'cidade',
+        'estado',
+        'cep',
+        'status'
     ];
 }

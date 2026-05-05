@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 
 export default function CreateClientModal({ open, setOpen }: any) {
     const [tipoCliente, setTipoCliente] = useState("pf");
+    const [Error, setError] = useState<any>({});
     const { data, setData, post } = useForm({
     tipo_cliente: "pf",
     nome: "",
@@ -29,7 +30,8 @@ export default function CreateClientModal({ open, setOpen }: any) {
     data_fundacao: "",
     endereco: "",
     cidade: "",
-    cep: ""
+    cep: "",
+    estado: "",
 });
 
     return (
@@ -137,6 +139,46 @@ export default function CreateClientModal({ open, setOpen }: any) {
                             value={data.cidade}
                             onChange={(e) => setData('cidade', e.target.value)}
                         />
+                    </div>
+                
+                    <div>
+                        <div className="col-span-2">
+                        <p>Estado *</p>
+                        <Select onValueChange={(value) => setData('estado', value)} defaultValue={data.estado}>
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Selecione o Estado" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-60 overflow-auto">
+                                <SelectItem value="AC">AC</SelectItem>
+                                <SelectItem value="AL">AL</SelectItem>
+                                <SelectItem value="AP">AP</SelectItem>
+                                <SelectItem value="AM">AM</SelectItem>
+                                <SelectItem value="BA">BA</SelectItem>
+                                <SelectItem value="CE">CE</SelectItem>
+                                <SelectItem value="DF">DF</SelectItem>
+                                <SelectItem value="ES">ES</SelectItem>
+                                <SelectItem value="GO">GO</SelectItem>
+                                <SelectItem value="MA">MA</SelectItem>
+                                <SelectItem value="MT">MT</SelectItem>
+                                <SelectItem value="MS">MS</SelectItem>
+                                <SelectItem value="MG">MG</SelectItem>
+                                <SelectItem value="PA">PA</SelectItem>
+                                <SelectItem value="PB">PB</SelectItem>
+                                <SelectItem value="PR">PR</SelectItem>
+                                <SelectItem value="PE">PE</SelectItem>
+                                <SelectItem value="PI">PI</SelectItem>
+                                <SelectItem value="RJ">RJ</SelectItem>
+                                <SelectItem value="RN">RN</SelectItem>
+                                <SelectItem value="RS">RS</SelectItem>
+                                <SelectItem value="RO">RO</SelectItem>
+                                <SelectItem value="RR">RR</SelectItem>
+                                <SelectItem value="SC">SC</SelectItem>
+                                <SelectItem value="SP">SP</SelectItem>
+                                <SelectItem value="SE">SE</SelectItem>
+                                <SelectItem value="TO">TO</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                     </div>
                     <div className="flex flex-col space-y-1.5">
                         <p>CEP</p>
