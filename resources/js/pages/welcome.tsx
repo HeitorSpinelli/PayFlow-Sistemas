@@ -44,8 +44,8 @@ export default function Welcome({
                                     <UserRound size={20} />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-bold leading-none">Equipe Financeira</p>
-                                    <p className="text-xs text-emerald-200">Gestão Corporativa</p>
+                                    <p className="text-sm font-bold leading-none">Axxion</p>
+                                    <p className="text-xs text-emerald-200">RH</p>
                                 </div>
                             </div>
                         </div>
