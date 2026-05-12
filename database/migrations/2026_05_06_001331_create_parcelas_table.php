@@ -6,17 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up(): void{
+    public function up(): void
+    {
         Schema::create('parcelas', function (Blueprint $table) {
             $table->id();
-            //onDelete cascade para garantir que, se uma apólice for deletada, as parcelas associadas a ela também sejam deletadas automaticamente, mantendo a integridade referencial do banco de dados.
-            //foreignId para criar uma chave estrangeira que referencia a tabela 'apolices', garantindo que cada parcela esteja associada a uma apólice específica e garantindo que nunca haja mais de uma parcela por contrato repetida.
             $table->foreignId('apolice_id')->constrained('apolices')->onDelete('cascade');
-            $table->integer('numero_parcela');
-            $table->decimal('valor_parcela', 15, 2);
+            $table->integer('numero_parcela')->nullable(); // ex: 3 (da parcela 3/12)
+            $table->decimal('valor_parcela', 15, 2)->nullable();
             $table->date('data_vencimento');
-            $table->string('status_pagamento'); // Ex: 'Pendente', 'Pago', 'Atrasado'
+            $table->date('data_pagamento')->nullable();
+            $table->string('status_pagamento', 50)->default('Pendente'); // 'Pago', 'Pendente', 'Atrasado'
+            $table->string('forma_pagamento_efetiva', 50)->nullable();
             $table->timestamps();
         });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('parcelas');
     }
 };

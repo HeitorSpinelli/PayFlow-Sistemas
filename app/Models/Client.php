@@ -6,19 +6,18 @@ use Illuminate\Database\Eloquent\Model;
 
 class Client extends Model
 {
-    //Modelo do cliente, com os campos necessários para pessoa física e jurídica
-
+    
     protected $fillable = [
-        'nome',
-        'tipo_pessoa',
-        'cpf_cnpj',
-        'data_fundacao',
+        'tipo_pessoa',              
+        'nome_completo',            
         'email',
         'telefone',
+        'cpf_cnpj',               
+        'data_nascimento_fundacao', 
         'endereco',
         'cidade',
         'estado',
         'cep',
-        'status'
+        'status',
     ];
 }

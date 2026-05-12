@@ -1,3 +1,4 @@
+
 <?php
 
 use Illuminate\Database\Migrations\Migration;
@@ -10,30 +11,18 @@ return new class extends Migration
     {
         Schema::create('apolices', function (Blueprint $table) {
             $table->id();
-            
-            // Número da apólice (único, conforme sua validação)
-            $table->string('numero_apolice')->unique();
-
-            // Chaves Estrangeiras (Foreign Keys)
-            // Certifique-se de que as tabelas 'clients', 'seguradoras' e 'ramos' já existam
-            $table->foreignId('cliente_id')->constrained('clients')->onDelete('cascade');
-            $table->foreignId('seguradora_id')->constrained('seguradoras')->onDelete('cascade');
-            $table->foreignId('ramo_id')->constrained('ramos')->onDelete('cascade');
-
-            // Valores Financeiros (usando decimal para precisão monetária)
-            // 'valor_premio_total' representa o valor total do prêmio do seguro, ou seja, o custo total que o cliente pagará pelo seguro.
-            // 'valor_cobertura' representa o valor máximo que a seguradora pagará em caso de sinistro, ou seja, o limite de cobertura do seguro.
-            $table->decimal('valor_premio_total', 15, 2);
-            $table->decimal('valor_cobertura', 15, 2);
-
-            // Dados de Pagamento
-            $table->integer('quantidade_parcelas');
-            $table->string('forma_pagamento');
-
-            // Vigência do Seguro (data de inicio e fim da cobertura/contrato)
-            $table->date('inicio_vigencia');
-            $table->date('fim_vigencia');
-
+            $table->string('numero_apolice', 100)->unique();
+            $table->foreignId('cliente_id')->constrained('segurados')->onDelete('cascade');
+            $table->foreignId('seguradora_id')->constrained('seguradoras')->onDelete('restrict');
+            $table->foreignId('ramo_id')->constrained('ramos')->onDelete('restrict');
+            $table->decimal('valor_premio_total', 15, 2)->nullable();
+            $table->decimal('valor_cobertura', 15, 2)->nullable();
+            $table->integer('quantidade_parcelas')->nullable();
+            $table->string('forma_pagamento', 50)->nullable(); // 'Boleto', 'PIX', 'Cartão'
+            $table->date('inicio_vigencia')->nullable();
+            $table->date('fim_vigencia')->nullable();
+            $table->string('status', 50)->nullable(); // 'Ativa', 'Vencida', 'Inadimplente', 'A renovar'
+            $table->text('observacoes')->nullable();
             $table->timestamps();
         });
     }
