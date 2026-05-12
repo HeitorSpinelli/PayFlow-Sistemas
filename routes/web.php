@@ -20,6 +20,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return inertia('FunctionsApp/clientes');
     })->name('clientes');
 
+    Route::get('/apolices', function () {
+        return inertia('FunctionsApp/apolices');
+    })->name('apolices');
+
     Route::get('/cobrancas', function () {
         return inertia('FunctionsApp/cobrancas');
     })->name('cobrancas');
