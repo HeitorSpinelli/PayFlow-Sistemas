@@ -5,10 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Segurado;
 use Illuminate\Http\Request;
 
-class seguradoController extends Controller
+class SeguradoController extends Controller
 {
-    public function createSegurado(Request $request)
+    public function store(Request $request)
     {
+        //1° Validaçao dos dados recebidos do create-segurado-modal.tsx
         $data = $request->validate([
             'nome_completo'            => 'required|string|max:255',
             'tipo_pessoa'              => 'required|in:pf,pj',
@@ -23,10 +24,18 @@ class seguradoController extends Controller
             'cep'                      => 'required|string|max:15',
             'status'                   => 'nullable|string|in:Ativo,Inativo,Pendente',
             'observacoes'              => 'nullable|string',
-        ]);
+        ]);     
+        
+        try {
+            //2° Criação dos dados recebidos do modal dentro do BD
+            Segurado::create($data);
 
-        Segurado::create($data);
+            //3° Retorna para o usuario que o Segurado foi cadastrado
+            return redirect()->back()->with('success', 'Segurado cadastrado com sucesso!');
 
-        return redirect()->back()->with('success', 'Cliente cadastrado com sucesso!');
+        } catch(\Exception $e){
+            //Se tudo falhar 
+            return redirect()->back()->with('error', 'Erro ao cadastrar segurado: ' . $e->getMessage());
+        }
     }
 }

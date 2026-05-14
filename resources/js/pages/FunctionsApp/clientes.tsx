@@ -3,14 +3,11 @@ import { Head } from "@inertiajs/react";
 import { Plus, ScrollText, Search, MoreHorizontal, Download, Filter, Check, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import Profile from "../settings/profile";
 import { UserRound } from 'lucide-react';
-import { CreateClientModal } from "@/components/clientes/create-cliente-modal";
+import CreateSeguradoModal from '@/components/modals/create-segurado-modal'
 import { Button } from "@/components/ui/button";
 
 export default function Clientes() {
-    const [filtroAberto, setFiltroAberto] = useState(false);
-    const [filtroSelecionado, setFiltroSelecionado] = useState("Todos");
-    const opcoesFiltro = ["Todos", "Ativos", "Inativos"];
-    // Modal de Criação de Cliente
+    // Modal do form para abrir o form de cadastro de segurados
     const [openModal, setOpenModal] = useState(false);
 
     return (
@@ -80,36 +77,11 @@ export default function Clientes() {
                             </div>
                             
                             <div className="relative">
-                                <button 
-                                    onClick={() => setFiltroAberto(!filtroAberto)}
-                                    className="inline-flex h-9 items-center justify-center rounded-md border border-sidebar-border bg-background px-3 text-sm font-medium gap-2 hover:bg-muted transition-colors min-w-[110px]"
-                                >
+                                <button className="inline-flex h-9 items-center justify-center rounded-md border border-sidebar-border bg-background px-3 text-sm font-medium gap-2 hover:bg-muted transition-colors min-w-[110px]">
                                     <Filter className="size-4 text-muted-foreground" />
-                                    {filtroSelecionado}
-                                    <ChevronDown className={`size-4 text-muted-foreground transition-transform ${filtroAberto ? 'rotate-180' : ''}`} />
+                                    <span>Filtro</span>
+                                    <ChevronDown className="size-4 text-muted-foreground" />
                                 </button>
-
-                                {filtroAberto && (
-                                    <div className="absolute right-0 mt-2 w-40 rounded-lg border border-sidebar-border bg-background shadow-lg z-50 overflow-hidden py-1">
-                                        {opcoesFiltro.map((opcao) => (
-                                            <button
-                                                key={opcao}
-                                                onClick={() => {
-                                                    setFiltroSelecionado(opcao);
-                                                    setFiltroAberto(false);
-                                                }}
-                                                className={`flex w-full items-center justify-between px-3 py-2 text-sm transition-colors ${
-                                                    filtroSelecionado === opcao 
-                                                    ? 'bg-[#2D5A43] text-white' 
-                                                    : 'hover:bg-muted text-foreground'
-                                                }`}
-                                            >
-                                                {opcao}
-                                                {filtroSelecionado === opcao && <Check className="size-4" />}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
                             </div>
 
                             <button className="inline-flex h-9 items-center justify-center rounded-md border border-sidebar-border bg-background px-3 text-sm font-medium gap-2 hover:bg-muted transition-colors">
@@ -119,7 +91,7 @@ export default function Clientes() {
                         </div>
                     </div>
 
-                    {/* Tabela */}
+                    {/* Tabela de segurados */}
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
@@ -137,7 +109,7 @@ export default function Clientes() {
                         </table>
                     </div>
 
-                    {/* 4. Paginação (Ajustada) */}
+                    {/* 4. Paginação */}
                     <div className="flex items-center justify-between px-4 py-4 border-t border-sidebar-border bg-muted/10">
                         <div className="text-sm text-muted-foreground">
                             Mostrando <span className="font-medium text-foreground">1</span> de <span className="font-medium text-foreground">1</span> resultados
@@ -155,7 +127,7 @@ export default function Clientes() {
                     </div>
                 </div>
             </div>
-            <CreateClientModal open={openModal} setOpen={setOpenModal} />
+            <CreateSeguradoModal open={openModal} setOpen={setOpenModal} />
         </>
     );
 }
