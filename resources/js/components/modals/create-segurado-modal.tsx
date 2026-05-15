@@ -194,7 +194,24 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         Localização
                     </p>
-
+                    <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                            Estado*
+                        </label>
+                        <Select onValueChange={(v) => setData('estado', v)}>
+                            <SelectTrigger className="h-12 border-muted-foreground/20 rounded-xl">
+                                <SelectValue placeholder='Selecione o Estado' />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {estados.map((estado:any) => (
+                                    <SelectItem key={estado.id} value={estado.sigla}>
+                                        {estado.nome}
+                                    </SelectItem>
+                                ))}                             
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -230,24 +247,6 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                             onChange={(e) => setData('endereco', e.target.value)}
                             className="h-12 border-muted-foreground/20 rounded-xl"
                         />
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            Estado*
-                        </label>
-                        <Select onValueChange={(v) => setData('estado', v)}>
-                            <SelectTrigger className="h-12 border-muted-foreground/20 rounded-xl">
-                                <SelectValue placeholder='Selecione o Estado' />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {estados.map((estado:any) => (
-                                    <SelectItem key={estado.id} value={estado.sigla}>
-                                        {estado.nome}
-                                    </SelectItem>
-                                ))}                             
-                            </SelectContent>
-                        </Select>
                     </div>
                 </div>
 
