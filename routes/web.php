@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
-use App\Http\Controllers\ClientController;
+use App\Http\Controllers\SeguradoController;
 use App\Http\Controllers\seguradoraController;
 use App\Models\Client;
 
@@ -19,6 +19,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/clientes', function () {
         return inertia('FunctionsApp/clientes');
     })->name('clientes');
+
+    Route::post('/clientes', [SeguradoController::class, 'store']);
 
     Route::get('/apolices', function () {
         return inertia('FunctionsApp/apolices');
