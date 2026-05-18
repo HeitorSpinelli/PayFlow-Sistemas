@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-class seguradoraController extends Controller
+class SeguroController extends Controller
 {
     //função para cadastrar um novo contrato de seguro, recebendo os dados do formulário e salvando no banco de dados
 
