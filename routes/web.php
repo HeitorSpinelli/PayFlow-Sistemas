@@ -16,10 +16,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return inertia('dashboard');
     })->name('dashboard');
 
-    Route::get('/clientes', function () {
-        return inertia('FunctionsApp/clientes');
-    })->name('clientes');
-
+    //Rota para consulta no banco dos segurados cadastrados no sistema
+    Route::get('/clientes', [SeguradoController::class, 'retorna'])->name('clientes');
 
     //Rota para salvar clientes via post chamando a classe SeguradoController e a função store
     Route::post('/clientes', [SeguradoController::class, 'store']);

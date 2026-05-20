@@ -38,4 +38,13 @@ class SeguradoController extends Controller
             return redirect()->back()->with('error', 'Erro ao cadastrar segurado: ' . $e->getMessage());
         }
     }
+
+    public function retorna()
+    {
+        $segurados = Segurado::all();
+        
+        return inertia('FunctionsApp/clientes', [
+            'segurados' => $segurados,
+        ]);
+    }
 }
