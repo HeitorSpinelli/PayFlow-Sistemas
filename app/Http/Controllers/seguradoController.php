@@ -4,17 +4,28 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreSeguradoRequest;
 use App\Models\Segurado;
-use Illuminate\Http\Request;
+use App\Services\SeguradoService;
 
 class SeguradoController extends Controller
 {
-    
-    public function store(StoreSeguradoRequest $request)
-    {     
-        $data = $request->validated();
+    //1. Declaração do service como propriedade
+    protected SeguradoService $seguradoService;
+
+    //2. Injeta pelo construtor
+    public function __construct(SeguradoService $seguradoService)
+    {
+        $this->seguradoService = $seguradoService;
     }
 
-    public function retorna()
+    //3. Usa no store
+    public function store(StoreSeguradoRequest $request){
+
+        $data = $request->validated();
+        $this->seguradoService->store($data);
+        return redirect()->back()->with('success', 'Segurado cadastrado com sucesso!');
+    }
+
+    public function show()
     {
         $segurados = Segurado::all();
         
