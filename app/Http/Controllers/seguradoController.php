@@ -25,12 +25,4 @@ class SeguradoController extends Controller
         return redirect()->back()->with('success', 'Segurado cadastrado com sucesso!');
     }
 
-    public function show()
-    {
-        $segurados = Segurado::all();
-        
-        return inertia('FunctionsApp/clientes', [
-            'segurados' => $segurados,
-        ]);
-    }
 }

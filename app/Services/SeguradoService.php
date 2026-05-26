@@ -15,4 +15,13 @@ class SeguradoService
             throw new \Exception('Erro ao cadastrar segurado: ' . $e->getMessage());
         }
     }
+
+     public function show()
+    {
+        $segurados = Segurado::all();
+        
+        return inertia('FunctionsApp/clientes', [
+            'segurados' => $segurados,
+        ]);
+    }
 }
