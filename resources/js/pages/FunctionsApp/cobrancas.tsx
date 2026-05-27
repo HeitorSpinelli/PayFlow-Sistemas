@@ -31,12 +31,14 @@ export default function Cobrancas() {
                             Gerencie as cobranças e pagamentos cadastrados
                         </p>
                     </div>
+                    {/* TODO: implementar lógica de exportação no modal */}
                     <Button variant="outline" onClick={() => setOpenModal(true)}>
                         <Download className="size-4" />
                         Exportar
                     </Button>
                 </div>
 
+                {/* Cards de resumo — cada cor sinaliza a criticidade: verde, laranja e vermelho */}
                 <div className="flex gap-4 justify-center">
                     <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 p-6 bg-card shadow-sm">
                         <div className="flex flex-col gap-1">
@@ -73,6 +75,7 @@ export default function Cobrancas() {
 
                         <div className="flex items-center gap-2">
                             <div className="relative">
+                                {/* Ícone posicionado absolutamente sobre o input */}
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                                 <input
                                     type="text"
@@ -81,11 +84,12 @@ export default function Cobrancas() {
                                 />
                             </div>
 
-                            {/* Filtro de Status */}
+                            {/* Dropdown de filtro por status */}
                             <div className="relative">
                                 <button
                                     onClick={() => {
                                         setFiltroAberto(!filtroAberto);
+                                        // Fecha o dropdown de período ao abrir o de status
                                         setPeriodoAberto(false);
                                     }}
                                     className="inline-flex h-9 items-center justify-center rounded-md border border-sidebar-border bg-background px-3 text-sm font-medium gap-2 hover:bg-muted transition-colors min-w-[110px]"
@@ -106,11 +110,13 @@ export default function Cobrancas() {
                                                 }}
                                                 className={`flex w-full items-center justify-between px-3 py-2 text-sm transition-colors ${
                                                     filtroSelecionado === opcao
+                                                    // Opção ativa: fundo verde escuro com texto branco
                                                     ? 'bg-[#2D5A43] text-white'
                                                     : 'hover:bg-muted text-foreground'
                                                 }`}
                                             >
                                                 {opcao}
+                                                {/* Checkmark visível apenas na opção selecionada */}
                                                 {filtroSelecionado === opcao && <Check className="size-4" />}
                                             </button>
                                         ))}
@@ -118,10 +124,12 @@ export default function Cobrancas() {
                                 )}
                             </div>
 
+                            {/* Dropdown de filtro por período */}
                             <div className="relative">
                                 <button
                                     onClick={() => {
                                         setPeriodoAberto(!periodoAberto);
+                                        // Fecha o dropdown de status ao abrir o de período
                                         setFiltroAberto(false);
                                     }}
                                     className="inline-flex h-9 items-center justify-center rounded-md border border-sidebar-border bg-background px-3 text-sm font-medium gap-2 hover:bg-muted transition-colors min-w-[120px]"
@@ -156,8 +164,8 @@ export default function Cobrancas() {
                         </div>
                     </div>
 
-                    {/* Tabela */}
-                   <div className="overflow-x-auto overflow-y-visible">
+                    {/* Tabela — tbody ainda sem dados*/}
+                    <div className="overflow-x-auto overflow-y-visible">
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-sidebar-border bg-muted/30 text-muted-foreground font-medium">
@@ -174,6 +182,7 @@ export default function Cobrancas() {
                         </table>
                     </div>
 
+                    {/* Paginação */}
                     <div className="flex items-center justify-between px-4 py-4 border-t border-sidebar-border bg-muted/10">
                         <div className="text-sm text-muted-foreground">
                             Mostrando <span className="font-medium text-foreground">1</span> de <span className="font-medium text-foreground">1</span> resultados
