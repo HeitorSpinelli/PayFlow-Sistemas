@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\SeguradoController;
-use App\Http\Controllers\seguradoraController;
+use App\Http\Controllers\ApolicesController;
 use App\Models\Client;
 
 Route::inertia('/', 'welcome', [
@@ -16,15 +16,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return inertia('dashboard');
     })->name('dashboard');
 
-    Route::get('/clientes', function () {
-        return inertia('FunctionsApp/clientes');
-    })->name('clientes');
+    //Rota para consulta no banco dos segurados cadastrados no sistema
+    Route::get('/clientes', [SeguradoController::class, 'show'])->name('clientes');
 
+    //Rota para salvar clientes via post chamando a classe SeguradoController e a função store
     Route::post('/clientes', [SeguradoController::class, 'store']);
 
-    Route::get('/apolices', function () {
-        return inertia('FunctionsApp/apolices');
-    })->name('apolices');
+    Route::get('/apolices', [ApolicesController::class, 'buscar'])->name('apolices');
+
+    //Rota para salvar apolices via post, chamando a classe ApolicesController e a função store
+    Route::post('/apolices', [ApolicesController::class, 'store']);
 
     Route::get('/cobrancas', function () {
         return inertia('FunctionsApp/cobrancas');

@@ -15,15 +15,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import { useForm } from '@inertiajs/react';
+import ApolicesController from '@/actions/App/Http/Controllers/ApolicesController';
 
 export default function CreateApoliceModal({ open, setOpen, clientes }: any) {
-    const [cliente, setCliente] = useState<any>(null);
-    const [busca, setBusca] = useState('');
-
     const { data, setData, post } = useForm({
         numero_apolice: "",
         cliente_id: "",
-        seguradora_id: "",  // ← ID da seguradora, não o nome
+        seguradora_id: "",
         ramo_id: "",
         valor_premio_total: "",
         valor_cobertura: "",
@@ -35,143 +33,235 @@ export default function CreateApoliceModal({ open, setOpen, clientes }: any) {
         observacoes: "",
     });
 
-    // Remove tudo que não for número
-    const apenasNumeros = (str: string) => str.replace(/\D/g, '');
+    const [busca, setBusca] = useState('')
+    const [clienteEncontrado, setClienteEncontrado] = useState<any>(null)
 
-    const buscarCliente = (valor: string) => {
-        const numeros = apenasNumeros(valor);
+    const buscarCliente = (valorDigitado: string) => {
+        const apenasNumeros = valorDigitado.replace(/\D/g, '');
 
-        // Só busca quando tiver 11 (CPF) ou 14 (CNPJ) dígitos
-        if (numeros.length !== 11 && numeros.length !== 14) {
-            setCliente(null);
+        if (apenasNumeros.length !== 11 && apenasNumeros.length !== 14) {
+            setClienteEncontrado(null);
             return;
         }
 
-        // Busca nos clientes que vieram como prop do Inertia
-        const encontrado = clientes.find((c: any) =>
-            apenasNumeros(c.cpf ?? '') === numeros ||
-            apenasNumeros(c.cnpj ?? '') === numeros
+        const encontrado = clientes.find((cliente: any) =>
+            cliente.cpf_cnpj.replace(/\D/g, '') === apenasNumeros
         );
 
-        setCliente(encontrado || null);
-
-        // Se encontrou, já preenche o cliente_id no formulário
-        if (encontrado) setData('cliente_id', encontrado.id);
-    };
-
-    const handleSubmit = () => {
-        post('/apolices', {
-            onSuccess: () => setOpen(false),
-        });
+        if (encontrado) {
+            setClienteEncontrado(encontrado);
+            setData('cliente_id', encontrado.id);
+        } else {
+            setClienteEncontrado(null);
+        }
     };
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Cadastrar Apólice</DialogTitle>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+
+                {/* Header */}
+                <DialogHeader className="mb-2">
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="h-8 w-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                            <div className="h-4 w-4 border-2 border-white rounded-sm rotate-45"></div>
+                        </div>
+                        <span className="text-sm font-black tracking-tighter text-emerald-600 uppercase italic">
+                            PayFlow-Sistemas
+                        </span>
+                    </div>
+                    <DialogTitle className="text-2xl font-bold tracking-tight">
+                        Cadastrar Apólice
+                    </DialogTitle>
                     <p className="text-sm text-muted-foreground">
                         Preencha os dados da apólice para cadastrá-la no sistema
                     </p>
                 </DialogHeader>
 
-                <div className="grid w-full items-center gap-4 py-4">
+                {/* Dados da Apólice */}
+                <div className="space-y-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Dados da Apólice
+                    </p>
 
-                    {/* Campo de busca de cliente */}
-                    <div className="flex flex-col gap-1">
-                        <p>Cliente*</p>
+                    <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                            Cliente*
+                        </label>
                         <Input
                             type="text"
                             placeholder="Digite o CPF ou CNPJ"
                             value={busca}
-                            onChange={(e) => {
-                                setBusca(e.target.value);
-                                buscarCliente(e.target.value);
-                            }}
+                            className="h-12 border-muted-foreground/20 rounded-xl"
                         />
-                        {/* Feedback da busca */}
-                        {cliente && (
-                            <p className="text-sm text-green-600">✓ {cliente.nome}</p>
-                        )}
-                        {!cliente && apenasNumeros(busca).length >= 11 && (
-                            <p className="text-sm text-red-500">Cliente não encontrado</p>
-                        )}
                     </div>
 
-                    {/* Número da apólice */}
-                    <div className="flex flex-col gap-1">
-                        <p>Número da Apólice*</p>
+                    <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                            Número da Apólice*
+                        </label>
                         <Input
                             type="text"
                             placeholder="Ex: 000123"
                             value={data.numero_apolice}
                             onChange={(e) => setData('numero_apolice', e.target.value)}
+                            className="h-12 border-muted-foreground/20 rounded-xl"
                         />
                     </div>
 
-                    {/* Início e fim de vigência */}
-                    <div className="grid grid-cols-2 gap-2">
-                        <div className="flex flex-col gap-1">
-                            <p>Início da Vigência*</p>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                Seguradora*
+                            </label>
+                            <Select onValueChange={(v) => setData('forma_pagamento', v)}>
+                                <SelectTrigger className="h-12 border-muted-foreground/20 rounded-xl">
+                                    <SelectValue placeholder="Selecione" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Porto Seguro">Porto Seguro</SelectItem>
+                                    <SelectItem value="Tokio Marine">Tokio Marine</SelectItem>
+                                    <SelectItem value="Bradesco">Bradesco</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                Ramo*
+                            </label>
+                            <Select onValueChange={(v) => setData('forma_pagamento', v)}>
+                                <SelectTrigger className="h-12 border-muted-foreground/20 rounded-xl">
+                                    <SelectValue placeholder="Selecione" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Porto Seguro">Porto Seguro</SelectItem>
+                                    <SelectItem value="Tokio Marine">Tokio Marine</SelectItem>
+                                    <SelectItem value="Bradesco">Bradesco</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Vigência */}
+                <div className="space-y-4 mt-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Vigência
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                Início da Vigência*
+                            </label>
                             <Input
                                 type="date"
                                 value={data.inicio_vigencia}
                                 onChange={(e) => setData('inicio_vigencia', e.target.value)}
+                                className="h-12 border-muted-foreground/20 rounded-xl"
                             />
                         </div>
-                        <div className="flex flex-col gap-1">
-                            <p>Fim da Vigência*</p>
+                        <div className="space-y-2">
+                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                Fim da Vigência*
+                            </label>
                             <Input
                                 type="date"
                                 value={data.fim_vigencia}
                                 onChange={(e) => setData('fim_vigencia', e.target.value)}
+                                className="h-12 border-muted-foreground/20 rounded-xl"
                             />
                         </div>
                     </div>
+                </div>
 
-                    {/* Valores */}
-                    <div className="grid grid-cols-2 gap-2">
-                        <div className="flex flex-col gap-1">
-                            <p>Valor do Prêmio*</p>
+                {/* Valores e Pagamento */}
+                <div className="space-y-4 mt-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Valores e Pagamento
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                Valor do Prêmio*
+                            </label>
                             <Input
                                 type="number"
                                 placeholder="R$ 0,00"
                                 value={data.valor_premio_total}
                                 onChange={(e) => setData('valor_premio_total', e.target.value)}
+                                className="h-12 border-muted-foreground/20 rounded-xl"
                             />
                         </div>
-                        <div className="flex flex-col gap-1">
-                            <p>Valor de Cobertura*</p>
+                        <div className="space-y-2">
+                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                Valor de Cobertura*
+                            </label>
                             <Input
                                 type="number"
                                 placeholder="R$ 0,00"
                                 value={data.valor_cobertura}
                                 onChange={(e) => setData('valor_cobertura', e.target.value)}
+                                className="h-12 border-muted-foreground/20 rounded-xl"
                             />
                         </div>
                     </div>
 
-                    {/* Forma de pagamento */}
-                    <div className="flex flex-col gap-1">
-                        <p>Forma de Pagamento*</p>
-                        <Select onValueChange={(v) => setData('forma_pagamento', v)}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecione" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="boleto">Boleto</SelectItem>
-                                <SelectItem value="cartao">Cartão</SelectItem>
-                                <SelectItem value="pix">Pix</SelectItem>
-                                <SelectItem value="debito">Débito Automático</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>s
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                Quantidade de Parcelas*
+                            </label>
+                            <Input
+                                type="number"
+                                placeholder="12"
+                                value={data.quantidade_parcelas}
+                                onChange={(e) => setData('quantidade_parcelas', e.target.value)}
+                                className="h-12 border-muted-foreground/20 rounded-xl"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                Forma de Pagamento*
+                            </label>
+                            <Select onValueChange={(v) => setData('forma_pagamento', v)}>
+                                <SelectTrigger className="h-12 border-muted-foreground/20 rounded-xl">
+                                    <SelectValue placeholder="Selecione" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="boleto">Boleto</SelectItem>
+                                    <SelectItem value="cartao">Cartão</SelectItem>
+                                    <SelectItem value="pix">Pix</SelectItem>
+                                    <SelectItem value="debito">Débito Automático</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                </div>
 
-                    <Button onClick={handleSubmit} className="w-full">
+                {/* Observação */}
+                <div className="space-y-2 mt-4">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Observação
+                    </label>
+                    <textarea
+                        value={data.observacoes}
+                        onChange={(e) => setData('observacoes', e.target.value)}
+                        className="w-full min-h-[80px] rounded-xl border border-muted-foreground/20 bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500 resize-none"
+                        placeholder="Observações adicionais..."
+                    />
+                </div>
+
+                {/* Botões */}
+                <div className="flex justify-end gap-2 mt-4">
+                    <Button
+                        className="h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98]"
+                    >
                         Cadastrar Apólice
                     </Button>
-
                 </div>
+
             </DialogContent>
         </Dialog>
     );

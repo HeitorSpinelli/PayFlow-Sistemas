@@ -15,6 +15,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useEffect, useState } from 'react';
 import { useForm } from '@inertiajs/react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function CreateSeguradoModal({ open, setOpen }: any) {
     const [tipoPessoa, setTipoPessoa] = useState("pf");
@@ -51,9 +53,17 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
         buscarEstados();
     }, [])
 
-    const salvarCliente = () => {
+    const bntSalvar = () => {
         post('/clientes', {
-            onSuccess: () => setOpen(false),
+            onSuccess: () => {
+                //1. Mostrar notificação de sucesso
+                toast.success("Segurado Salvo com Sucesso!");
+                //2. fechar o modal
+                setOpen(false);
+            }, onError: () => {
+                //Se tiver um erro ou campo faltando
+                toast.error("Falha ao Salvar, Verifique os campos")
+            }
         });
     };
 
@@ -266,22 +276,15 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                 {/* Botões */}
                 <div className="flex justify-end gap-2 mt-4">
                     <Button
-                        variant="outline"
-                        onClick={() => setOpen(false)}
-                        className="rounded-xl"
-                    >
-                        Cancelar
-                    </Button>
-                    <Button
-                        onClick={salvarCliente}
+                        onClick={bntSalvar}
                         disabled={processing}
                         className="h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98]"
                     >
                         {processing ? 'Salvando...' : 'Salvar'}
                     </Button>
-                </div>
-
+                </div>         
             </DialogContent>
+            <ToastContainer />
         </Dialog>
     )
 }

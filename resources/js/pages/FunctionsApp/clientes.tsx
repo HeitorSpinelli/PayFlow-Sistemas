@@ -6,7 +6,7 @@ import { UserRound } from 'lucide-react';
 import CreateSeguradoModal from '@/components/modals/create-segurado-modal'
 import { Button } from "@/components/ui/button";
 
-export default function Clientes() {
+export default function Clientes({segurados}): any {
     // Modal do form para abrir o form de cadastro de segurados
     const [openModal, setOpenModal] = useState(false);
 
@@ -98,13 +98,31 @@ export default function Clientes() {
                                 <tr className="border-b border-sidebar-border bg-muted/30 text-muted-foreground font-medium">
                                     <th className="h-12 px-4 text-left">Cliente</th>
                                     <th className="h-12 px-4 text-left">CPF/CNPJ</th>
-                                    <th className="h-12 px-4 text-left">Contato</th>
+                                    <th className="h-12 px-4 text-left">Telefone</th>
                                     <th className="h-12 px-4 text-left">Localização</th>
                                     <th className="h-12 px-4 text-left">Status</th>
                                     <th className="h-12 px-4"></th>
                                 </tr>
                             </thead>
                             <tbody>
+                                {segurados.map((segurado: any) => (
+                                    <tr key={segurado.id} className="border-b border-sidebar-border hover:bg-muted/30 transition-colors">
+                                        <td className="h-12 px-4">{segurado.nome_completo}</td>
+                                        <td className="h-12 px-4">{segurado.cpf_cnpj}</td>
+                                        <td className="h-12 px-4">{segurado.celular_whatsapp}</td>
+                                        <td className="h-12 px-4">{segurado.cidade} - {segurado.estado}</td>
+                                        <td className="h-12 px-4">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                segurado.status === 'Ativo' 
+                                                ? 'bg-green-500/10 text-green-500' 
+                                                : 'bg-red-500/10 text-red-500'
+                                            }`}>
+                                                {segurado.status}
+                                            </span>
+                                        </td>
+                                        <td className="h-12 px-4"></td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>
