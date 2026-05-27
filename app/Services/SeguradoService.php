@@ -16,12 +16,8 @@ class SeguradoService
         }
     }
 
-     public function show()
+    public function count()
     {
-        $segurados = Segurado::all();
-        
-        return inertia('FunctionsApp/clientes', [
-            'segurados' => $segurados,
-        ]);
+        return Segurado::count();
     }
 }

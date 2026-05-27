@@ -6,7 +6,8 @@ import { UserRound } from 'lucide-react';
 import CreateSeguradoModal from '@/components/modals/create-segurado-modal'
 import { Button } from "@/components/ui/button";
 
-export default function Clientes({segurados}): any {
+//Recebe os segurados e o total de clientes como props e declarando seu tipo
+export default function Clientes({segurados, total}: {segurados: any[], total: number}): any {
     // Modal do form para abrir o form de cadastro de segurados
     const [openModal, setOpenModal] = useState(false);
 
@@ -35,7 +36,7 @@ export default function Clientes({segurados}): any {
                     <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 p-6 bg-card shadow-sm">
                         <div className="flex flex-col gap-1">
                             <h2 className="text-sm font-medium text-muted-foreground">Total de Clientes</h2>
-                            <p className="text-3xl font-bold tracking-tight text-green-500">2</p>
+                            <p className="text-3xl font-bold tracking-tight text-green-500">{total}</p>
                         </div>
                         <UserRound className="size-10 text-muted-foreground/50"/>
                     </div>
