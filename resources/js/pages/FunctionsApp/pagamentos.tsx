@@ -3,12 +3,12 @@ import { useState } from "react";
 import {
     Search, Download, Filter, Plus,
     Check, ChevronDown, ChevronLeft, ChevronRight,
-    CircleCheck, Clock4, Wallet, ClipboardList,
-    DollarSign, Receipt, Calendar
+    CircleCheck, DollarSign, Receipt, Calendar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import CreatePagamentoModal from "@/components/modals/create-pagamentos-modal";
 
-export default function Pagamentos() {
+export default function Pagamentos({ clientes, apolices }: any) {
     const [filtroAberto, setFiltroAberto] = useState(false);
     const [filtroSelecionado, setFiltroSelecionado] = useState("Todos");
     const opcoesFiltro = ["Todos", "Confirmados", "Pendentes"];
@@ -36,6 +36,7 @@ export default function Pagamentos() {
                     </Button>
                 </div>
 
+                {/* Cards de resumo financeiro */}
                 <div className="flex gap-4 justify-center">
                     <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 p-6 bg-card shadow-sm">
                         <div className="flex flex-col gap-1">
@@ -64,6 +65,7 @@ export default function Pagamentos() {
                     <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 p-6 bg-card shadow-sm">
                         <div className="flex flex-col gap-1">
                             <h2 className="text-sm font-medium text-muted-foreground">Pendentes</h2>
+                            {/* Pendentes usa laranja para indicar atenção, diferente dos outros cards */}
                             <p className="text-3xl font-bold tracking-tight text-orange-500">7,00</p>
                         </div>
                         <Calendar className="size-10 text-muted-foreground/50" />
@@ -80,6 +82,7 @@ export default function Pagamentos() {
 
                         <div className="flex items-center gap-2">
                             <div className="relative">
+                                {/* Ícone posicionado absolutamente sobre o input */}
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                                 <input
                                     type="text"
@@ -87,10 +90,13 @@ export default function Pagamentos() {
                                     className="h-9 w-64 rounded-md border border-sidebar-border bg-background pl-9 pr-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                 />
                             </div>
+
+                            {/* Dropdown de filtro por status */}
                             <div className="relative">
                                 <button
                                     onClick={() => {
                                         setFiltroAberto(!filtroAberto);
+                                        // Fecha o dropdown de exportar ao abrir o de filtro
                                         setExportarAberto(false);
                                     }}
                                     className="inline-flex h-9 items-center justify-center rounded-md border border-sidebar-border bg-background px-3 text-sm font-medium gap-2 hover:bg-muted transition-colors min-w-[110px]"
@@ -111,11 +117,13 @@ export default function Pagamentos() {
                                                 }}
                                                 className={`flex w-full items-center justify-between px-3 py-2 text-sm transition-colors ${
                                                     filtroSelecionado === opcao
+                                                    // Opção ativa: fundo verde escuro com texto branco
                                                     ? 'bg-[#2D5A43] text-white'
                                                     : 'hover:bg-muted text-foreground'
                                                 }`}
                                             >
                                                 {opcao}
+                                                {/* Checkmark visível apenas na opção selecionada */}
                                                 {filtroSelecionado === opcao && <Check className="size-4" />}
                                             </button>
                                         ))}
@@ -123,6 +131,7 @@ export default function Pagamentos() {
                                 )}
                             </div>
 
+                            {/* TODO: implementar lógica de exportação */}
                             <button
                                 onClick={() => setExportarAberto(false)}
                                 className="inline-flex h-9 items-center justify-center rounded-md border border-sidebar-border bg-background px-3 text-sm font-medium gap-2 hover:bg-muted transition-colors"
@@ -133,7 +142,7 @@ export default function Pagamentos() {
                         </div>
                     </div>
 
-                    {/* Tabela */}
+                    {/* Tabela — tbody ainda sem dados, aguardando integração com API */}
                     <div className="overflow-x-auto overflow-y-visible">
                         <table className="w-full text-sm">
                             <thead>
@@ -145,7 +154,7 @@ export default function Pagamentos() {
                                     <th className="h-12 px-4 text-left">Data Pagamento</th>
                                     <th className="h-12 px-4 text-left">Forma</th>
                                     <th className="h-12 px-4 text-left">Status</th>
-                                    <th className="h-12 px-4"></th>
+                                    <th className="h-12 px-4 text-left">Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -153,6 +162,7 @@ export default function Pagamentos() {
                         </table>
                     </div>
 
+                    {/* Paginação */}
                     <div className="flex items-center justify-between px-4 py-4 border-t border-sidebar-border bg-muted/10">
                         <div className="text-sm text-muted-foreground">
                             Mostrando <span className="font-medium text-foreground">1</span> de <span className="font-medium text-foreground">1</span> resultados
@@ -170,6 +180,14 @@ export default function Pagamentos() {
                     </div>
                 </div>
             </div>
+
+            {/* Modal fora do div principal para não herdar estilos de layout */}
+            <CreatePagamentoModal
+                open={openModal}
+                setOpen={setOpenModal}
+                clientes={clientes}
+                apolices={apolices}
+            />
         </>
     );
 }
