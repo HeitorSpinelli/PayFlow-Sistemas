@@ -15,45 +15,54 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import { useForm } from '@inertiajs/react';
-import ApolicesController from '@/actions/App/Http/Controllers/ApolicesController';
 
-export default function CreateApoliceModal({ open, setOpen, clientes }: any) {
+export default function CreateApoliceModal({ open, setOpen, segurados }: any) {
+
+    // Estados
+    const [busca, setBusca] = useState('');
+    const [mostrarLista, setMostrarLista] = useState(false);
+    const [seguradoEncontrado, setSeguradoEncontrado] = useState<any>(null);
+
+    // Formulário
     const { data, setData, post } = useForm({
-        numero_apolice: "",
-        cliente_id: "",
-        seguradora_id: "",
-        ramo_id: "",
-        valor_premio_total: "",
-        valor_cobertura: "",
+        numero_apolice:      "",
+        cliente_id:          "",
+        seguradora_id:       "",
+        ramo_id:             "",
+        valor_premio_total:  "",
+        valor_cobertura:     "",
         quantidade_parcelas: "",
-        forma_pagamento: "",
-        inicio_vigencia: "",
-        fim_vigencia: "",
-        status: "",
-        observacoes: "",
+        forma_pagamento:     "",
+        inicio_vigencia:     "",
+        fim_vigencia:        "",
+        status:              "",
+        observacoes:         "",
     });
 
-    const [busca, setBusca] = useState('')
-    const [clienteEncontrado, setClienteEncontrado] = useState<any>(null)
+    // Remove caracteres especiais deixando só números
+    const apenasNumeros = (str: string) => str.replace(/\D/g, '');
 
-    const buscarCliente = (valorDigitado: string) => {
-        const apenasNumeros = valorDigitado.replace(/\D/g, '');
+    // Filtra segurados conforme digitação
+    const resultados = busca.length > 0
+        ? segurados.filter((segurado: any) =>
+            apenasNumeros(segurado.cpf_cnpj).includes(apenasNumeros(busca)) ||
+            segurado.nome_completo.toLowerCase().includes(busca.toLowerCase())
+        )
+        : [];
 
-        if (apenasNumeros.length !== 11 && apenasNumeros.length !== 14) {
-            setClienteEncontrado(null);
-            return;
-        }
+    // Seleciona o segurado ao clicar na lista
+    const selecionarSegurado = (segurado: any) => {
+        setSeguradoEncontrado(segurado);
+        setData('cliente_id', segurado.id);
+        setBusca(segurado.nome_completo);
+        setMostrarLista(false);
+    };
 
-        const encontrado = clientes.find((cliente: any) =>
-            cliente.cpf_cnpj.replace(/\D/g, '') === apenasNumeros
-        );
-
-        if (encontrado) {
-            setClienteEncontrado(encontrado);
-            setData('cliente_id', encontrado.id);
-        } else {
-            setClienteEncontrado(null);
-        }
+    // Envia o formulário
+    const salvarApolice = () => {
+        post('/apolices', {
+            onSuccess: () => setOpen(false),
+        });
     };
 
     return (
@@ -84,18 +93,44 @@ export default function CreateApoliceModal({ open, setOpen, clientes }: any) {
                         Dados da Apólice
                     </p>
 
-                    <div className="space-y-2">
+                    {/* Campo de busca de segurado */}
+                    <div className="space-y-2 relative">
                         <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                             Cliente*
                         </label>
                         <Input
-                            type="text"
-                            placeholder="Digite o CPF ou CNPJ"
+                            placeholder="Busque pelo nome ou CPF/CNPJ"
                             value={busca}
+                            onChange={(e) => {
+                                setBusca(e.target.value);
+                                setMostrarLista(true);
+                            }}
                             className="h-12 border-muted-foreground/20 rounded-xl"
                         />
+
+                        {/* Lista de resultados */}
+                        {mostrarLista && resultados.length > 0 && (
+                            <div className="absolute z-50 w-full mt-1 border border-muted-foreground/20 rounded-xl bg-background shadow-lg overflow-hidden">
+                                {resultados.map((segurado: any) => (
+                                    <div
+                                        key={segurado.id}
+                                        onClick={() => selecionarSegurado(segurado)}
+                                        className="px-4 py-3 hover:bg-muted cursor-pointer flex justify-between items-center"
+                                    >
+                                        <span className="font-medium text-sm">{segurado.nome_completo}</span>
+                                        <span className="text-xs text-muted-foreground">{segurado.cpf_cnpj}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Nenhum resultado */}
+                        {mostrarLista && busca.length > 0 && resultados.length === 0 && (
+                            <p className="text-sm text-red-500">Nenhum cliente encontrado</p>
+                        )}
                     </div>
 
+                    {/* Número da apólice */}
                     <div className="space-y-2">
                         <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                             Número da Apólice*
@@ -114,7 +149,7 @@ export default function CreateApoliceModal({ open, setOpen, clientes }: any) {
                             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                 Seguradora*
                             </label>
-                            <Select onValueChange={(v) => setData('forma_pagamento', v)}>
+                            <Select onValueChange={(v) => setData('seguradora_id', v)}>
                                 <SelectTrigger className="h-12 border-muted-foreground/20 rounded-xl">
                                     <SelectValue placeholder="Selecione" />
                                 </SelectTrigger>
@@ -129,14 +164,14 @@ export default function CreateApoliceModal({ open, setOpen, clientes }: any) {
                             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                 Ramo*
                             </label>
-                            <Select onValueChange={(v) => setData('forma_pagamento', v)}>
+                            <Select onValueChange={(v) => setData('ramo_id', v)}>
                                 <SelectTrigger className="h-12 border-muted-foreground/20 rounded-xl">
                                     <SelectValue placeholder="Selecione" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="Porto Seguro">Porto Seguro</SelectItem>
-                                    <SelectItem value="Tokio Marine">Tokio Marine</SelectItem>
-                                    <SelectItem value="Bradesco">Bradesco</SelectItem>
+                                    <SelectItem value="Auto">Auto</SelectItem>
+                                    <SelectItem value="Vida">Vida</SelectItem>
+                                    <SelectItem value="Residencial">Residencial</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -148,7 +183,6 @@ export default function CreateApoliceModal({ open, setOpen, clientes }: any) {
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         Vigência
                     </p>
-
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -180,7 +214,6 @@ export default function CreateApoliceModal({ open, setOpen, clientes }: any) {
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         Valores e Pagamento
                     </p>
-
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -207,7 +240,6 @@ export default function CreateApoliceModal({ open, setOpen, clientes }: any) {
                             />
                         </div>
                     </div>
-
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -256,6 +288,14 @@ export default function CreateApoliceModal({ open, setOpen, clientes }: any) {
                 {/* Botões */}
                 <div className="flex justify-end gap-2 mt-4">
                     <Button
+                        variant="outline"
+                        onClick={() => setOpen(false)}
+                        className="rounded-xl"
+                    >
+                        Cancelar
+                    </Button>
+                    <Button
+                        onClick={salvarApolice}
                         className="h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98]"
                     >
                         Cadastrar Apólice

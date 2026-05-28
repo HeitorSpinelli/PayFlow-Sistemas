@@ -1,33 +1,41 @@
 <?php
 
 namespace App\Http\Controllers;
-
-use App\Models\apolices;
-use App\Models\Segurado;
-use App\Models\seguradora;
-use App\Models\ramo;
-use App\Http\Controllers\Controller;
+use App\Services\ApoliceService;
 use App\Http\Requests\StoreApoliceRequest;
-use App\Models\ramos;
-use ErrorException;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
+use App\Http\Controllers\Controller;
+
 
 class ApolicesController extends Controller
 {
-    public function store (StoreApoliceRequest $request){
+    //1. Declarar service como propriedade
+    protected ApoliceService $apoliceService;
 
-        $data = $request->validated();
+    //2. Injetar a dependencia por meio do construtor
+    public function __construct(ApoliceService $apoliceService){
+        //3. Atribuir a propriedade a instancia do service
+        //significa que a propriedade $apoliceService da classe ApolicesController vai receber a instancia do ApoliceService que foi injetada pelo construtor
+        //ou seja essa classe tem acesso a todos os dados e funções do service, e pode usar ele para realizar as operações relacionadas a apolices, como cadastrar, buscar, etc
+        $this->apoliceService = $apoliceService;
+    }
 
+    //3. Usar o service no método store
+    public function store(StoreApoliceRequest $request){
+        //Aqui a gente pega os dados do request, valida eles e depois chama o método store do service passando os dados validados
+        try{
+            $data = $request->validated();
+            $this->apoliceService->store($data);
+            return redirect()->back()->with('success', 'Apólice cadastrada com sucesso!');
+        }catch(\Exception $e){
+            return redirect()->back()->with('error', 'Erro ao cadastrar apólice: ' . $e->getMessage());
+        }
     }
 
     public function buscar(){
-        //Fazendo um select usando o model segurado nos campos abaixo e indo no banco fazer a requisição
-        $segurado = Segurado::select('id', 'nome_completo', 'cpf_cnpj')-> get();
-
-        //Retorna a tela com os clientes que encontrou
-        return inertia('FunctionsApp/apolices', [
-            'clientes' => $segurado,
-        ]);
-    }
+    $segurados = $this->apoliceService->buscar();
+    
+    return inertia('FunctionsApp/apolices', [
+        'segurados' => $segurados,
+    ]);
+}
 }

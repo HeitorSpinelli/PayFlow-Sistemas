@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useForm } from '@inertiajs/react';
 import { Search, Check } from 'lucide-react';
+import { useState } from 'react';
 
 export default function CreatePagamentoModal({ open, setOpen, clientes, apolices }: any) {
     const { data, setData, post, reset } = useForm({
@@ -28,6 +29,13 @@ export default function CreatePagamentoModal({ open, setOpen, clientes, apolices
         observacoes: "",
     });
 
+    const [mostrarLista, setMostrarLista] = useState(false);
+
+    const resultados = segurados.filter((segurado: any) =>
+    segurado.cpf_cnpj.includes(apenasNumeros(busca)) ||
+    segurado.nome_completo.toLowerCase().includes(busca.toLowerCase())
+);
+    
     const apenasNumeros = (str: string) => str.replace(/\D/g, '');
 
     const buscarCliente = (valor: string) => {

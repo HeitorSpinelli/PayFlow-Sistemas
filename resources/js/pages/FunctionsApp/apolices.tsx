@@ -6,13 +6,12 @@ import { UserRound } from 'lucide-react';
 import CreateApoliceModal from "@/components/modals/create-apolice-modal";
 import { Button } from "@/components/ui/button";
 
-export default function Clientes() {
-    // Modal de Criação de Cliente
+export default function Apolices({ segurados }: any) {
     const [openModal, setOpenModal] = useState(false);
 
     return (
         <>
-            <Head title="Clientes" />
+            <Head title="Apolices" />
 
             <div>
                 <div className="flex items-center justify-between mb-4">
@@ -28,7 +27,7 @@ export default function Clientes() {
                 </div>
             </div>
 
-            <CreateApoliceModal open={openModal} setOpen={setOpenModal} />
+            <CreateApoliceModal open={openModal}  setOpen={setOpenModal} segurados={segurados}/>
         </>
     );
 }

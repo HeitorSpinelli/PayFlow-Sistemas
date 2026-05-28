@@ -64,7 +64,7 @@ export default function Clientes({segurados, total}: {segurados: any[], total: n
                     <div className="p-4 border-b border-sidebar-border flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <h3 className="text-lg font-semibold">Lista de Clientes</h3>
-                            <p className="text-xs text-muted-foreground">2 cliente(s) encontrado(s)</p>
+                            <p className="text-xs text-muted-foreground">{total} cliente(s) encontrado(s)</p>
                         </div>
 
                         <div className="flex items-center gap-2">
