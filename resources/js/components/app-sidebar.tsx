@@ -46,14 +46,14 @@ const mainNavItems: NavItem[] = [
         icon: FileText, // Ícone 3 (Documento)
     },
     {
-        title: 'Cobranças',
-        href: '/cobrancas',
-        icon: Receipt, // Ícone 4 (Cifrão/Recibo)
-    },
-    {
         title: 'Pagamentos',
         href: '/pagamentos',
         icon: CreditCard, // Ícone 5 (Cartão)
+    },
+    {
+        title: 'Cobranças',
+        href: '/cobrancas',
+        icon: Receipt, // Ícone 4 (Cifrão/Recibo)
     },
     {
         title: 'Agenda',

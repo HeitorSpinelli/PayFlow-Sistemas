@@ -18,6 +18,18 @@ class ApoliceService{
     }
 
     public function buscar(){
-        return Segurado::select('id', 'nome_completo', 'cpf_cnpj')-> get();
+        try{
+            return Segurado::select('id', 'nome_completo', 'cpf_cnpj')-> get();
+        }catch(\Exception $e){
+            throw new \Exception('Erro ao buscar segurados: ' . $e->getMessage());
+        }
+    }
+
+    public function count(){
+        try{
+            return Apolices::count();
+        }catch(\Exception $e){
+            throw new \Exception('Erro ao contar apólices: ' . $e->getMessage());
+        }
     }
 }

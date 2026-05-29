@@ -31,11 +31,13 @@ class ApolicesController extends Controller
         }
     }
 
-    public function buscar(){
+    public function index(){
     $segurados = $this->apoliceService->buscar();
-    
+    $total = $this->apoliceService->count();
+
     return inertia('FunctionsApp/apolices', [
         'segurados' => $segurados,
+        'total' => $total,
     ]);
 }
 }
