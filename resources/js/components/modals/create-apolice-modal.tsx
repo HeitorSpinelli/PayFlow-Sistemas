@@ -13,17 +13,18 @@ import {
 } from "@/components/ui/select";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { formataCpfCnpj } from "@/utils/cpfMask";
 import { useState } from 'react';
 import { useForm } from '@inertiajs/react';
 
-export default function CreateApoliceModal({ open, setOpen, segurados }: any) {
+export default function CreateApoliceModal({ open, setOpen, segurados, seguradoras }: any) {
 
     // Estados
     const [busca, setBusca] = useState('');
     const [mostrarLista, setMostrarLista] = useState(false);
     const [seguradoEncontrado, setSeguradoEncontrado] = useState<any>(null);
 
-    // Formulário
+    // Formulário do Inertia
     const { data, setData, post } = useForm({
         numero_apolice:      "",
         cliente_id:          "",
@@ -50,11 +51,25 @@ export default function CreateApoliceModal({ open, setOpen, segurados }: any) {
         )
         : [];
 
-    // Seleciona o segurado ao clicar na lista
+    // Manipula a digitação no input de busca
+    const handleBuscaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const valorDigitado = e.target.value;
+        
+        // Se o usuário começar a digitar números, aplicamos a máscara dinamicamente
+        // Se forem letras (nome do cliente), a função mantém o texto normal
+        const valorFormatado = formataCpfCnpj(valorDigitado);
+        
+        setBusca(valorFormatado);
+        setMostrarLista(true);
+    };
+
+    // Seleciona o segurado ao clicar na lista de resultados
     const selecionarSegurado = (segurado: any) => {
         setSeguradoEncontrado(segurado);
         setData('cliente_id', segurado.id);
-        setBusca(segurado.nome_completo);
+        
+        // Ao selecionar, você pode escolher mostrar o Nome ou o CPF/CNPJ formatado no Input
+        setBusca(segurado.nome_completo); 
         setMostrarLista(false);
     };
 
@@ -98,14 +113,13 @@ export default function CreateApoliceModal({ open, setOpen, segurados }: any) {
                         <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                             Cliente*
                         </label>
-                        <Input
-                            placeholder="Busque pelo nome ou CPF/CNPJ"
+                        <Input 
+                            type="text" 
+                            placeholder="Buscar por CPF ou CNPJ..." 
                             value={busca}
-                            onChange={(e) => {
-                                setBusca(e.target.value);
-                                setMostrarLista(true);
-                            }}
-                            className="h-12 border-muted-foreground/20 rounded-xl"
+                            onChange={handleBuscaChange}
+                            onFocus={() => setMostrarLista(true)}
+                            className="h-9 w-full rounded-md border border-sidebar-border bg-background px-3 text-sm"
                         />
 
                         {/* Lista de resultados */}
@@ -117,8 +131,9 @@ export default function CreateApoliceModal({ open, setOpen, segurados }: any) {
                                         onClick={() => selecionarSegurado(segurado)}
                                         className="px-4 py-3 hover:bg-muted cursor-pointer flex justify-between items-center"
                                     >
+                                        <span className="text-sm text-muted-foreground">{segurado.tipo_pessoa === 'F' ? 'CPF' : 'CNPJ'}</span>
                                         <span className="font-medium text-sm">{segurado.nome_completo}</span>
-                                        <span className="text-xs text-muted-foreground">{segurado.cpf_cnpj}</span>
+                                        <span className="text-xs text-muted-foreground">{formataCpfCnpj(segurado.cpf_cnpj)}</span>
                                     </div>
                                 ))}
                             </div>
@@ -137,7 +152,7 @@ export default function CreateApoliceModal({ open, setOpen, segurados }: any) {
                         </label>
                         <Input
                             type="text"
-                            placeholder="Ex: 000123"
+                            placeholder="Ex: 401391234567"
                             value={data.numero_apolice}
                             onChange={(e) => setData('numero_apolice', e.target.value)}
                             className="h-12 border-muted-foreground/20 rounded-xl"
@@ -154,9 +169,8 @@ export default function CreateApoliceModal({ open, setOpen, segurados }: any) {
                                     <SelectValue placeholder="Selecione" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="Porto Seguro">Porto Seguro</SelectItem>
-                                    <SelectItem value="Tokio Marine">Tokio Marine</SelectItem>
-                                    <SelectItem value="Bradesco">Bradesco</SelectItem>
+                                    {/*Percorrendo seguradoras que foi passado como propriedade*/}
+                                    
                                 </SelectContent>
                             </Select>
                         </div>
@@ -169,9 +183,7 @@ export default function CreateApoliceModal({ open, setOpen, segurados }: any) {
                                     <SelectValue placeholder="Selecione" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="Auto">Auto</SelectItem>
-                                    <SelectItem value="Vida">Vida</SelectItem>
-                                    <SelectItem value="Residencial">Residencial</SelectItem>
+                                    
                                 </SelectContent>
                             </Select>
                         </div>
