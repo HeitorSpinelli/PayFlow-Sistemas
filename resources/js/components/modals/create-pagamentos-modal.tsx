@@ -15,11 +15,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useForm } from '@inertiajs/react';
 import { Search, Check } from 'lucide-react';
-import { useState } from 'react';
 
-export default function CreatePagamentoModal({ open, setOpen, clientes, apolices }: any) {
+export default function CreatePagamentoModal({ open, setOpen, segurados, apolices }: any) {
     const { data, setData, post, reset } = useForm({
-        cliente_id: "",
+        segurado_id: "",
         apolice_id: "",
         parcela: "",
         valor: "",
@@ -29,26 +28,19 @@ export default function CreatePagamentoModal({ open, setOpen, clientes, apolices
         observacoes: "",
     });
 
-    const [mostrarLista, setMostrarLista] = useState(false);
-
-    const resultados = segurados.filter((segurado: any) =>
-    segurado.cpf_cnpj.includes(apenasNumeros(busca)) ||
-    segurado.nome_completo.toLowerCase().includes(busca.toLowerCase())
-);
-    
     const apenasNumeros = (str: string) => str.replace(/\D/g, '');
 
-    const buscarCliente = (valor: string) => {
+    const buscarSegurado = (valor: string) => {
         const numeros = apenasNumeros(valor);
         if (numeros.length !== 11 && numeros.length !== 14) {
-            setData('cliente_id', '');
+            setData('segurado_id', '');
             return;
         }
-        const encontrado = clientes?.find((c: any) =>
-            apenasNumeros(c.cpf ?? '') === numeros ||
-            apenasNumeros(c.cnpj ?? '') === numeros
+        const encontrado = segurados?.find((s: any) =>
+            apenasNumeros(s.cpf ?? '') === numeros ||
+            apenasNumeros(s.cnpj ?? '') === numeros
         );
-        setData('cliente_id', encontrado?.id ?? '');
+        setData('segurado_id', encontrado ? String(encontrado.id) : '');
     };
 
     const handleSubmit = () => {
@@ -77,17 +69,17 @@ export default function CreatePagamentoModal({ open, setOpen, clientes, apolices
                 <div className="flex flex-col gap-4 py-2">
 
                     <div className="flex flex-col gap-1">
-                        <p className="text-sm font-medium">Cliente *</p>
+                        <p className="text-sm font-medium">Segurado *</p>
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                             <Input
-                                placeholder="Digite o CPF ou CNPJ"
+                                placeholder="Digite o CPF ou CNPJ do segurado"
                                 className="pl-9"
-                                onChange={(e) => buscarCliente(e.target.value)}
+                                onChange={(e) => buscarSegurado(e.target.value)}
                             />
                         </div>
-                        {data.cliente_id
-                            ? <p className="text-sm text-green-600">✓ {clientes?.find((c: any) => c.id === data.cliente_id)?.nome}</p>
+                        {data.segurado_id
+                            ? <p className="text-sm text-green-600">✓ {segurados?.find((s: any) => String(s.id) === data.segurado_id)?.nome}</p>
                             : null
                         }
                     </div>
@@ -147,23 +139,6 @@ export default function CreatePagamentoModal({ open, setOpen, clientes, apolices
                                 >
                                     {data.forma_pagamento === forma.toLowerCase() && <Check className="size-3.5" />}
                                     {forma}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                        <p className="text-sm font-medium">Status *</p>
-                        <div className="flex gap-2">
-                            {['Confirmado', 'Pendente'].map((status) => (
-                                <button
-                                    key={status}
-                                    type="button"
-                                    onClick={() => setData('status', status.toLowerCase())}
-                                    className={data.status === status.toLowerCase() ? btnAtivo : btnInativo}
-                                >
-                                    {data.status === status.toLowerCase() && <Check className="size-3.5" />}
-                                    {status}
                                 </button>
                             ))}
                         </div>
