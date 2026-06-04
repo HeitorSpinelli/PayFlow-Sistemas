@@ -6,7 +6,7 @@ import { UserRound } from 'lucide-react';
 import CreateApoliceModal from "@/components/modals/create-apolice-modal";
 import { Button } from "@/components/ui/button";
 
-export default function Apolices({ segurados, total }: any) {
+export default function Apolices({ segurados, seguradoras, total, ramos, apolices }: any) {
     const [openModal, setOpenModal] = useState(false);
 
     return (
@@ -95,8 +95,8 @@ export default function Apolices({ segurados, total }: any) {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-sidebar-border bg-muted/30 text-muted-foreground font-medium">
-                                    <th className="h-12 px-4 text-left">Apólice</th>
                                     <th className="h-12 px-4 text-left">Cliente</th>
+                                    <th className="h-12 px-4 text-left">Apólice</th>
                                     <th className="h-12 px-4 text-left">Tipo/Seguradora</th>
                                     <th className="h-12 px-4 text-left">Valor</th>
                                     <th className="h-12 px-4 text-left">Parcelas</th>
@@ -105,13 +105,25 @@ export default function Apolices({ segurados, total }: any) {
                                 </tr>
                             </thead>
                             <tbody>
-                                
+                                {apolices.map((apolice: any) => (
+                                    <tr key={apolice.id} className="border-b border-sidebar-border hover:bg-muted/50 transition-colors">
+                                        <td className="h-12 px-4">{apolice.segurado_nome}</td>
+                                        <td className="h-12 px-4">{apolice.numero_apolice}</td>
+                                        <td className="h-12 px-4">{apolice.ramo_nome} / {apolice.seguradora_nome}</td>
+                                        <td className="h-12 px-4">R$ {apolice.valor_total}</td>
+                                        <td className="h-12 px-4">{apolice.parcelas}</td>
+                                        <td className="h-12 px-4">{apolice.vigencia_inicio} a {apolice.vigencia_fim}</td>
+                                        <td className={`h-12 px-4 font-medium ${apolice.status === 'Ativa' ? 'text-green-500' : 'text-red-500'}`}>
+                                            {apolice.status}
+                                        </td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
-            <CreateApoliceModal open={openModal}  setOpen={setOpenModal} segurados={segurados}/>
+            <CreateApoliceModal open={openModal}  setOpen={setOpenModal} segurados={segurados} seguradoras={seguradoras} ramos={ramos} apolices={apolices} />
         </>
     );
 }

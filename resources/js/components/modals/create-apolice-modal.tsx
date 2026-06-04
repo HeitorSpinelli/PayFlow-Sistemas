@@ -14,10 +14,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formataCpfCnpj } from "@/utils/cpfMask";
+import { ToastContainer, toast } from 'react-toastify';
 import { useState } from 'react';
 import { useForm } from '@inertiajs/react';
 
-export default function CreateApoliceModal({ open, setOpen, segurados, seguradoras }: any) {
+export default function CreateApoliceModal({ open, setOpen, segurados, ramos, seguradoras }: any) {
 
     // Estados
     const [busca, setBusca] = useState('');
@@ -76,7 +77,13 @@ export default function CreateApoliceModal({ open, setOpen, segurados, segurador
     // Envia o formulário
     const salvarApolice = () => {
         post('/apolices', {
-            onSuccess: () => setOpen(false),
+            onSuccess: () => {
+                toast.success('Apólice cadastrada com sucesso!');
+                setOpen(false);
+            },
+            onError: () => {
+                toast.error('Erro ao cadastrar apólice. Verifique os dados e tente novamente.');
+            }
         });
     };
 
@@ -169,8 +176,11 @@ export default function CreateApoliceModal({ open, setOpen, segurados, segurador
                                     <SelectValue placeholder="Selecione" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {/*Percorrendo seguradoras que foi passado como propriedade*/}
-                                    
+                                    {seguradoras.map((seguradora: any) => (
+                                        <SelectItem key={seguradora.id} value={String(seguradora.id)}>
+                                            {seguradora.nome_fantasia}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -183,7 +193,11 @@ export default function CreateApoliceModal({ open, setOpen, segurados, segurador
                                     <SelectValue placeholder="Selecione" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    
+                                    {ramos.map((ramo:any) => (
+                                        <SelectItem key={ramo.id} value={String(ramo.id)}>
+                                            {ramo.nome_ramo}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>

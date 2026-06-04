@@ -53,14 +53,15 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
         buscarEstados();
     }, [])
 
-    const bntSalvar = () => {
+    const salvarClientes = () => {
         post('/clientes', {
             onSuccess: () => {
                 //1. Mostrar notificação de sucesso
                 toast.success("Segurado Salvo com Sucesso!");
                 //2. fechar o modal
                 setOpen(false);
-            }, onError: () => {
+            }, 
+            onError: () => {
                 //Se tiver um erro ou campo faltando
                 toast.error("Falha ao Salvar, Verifique os campos")
             }
@@ -276,7 +277,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                 {/* Botões */}
                 <div className="flex justify-end gap-2 mt-4">
                     <Button
-                        onClick={bntSalvar}
+                        onClick={salvarClientes}
                         disabled={processing}
                         className="h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98]"
                     >

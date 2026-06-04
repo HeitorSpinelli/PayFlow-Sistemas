@@ -34,10 +34,16 @@ class ApolicesController extends Controller
     public function index(){
     $segurados = $this->apoliceService->buscar();
     $total = $this->apoliceService->count();
+    $seguradoras = $this->apoliceService->buscarSeguradoras();
+    $ramos = $this->apoliceService->buscarRamos();
+    $apolices = $this->apoliceService->buscarApolices();
 
     return inertia('FunctionsApp/apolices', [
         'segurados' => $segurados,
         'total' => $total,
+        'seguradoras' => $seguradoras,
+        'ramos' => $ramos,
+        'apolices' => $apolices,
     ]);
 }
 }

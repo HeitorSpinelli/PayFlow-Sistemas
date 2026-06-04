@@ -22,6 +22,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //Rota para salvar clientes via post chamando a classe SeguradoController e a função store
     Route::post('/clientes', [SeguradoController::class, 'store']);
 
+    //Rota para exibir a página de apolices, chamando a classe ApolicesController e a função index
     Route::get('/apolices', [ApolicesController::class, 'index'])->name('apolices');
 
     //Rota para salvar apolices via post, chamando a classe ApolicesController e a função store
