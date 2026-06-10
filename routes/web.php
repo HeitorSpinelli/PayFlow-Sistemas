@@ -52,6 +52,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return inertia('FunctionsApp/configuracoes');
     })->name('configuracoes');
 
+
 });
 
 require __DIR__.'/settings.php';
