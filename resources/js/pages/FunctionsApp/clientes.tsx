@@ -5,11 +5,20 @@ import Profile from "../settings/profile";
 import { UserRound } from 'lucide-react';
 import CreateSeguradoModal from '@/components/modals/create-segurado-modal'
 import { Button } from "@/components/ui/button";
+import seguradoProfile from "@/components/modals/create-profile-modal";
+import SeguradoProfileModal from "@/components/modals/create-profile-modal";
 
 //Recebe os segurados e o total de clientes como props e declarando seu tipo
 export default function Clientes({segurados, total}: {segurados: any[], total: number}): any {
-    // Modal do form para abrir o form de cadastro de segurados
-    const [openModal, setOpenModal] = useState(false);
+
+    const [openModal, setOpenModal] = useState(false);          // modal de criar
+    const [openProfile, setOpenProfile] = useState(false);      // modal de perfil
+    const [seguradoSelecionado, setSeguradoSelecionado] = useState<any>(null);
+
+    const abrirPerfil = (segurado: any) => {
+        setSeguradoSelecionado(segurado);
+        setOpenProfile(true);
+    };
 
     return (
         <>
@@ -121,7 +130,16 @@ export default function Clientes({segurados, total}: {segurados: any[], total: n
                                                 {segurado.status}
                                             </span>
                                         </td>
-                                        <td className="h-12 px-4"></td>
+                                        <td className="h-12 px-4">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="rounded-lg"
+                                                onClick={() => abrirPerfil(segurado)}  // ← abre o perfil, não o de criar
+                                            >
+                                                <MoreHorizontal className="size-4" />
+                                            </Button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -146,7 +164,15 @@ export default function Clientes({segurados, total}: {segurados: any[], total: n
                     </div>
                 </div>
             </div>
-            <CreateSeguradoModal open={openModal} setOpen={setOpenModal} />
+            {/* Modal de criar cliente */}
+        <CreateSeguradoModal open={openModal} setOpen={setOpenModal} />
+
+        {/* Modal de perfil do cliente */}
+        <SeguradoProfileModal
+            open={openProfile}
+            setOpen={setOpenProfile}
+            segurado={seguradoSelecionado}
+        />
         </>
     );
 }

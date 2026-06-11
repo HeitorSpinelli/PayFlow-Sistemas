@@ -5,8 +5,9 @@ import Profile from "../settings/profile";
 import { UserRound } from 'lucide-react';
 import CreateApoliceModal from "@/components/modals/create-apolice-modal";
 import { Button } from "@/components/ui/button";
+import seguradoProfile from "@/components/modals/create-profile-modal";
 
-export default function Apolices({ segurados, seguradoras, total, ramos, apolices }: any) {
+export default function Apolices({ segurados, seguradoras, total, ramos, apolices}: any) {
     const [openModal, setOpenModal] = useState(false);
 
     return (
@@ -107,12 +108,12 @@ export default function Apolices({ segurados, seguradoras, total, ramos, apolice
                             <tbody>
                                 {apolices.map((apolice: any) => (
                                     <tr key={apolice.id} className="border-b border-sidebar-border hover:bg-muted/50 transition-colors">
-                                        <td className="h-12 px-4">{apolice.segurado_nome}</td>
+                                        <td className="h-12 px-4">{apolice.nome_completo}</td>
                                         <td className="h-12 px-4">{apolice.numero_apolice}</td>
-                                        <td className="h-12 px-4">{apolice.ramo_nome} / {apolice.seguradora_nome}</td>
-                                        <td className="h-12 px-4">R$ {apolice.valor_total}</td>
-                                        <td className="h-12 px-4">{apolice.parcelas}</td>
-                                        <td className="h-12 px-4">{apolice.vigencia_inicio} a {apolice.vigencia_fim}</td>
+                                        <td className="h-12 px-4">{apolice.nome_ramo} / {apolice.nome_fantasia}</td>
+                                        <td className="h-12 px-4">R$ {apolice.valor_premio_total}</td>
+                                        <td className="h-12 px-4">{apolice.quantidade_parcelas}</td>
+                                        <td className="h-12 px-4">{apolice.inicio_vigencia} a {apolice.fim_vigencia}</td>
                                         <td className={`h-12 px-4 font-medium ${apolice.status === 'Ativa' ? 'text-green-500' : 'text-red-500'}`}>
                                             {apolice.status}
                                         </td>
@@ -123,7 +124,7 @@ export default function Apolices({ segurados, seguradoras, total, ramos, apolice
                     </div>
                 </div>
             </div>
-            <CreateApoliceModal open={openModal}  setOpen={setOpenModal} segurados={segurados} seguradoras={seguradoras} ramos={ramos} apolices={apolices} />
+            <CreateApoliceModal open={openModal}  setOpen={setOpenModal} segurados={segurados} seguradoras={seguradoras} ramos={ramos} apolices={apolices} Profile={seguradoProfile} />
         </>
     );
 }
