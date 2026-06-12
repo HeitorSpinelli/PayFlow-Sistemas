@@ -151,7 +151,7 @@ return [
     'string'                 => 'O campo :attribute deve conter texto.',
     'timezone'               => 'O campo :attribute deve ter um fuso horário válido.',
     'ulid'                   => 'O :attribute deve ser um ULID válido.',
-    'unique'                 => 'O e-mail inserido no campo já se encontra registrado.',
+    'unique'                 => 'Este e-mail já se encontra registrado.',
     'uploaded'               => 'Falha no upload do arquivo :attribute.',
     'uppercase'              => 'O campo :attribute deve estar em maiúsculas.',
     'url'                    => 'O formato de URL indicado para o campo :attribute é inválido.',
