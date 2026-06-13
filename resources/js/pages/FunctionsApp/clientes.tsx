@@ -1,15 +1,14 @@
 import { useState } from "react";
 import { Head } from "@inertiajs/react";
 import { Plus, ScrollText, Search, MoreHorizontal, Download, Filter, Check, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
-import Profile from "../settings/profile";
 import { UserRound } from 'lucide-react';
+import { X } from "lucide-react";
 import CreateSeguradoModal from '@/components/modals/create-segurado-modal'
 import { Button } from "@/components/ui/button";
-import seguradoProfile from "@/components/modals/create-profile-modal";
 import SeguradoProfileModal from "@/components/modals/create-profile-modal";
 
 //Recebe os segurados e o total de clientes como props e declarando seu tipo
-export default function Clientes({segurados, total}: {segurados: any[], total: number}): any {
+export default function Clientes({segurados, total, seguradosinativos}: {segurados: any[], total: number, seguradosinativos: any[]}): any {
 
     const [openModal, setOpenModal] = useState(false);          // modal de criar
     const [openProfile, setOpenProfile] = useState(false);      // modal de perfil
@@ -52,7 +51,7 @@ export default function Clientes({segurados, total}: {segurados: any[], total: n
                     <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 p-6 bg-card shadow-sm">
                         <div className="flex flex-col gap-1">
                             <h2 className="text-sm font-medium text-muted-foreground">Clientes Ativos</h2>
-                            <p className="text-3xl font-bold tracking-tight text-green-500">2</p>
+                            <p className="text-3xl font-bold tracking-tight text-green-500">{segurados.filter((s) => s.status === 'Ativo').length}</p>
                         </div>
                         <ScrollText className="size-10 text-muted-foreground/50" />
                     </div>
@@ -60,7 +59,7 @@ export default function Clientes({segurados, total}: {segurados: any[], total: n
                     <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 p-6 bg-card shadow-sm">
                         <div className="flex flex-col gap-1">
                             <h2 className="text-sm font-medium text-muted-foreground">Inativos</h2>
-                            <p className="text-3xl font-bold tracking-tight text-red-500">0</p>
+                            <p className="text-3xl font-bold tracking-tight text-red-500">{seguradosinativos.length}</p>
                         </div>
                         <ScrollText className="size-10 text-muted-foreground/50" />
                     </div>
@@ -119,14 +118,11 @@ export default function Clientes({segurados, total}: {segurados: any[], total: n
                                     <tr key={segurado.id} className="border-b border-sidebar-border hover:bg-muted/30 transition-colors">
                                         <td className="h-12 px-4">{segurado.nome_completo}</td>
                                         <td className="h-12 px-4">{segurado.cpf_cnpj}</td>
-                                        <td className="h-12 px-4">{segurado.celular_whatsapp}</td>
+                                        <td className="h-12 px-4">{segurado.telefone_fixo}</td>
                                         <td className="h-12 px-4">{segurado.cidade} - {segurado.estado}</td>
                                         <td className="h-12 px-4">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                segurado.status === 'Ativo' 
-                                                ? 'bg-green-500/10 text-green-500' 
-                                                : 'bg-red-500/10 text-red-500'
-                                            }`}>
+                                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${segurado.status === 'Ativo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                {segurado.status === 'Ativo' ? <Check className="size-3" /> : <X className="size-3" />}
                                                 {segurado.status}
                                             </span>
                                         </td>
@@ -165,14 +161,14 @@ export default function Clientes({segurados, total}: {segurados: any[], total: n
                 </div>
             </div>
             {/* Modal de criar cliente */}
-        <CreateSeguradoModal open={openModal} setOpen={setOpenModal} />
-
-        {/* Modal de perfil do cliente */}
-        <SeguradoProfileModal
-            open={openProfile}
-            setOpen={setOpenProfile}
-            segurado={seguradoSelecionado}
-        />
+            <CreateSeguradoModal open={openModal} setOpen={setOpenModal} />
+            {seguradoSelecionado && (
+                <SeguradoProfileModal
+                    open={openProfile}
+                    setOpen={setOpenProfile}
+                    segurado={seguradoSelecionado}
+                />
+            )}
         </>
-    );
+    )
 }

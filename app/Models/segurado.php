@@ -3,9 +3,17 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Apolice;
 
 class Segurado extends Model
 {
+    public function apolices(){
+        return $this->hasMany(apolices::class, 'cliente_id');
+    }
+
+    public function status(){
+        return $this->apolices()->exists() ? 'Ativo' : 'Inativo';
+    }
     
     protected $fillable = [              
         'nome_completo',
@@ -19,7 +27,6 @@ class Segurado extends Model
         'cidade',
         'estado',
         'cep',
-        'status',
         'observacoes'
     ];
 }

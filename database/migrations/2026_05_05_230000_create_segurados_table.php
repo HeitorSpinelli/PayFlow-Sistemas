@@ -22,7 +22,6 @@ return new class extends Migration
             $table->string('cidade', 100)->nullable();
             $table->char('estado', 2)->nullable();
             $table->string('cep', 15)->nullable();
-            $table->string('status', 50)->default('Ativo'); // 'Ativo', 'Inativo', 'Pendente'
             $table->text('observacoes')->nullable();
             $table->timestamps();
         });

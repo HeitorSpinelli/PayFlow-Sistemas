@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import { useForm, router } from '@inertiajs/react';
+import { toast } from 'sonner';
 
 // ─────────────────────────────────────────────────────────────
 // Define os 3 estados possíveis do modal
@@ -52,15 +53,17 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
     // PUT /clientes/{id} — atualiza o segurado no banco
     // Se der certo (onSuccess), fecha o modal
     const salvarEdicao = () => {
+        if (!segurado) return;
         put(`/clientes/${segurado.id}`, {
-            onSuccess: () => fechar(),
+            onSuccess: () => {
+                toast.success('Cliente atualizado com sucesso!');
+                fechar();
+            },
         });
     };
 
-    // Envia a requisição de exclusão para o Laravel via DELETE
-    // DELETE /clientes/{id} — remove o segurado do banco
-    // Se der certo (onSuccess), fecha o modal
     const confirmarExclusao = () => {
+        if (!segurado) return; // ← proteção
         router.delete(`/clientes/${segurado.id}`, {
             onSuccess: () => fechar(),
         });
@@ -80,7 +83,7 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                         {/* Avatar com a primeira letra do nome */}
                         <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
                             <span className="text-emerald-500 font-bold text-lg">
-                                {segurado.nome_completo.charAt(0).toUpperCase()}
+                                {segurado.nome_completo.charAt(0.0).toUpperCase()}
                             </span>
                         </div>
 
