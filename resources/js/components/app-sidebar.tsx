@@ -69,12 +69,7 @@ const mainNavItems: NavItem[] = [
         title: 'Notificações',
         href: '/notificacoes',
         icon: MessageSquare, // Ícone 8 (Balão de chat)
-    },
-    {
-        title: 'Configurações',
-        href: '/configuracoes',
-        icon: Settings, // Ícone 9 (Engrenagem)
-    },
+    }
 ];
 
 const footerNavItems: NavItem[] = [
