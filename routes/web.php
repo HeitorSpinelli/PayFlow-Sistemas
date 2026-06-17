@@ -53,9 +53,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return inertia('FunctionsApp/notificacoes');
     })->name('notificacoes');
 
-    Route::get('/configuracoes', function () {
-        return inertia('FunctionsApp/configuracoes');
-    })->name('configuracoes');
+    Route::get('/seguradoras', function () {
+        return inertia('FunctionsApp/seguradoras');
+    })->name('seguradoras');
 
 
 });

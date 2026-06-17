@@ -65,7 +65,9 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
     const confirmarExclusao = () => {
         if (!segurado) return; // ← proteção
         router.delete(`/clientes/${segurado.id}`, {
-            onSuccess: () => fechar(),
+            onSuccess: () => toast.success('Cliente excluído com sucesso!'),
+            onError: () => toast.error('Erro ao excluir cliente. Tente novamente.'),
+            onFinish: () => fechar(), // Fecha o modal mesmo se der erro, para evitar confusão
         });
     };
 

@@ -10,7 +10,8 @@ import {
     MessageSquare, 
     Settings,
     BookOpen,
-    FolderGit2
+    FolderGit2,
+    Building
 } from 'lucide-react'; 
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -69,6 +70,11 @@ const mainNavItems: NavItem[] = [
         title: 'Notificações',
         href: '/notificacoes',
         icon: MessageSquare, // Ícone 8 (Balão de chat)
+    },
+    {
+        title: 'Seguradoras e Ramos',
+        href: '/seguradoras',
+        icon: Building, // Ícone 9 (Prédio)
     }
 ];
 
