@@ -14,7 +14,8 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
 
     return (
         <SidebarGroup className="px-2 py-7">
-            <SidebarGroupLabel>Platform</SidebarGroupLabel>
+            {}
+            <SidebarGroupLabel className="text-zinc-500 dark:text-zinc-400">Platform</SidebarGroupLabel>
             <SidebarMenu>
                 {items.map((item) => (
                     <SidebarMenuItem key={item.title}>
@@ -22,12 +23,12 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                             asChild
                             isActive={isCurrentUrl(item.href)}
                             tooltip={{ children: item.title }}
-                            className="py-5 text-zinc-100 transition-colors hover:bg-[#00A460] hover:text-white" // Aumenta um pouco a altura da linha para caber o ícone maior
+                            className="py-5 text-zinc-800 dark:text-zinc-100 transition-colors hover:bg-[#00A460] hover:text-white dark:hover:text-white"
                         >
                             <Link href={item.href} prefetch className="flex items-center gap-3">
                                 {item.icon && (
                                     <item.icon 
-                                        className="!size-5 shrink-0 " // O "!" garante que o tamanho seja aplicado
+                                        className="!size-5 shrink-0" // O "!" garante que o tamanho seja aplicado
                                     />
                                 )}
                                 <span className="text-base">{item.title}</span> 

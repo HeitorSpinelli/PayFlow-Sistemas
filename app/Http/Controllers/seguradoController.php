@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreSeguradoRequest;
+use App\Http\Requests\UpdateSeguradoRequest;
 use App\Models\Segurado;
 use App\Services\SeguradoService;
+
 
 class SeguradoController extends Controller
 {
@@ -27,13 +29,32 @@ class SeguradoController extends Controller
 
     public function show()
     {
-        $segurados = Segurado::all();
+        $segurados = Segurado::with('apolices')->get();
         $total = Segurado::count();
+        $seguradosinativos = Segurado::whereDoesntHave('apolices')->get();
         
         return inertia('FunctionsApp/clientes', [
             'segurados' => $segurados,
             'total' => $total,
+            'seguradosinativos' => $seguradosinativos,
         ]);
     }
 
+    public function destroy(int $id){
+        try {
+            $this->seguradoService->destroy($id);
+            return redirect()->back()->with('success', 'Segurado excluído com sucesso!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erro ao excluir segurado: ' . $e->getMessage());
+        }
+    }
+    public function update(UpdateSeguradoRequest $request, int $id){
+        try {
+            $data = $request->validated();
+            $this->seguradoService->update($id, $data);
+            return redirect()->back()->with('success', 'Segurado atualizado com sucesso!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erro ao atualizar segurado: ' . $e->getMessage());
+        }
+    }
 }

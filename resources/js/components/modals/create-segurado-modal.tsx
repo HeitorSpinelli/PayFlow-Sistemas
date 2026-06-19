@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useEffect, useState } from 'react';
 import { useForm } from '@inertiajs/react';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'sonner';
 import 'react-toastify/dist/ReactToastify.css';
 
 export default function CreateSeguradoModal({ open, setOpen }: any) {
@@ -285,7 +285,6 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                     </Button>
                 </div>         
             </DialogContent>
-            <ToastContainer />
         </Dialog>
     )
 }

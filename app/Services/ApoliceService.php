@@ -43,13 +43,32 @@ class ApoliceService{
         }
     }
 
-    public function buscarApolices(){
-        try{
-            return Apolices::all();
-        }catch(\Exception $e){
+    public function buscarApolices()
+    {
+    try {
+        return Apolices::select(
+                'apolices.id',
+                'apolices.numero_apolice',
+                'apolices.valor_premio_total',
+                'apolices.quantidade_parcelas',
+                'apolices.inicio_vigencia',
+                'apolices.fim_vigencia',
+                'apolices.status',
+                // Puxa o nome do cliente, ramo e seguradora diretamente
+                'segurados.nome_completo',
+                'ramos.nome_ramo',
+                'seguradoras.nome_fantasia'
+            )
+            //Usa join para buscar dados de outras tabelas e juntar em um só resultado
+            ->join('segurados',   'apolices.cliente_id',    '=', 'segurados.id')
+            ->join('ramos',       'apolices.ramo_id',       '=', 'ramos.id')
+            ->join('seguradoras', 'apolices.seguradora_id', '=', 'seguradoras.id')
+            ->get();
+
+        } catch (\Exception $e) {
             throw new \Exception('Erro ao buscar apólices: ' . $e->getMessage());
         }
-    }
+    }   
 
     //Função para contar o total de apolices cadastradas no banco
     public function count(){

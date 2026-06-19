@@ -20,4 +20,34 @@ class SeguradoService
     {
         return Segurado::count();
     }
+
+    public function destroy(int $id)
+    {
+        try {
+            $segurado = Segurado::findOrFail($id);
+            $segurado->delete();
+        } 
+        catch (\Exception $e) {
+            throw new \Exception('Erro ao excluir segurado: ' . $e->getMessage());
+        }
+    }
+
+    public function update(int $id, array $data)
+    {
+        try {
+            $segurado = Segurado::findOrFail($id);
+            $segurado->update($data);
+        } 
+        catch (\Exception $e) {
+            throw new \Exception('Erro ao atualizar segurado: ' . $e->getMessage());
+        }
+    }
+
+    public function activeInative(int $id)
+    {
+        if ($id) {
+            $segurado = Segurado::findOrFail($id);
+            $segurado->ativo = !$segurado->ativo;
+        }
+    }
 }

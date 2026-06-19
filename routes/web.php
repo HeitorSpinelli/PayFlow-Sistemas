@@ -22,6 +22,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //Rota para salvar clientes via post chamando a classe SeguradoController e a função store
     Route::post('/clientes', [SeguradoController::class, 'store']);
 
+    //Rotas para apagar e atualizar clientes
+
+    Route::delete('/clientes/{id}', [SeguradoController::class, 'destroy'])->name('clientes.destroy');
+    Route::put('/clientes/{id}', [SeguradoController::class, 'update'])->name('clientes.update');
+
     //Rota para exibir a página de apolices, chamando a classe ApolicesController e a função index
     Route::get('/apolices', [ApolicesController::class, 'index'])->name('apolices');
 
@@ -48,9 +53,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return inertia('FunctionsApp/notificacoes');
     })->name('notificacoes');
 
-    Route::get('/configuracoes', function () {
-        return inertia('FunctionsApp/configuracoes');
-    })->name('configuracoes');
+    Route::get('/seguradoras', function () {
+        return inertia('FunctionsApp/seguradoras');
+    })->name('seguradoras');
+
 
 });
 
