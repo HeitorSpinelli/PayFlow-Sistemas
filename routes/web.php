@@ -60,6 +60,10 @@ Route::middleware('auth', 'can:is-admin')->group(function(){
     Route::get('/notificacoes', function () {
         return inertia('FunctionsApp/notificacoes');
     })->name('notificacoes');
+
+    Route::get('/administracao', function () {
+        return inertia('FunctionsApp/administracao');
+    })->name('administracao');
 });
 
 require __DIR__.'/settings.php';

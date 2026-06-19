@@ -75,6 +75,12 @@ const mainNavItems: NavItem[] = [
         href: '/seguradoras',
         adminOnly: true, // Somente visível para admins
         icon: Building, // Ícone 9 (Prédio)
+    },
+    {
+        title: 'Administração',
+        href: '/administracao',
+        adminOnly: true, // Somente visível para admins
+        icon: Users, // Reutilizando o ícone de Pessoas para Administração
     }
 ];
 const footerNavItems: NavItem[] = [
