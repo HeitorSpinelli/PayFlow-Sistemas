@@ -49,15 +49,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return inertia('FunctionsApp/importar');
     })->name('importar');
 
-    Route::get('/notificacoes', function () {
-        return inertia('FunctionsApp/notificacoes');
-    })->name('notificacoes');
+});
 
+//Rotas de funções exclusivas para admins, utilizadno middlware para verificar se é admin pelo appserviceprovider
+Route::middleware('auth', 'can:is-admin')->group(function(){
     Route::get('/seguradoras', function () {
         return inertia('FunctionsApp/seguradoras');
     })->name('seguradoras');
 
-
+    Route::get('/notificacoes', function () {
+        return inertia('FunctionsApp/notificacoes');
+    })->name('notificacoes');
 });
 
 require __DIR__.'/settings.php';

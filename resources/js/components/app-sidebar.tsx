@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import { 
     LayoutGrid, 
     Users, 
@@ -8,9 +9,6 @@ import {
     Calendar, 
     UploadCloud, 
     MessageSquare, 
-    Settings,
-    BookOpen,
-    FolderGit2,
     Building
 } from 'lucide-react'; 
 import AppLogo from '@/components/app-logo';
@@ -69,20 +67,33 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Notificações',
         href: '/notificacoes',
+        adminOnly: true, // Somente visível para admins
         icon: MessageSquare, // Ícone 8 (Balão de chat)
     },
     {
         title: 'Seguradoras e Ramos',
         href: '/seguradoras',
+        adminOnly: true, // Somente visível para admins
         icon: Building, // Ícone 9 (Prédio)
     }
 ];
-
 const footerNavItems: NavItem[] = [
     
 ];
 
 export function AppSidebar() {
+
+    const {auth} = usePage().props as any;
+    const user = auth.user;
+
+    // Filtra os itens de navegação com base na função do usuário
+    const filteredMainNavItems = mainNavItems.filter(item => {
+        if (item.adminOnly && user.role !== 'admin') {
+            return false; // Se o item é apenas para admins e o usuário não é admin, não exibe
+        }
+        return true; // Caso contrário, exibe o item
+    });
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -99,7 +110,7 @@ export function AppSidebar() {
 
             <SidebarContent className="[&_svg]:size-6">
                 {/* Basta chamar o NavMain uma vez, ele vai ler toda a lista mainNavItems */}
-                <NavMain items={mainNavItems} />
+                <NavMain items={filteredMainNavItems} />
             </SidebarContent>
 
             <SidebarFooter>
