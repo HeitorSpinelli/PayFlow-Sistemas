@@ -57,12 +57,12 @@ export default function Notificacoes({ notificacoes }: any) {
                     </div>
                 </div>
 
-                /* Cards*/
+                {/* Cards*/}
                 <div className="flex gap-4 justify-center">
                     <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 p-6 bg-card shadow-sm">
                         <div className="flex flex-col gap-1">
                             <h2 className="text-sm font-medium text-muted-foreground">Total Hoje</h2>
-                            <p className="text-3xl font-bold tracking-tight">5</p>
+                            <p className="text-3xl font-bold tracking-tight">10</p>
                         </div>
                         <Bell className="size-10 text-muted-foreground/50" />
                     </div>
@@ -70,7 +70,7 @@ export default function Notificacoes({ notificacoes }: any) {
                     <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 p-6 bg-card shadow-sm">
                         <div className="flex flex-col gap-1">
                             <h2 className="text-sm font-medium text-muted-foreground">Enviados</h2>
-                            <p className="text-3xl font-bold tracking-tight text-green-500">3</p>
+                            <p className="text-3xl font-bold tracking-tight text-green-500">20</p>
                         </div>
                         <CircleCheck className="size-10 text-muted-foreground/50" />
                     </div>
@@ -78,7 +78,7 @@ export default function Notificacoes({ notificacoes }: any) {
                     <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 p-6 bg-card shadow-sm">
                         <div className="flex flex-col gap-1">
                             <h2 className="text-sm font-medium text-muted-foreground">Pendentes</h2>
-                            <p className="text-3xl font-bold tracking-tight text-orange-500">1</p>
+                            <p className="text-3xl font-bold tracking-tight text-orange-500">30</p>
                         </div>
                         <Clock4 className="size-10 text-muted-foreground/50" />
                     </div>
@@ -86,13 +86,13 @@ export default function Notificacoes({ notificacoes }: any) {
                     <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 p-6 bg-card shadow-sm">
                         <div className="flex flex-col gap-1">
                             <h2 className="text-sm font-medium text-muted-foreground">Falhas</h2>
-                            <p className="text-3xl font-bold tracking-tight text-red-500">1</p>
+                            <p className="text-3xl font-bold tracking-tight text-red-500">7</p>
                         </div>
                         <CircleX className="size-10 text-muted-foreground/50" />
                     </div>
                 </div>
 
-                /* Abas do Histórico é Automações */
+                {/* Abas do Histórico é Automações */}
                 <div className="inline-flex w-fit rounded-md border border-sidebar-border bg-muted/30 p-1">
                     <button
                         onClick={() => setAbaSelecionada("historico")}
@@ -122,11 +122,11 @@ export default function Notificacoes({ notificacoes }: any) {
                         <div className="p-4 border-b border-sidebar-border flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div>
                                 <h3 className="text-lg font-semibold">Histórico de Notificações</h3>
-                                <p className="text-xs text-muted-foreground">5 notificação(ões) encontrada(s)</p>
+                                <p className="text-xs text-muted-foreground">10 notificação(ões) encontrada(s)</p>
                             </div>
 
                             <div className="flex items-center gap-2">
-                                /* Filtro*/
+                                {/* Filtro*/}
                                 <div className="relative">
                                     <button
                                         onClick={() => {
@@ -267,7 +267,7 @@ export default function Notificacoes({ notificacoes }: any) {
 
                 {abaSelecionada === "automacoes" && (
                     <div className="rounded-xl border border-sidebar-border bg-card shadow-sm p-6 text-sm text-muted-foreground">
-                        /* Mexer nisso aqui depois*/
+                        {/* Mexer nisso aqui depois*/}
                         Conteúdo de automações ainda não implementado.
                     </div>
                 )}
