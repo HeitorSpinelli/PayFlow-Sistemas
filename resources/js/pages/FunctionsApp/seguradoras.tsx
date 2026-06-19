@@ -1,4 +1,6 @@
+import CreateSeguradoraRamoModal from "@/components/modals/create-cadastro-seg_ramo";
 import { Head } from "@inertiajs/react";
+import { useState } from "react";
 
 export default function Seguradoras() {
 
@@ -7,9 +9,14 @@ export default function Seguradoras() {
         <>
             <Head title="Seguradoras e Ramos" />
 
-            <h1 className="text-2xl font-bold mb-4">Seguradoras e Ramos</h1>
-            <p className="text-white-600">Aqui você pode gerenciar as seguradoras e os ramos de seguro disponíveis no sistema.</p>
+            <div className="flex flex-col gap-6 p-6">
+                {/*Header da Página*/}
+                <div className="">
+                    
+                </div>
+            </div>
         </>
         
     );
+    <CreateSeguradoraRamoModal open={openModal} setOpen={setOpenModal} />
 }

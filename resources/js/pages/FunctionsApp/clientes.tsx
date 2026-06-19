@@ -110,7 +110,7 @@ export default function Clientes({segurados, total, seguradosinativos}: {segurad
                                     <th className="h-12 px-4 text-left">Telefone</th>
                                     <th className="h-12 px-4 text-left">Localização</th>
                                     <th className="h-12 px-4 text-left">Status</th>
-                                    <th className="h-12 px-4"></th>
+                                    <th className="h-12 px-4 text-left">Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
