@@ -8,12 +8,29 @@ use Illuminate\Http\Request;
 
 class SeguradorasService{
 
-    //Cria uma nova seguradora
-    public function createSeguradora(Request $request){
-        try {
-            Seguradora::create($request->all());
-        } catch (\Exception $e) {
-            throw new \Exception('Erro ao cadastrar seguradora: ' . $e->getMessage());
+    // SeguradorasService.php
+
+    public function createSeguradora(array $data): void
+    {
+        // 1. Separa os ramos do resto dos dados
+        // Usa o array_key_exists para verificar se veio ramos no formulário
+        $ramo = $data['ramos'] ?? [];
+
+        // 2. Remove os ramos do array antes de criar a seguradora
+        // A tabela seguradoras não tem coluna 'ramos', então não pode ir junto
+        unset($data['ramos']);
+
+        // 3. Cria a seguradora e guarda o objeto retornado
+        // O create() retorna o objeto com o id gerado pelo banco
+        $seguradora = Seguradora::create($data);
+
+        // 4. Para cada ramo da lista, cria um registro na tabela ramos
+        // Usa o id da seguradora recém criada como chave estrangeira
+        foreach ($ramo as $nomeRamo) {
+            Ramo::create([
+                'nome_ramo' => $nomeRamo,
+                'seguradora_id' => $seguradora->id
+            ]);
         }
     }
 

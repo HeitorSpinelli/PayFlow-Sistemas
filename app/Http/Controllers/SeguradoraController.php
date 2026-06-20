@@ -8,7 +8,7 @@ use App\Models\Seguradora;
 use App\Services\SeguradorasService;
 use Illuminate\Http\Request;
 
-class SeguradorasController extends Controller
+class SeguradoraController extends Controller
 {
 
     protected SeguradorasService $seguradorasService;
@@ -20,7 +20,7 @@ class SeguradorasController extends Controller
     public function store(StoreSeguradoraRequest $request)
     {
         try {
-            $this->seguradorasService->createSeguradora($request);
+            $this->seguradorasService->createSeguradora($request->validated());
             return redirect()->back()->with('success', 'Seguradora cadastrada com sucesso!');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Erro ao cadastrar seguradora: ' . $e->getMessage());

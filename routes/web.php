@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\SeguradoController;
 use App\Http\Controllers\ApolicesController;
-use App\Models\Client;
+use App\Http\Controllers\SeguradoraController;
 
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
@@ -56,6 +56,8 @@ Route::middleware('auth', 'can:is-admin')->group(function(){
     Route::get('/seguradoras', function () {
         return inertia('FunctionsApp/seguradoras');
     })->name('seguradoras');
+
+    Route::post('/seguradoras', [SeguradoraController::class, 'store']);
 
     Route::get('/notificacoes', function () {
         return inertia('FunctionsApp/notificacoes');

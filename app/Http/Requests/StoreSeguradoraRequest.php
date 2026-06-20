@@ -12,7 +12,7 @@ class StoreSeguradoraRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -23,11 +23,13 @@ class StoreSeguradoraRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nome_fantasia' => 'required|string',
-            'razao_social' => 'required|string',
-            'cnpj' => 'required|string|unique:seguradoras,cnpj',
-            'contato_nome' => 'required|string',
-            'email_suporte' => 'required|email',
+            'nome_fantasia' => 'required|string|max:255',
+            'razao_social'  => 'nullable|string|max:255',
+            'cnpj'          => 'required|string|max:20|unique:seguradoras,cnpj',
+            'contato_nome'  => 'nullable|string|max:255',
+            'email_suporte' => 'nullable|email|max:255',
+            'ramos'         => 'nullable|array',      // aceita array
+            'ramos.*'       => 'string|max:100',      // cada item do array é uma string
         ];
     }
 }

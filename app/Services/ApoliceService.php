@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Seguradora;
 use App\Models\Segurado;
-use App\Models\Ramos;
+use App\Models\Ramo;
 use App\Models\Apolices;
 
 class ApoliceService{
@@ -37,7 +37,7 @@ class ApoliceService{
 
     public function buscarRamos(){
         try{
-            return Ramos::select('id', 'nome_ramo')-> get();
+            return Ramo::select('id', 'nome_ramo')-> get();
         }catch(\Exception $e){
             throw new \Exception('Erro ao buscar ramos: ' . $e->getMessage());
         }
