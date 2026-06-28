@@ -29,6 +29,7 @@ class SeguradoController extends Controller
 
     public function show()
     {
+        // Cada segurado aqui dentro agora terá a propriedade 'status' anexada automaticamente
         $segurados = Segurado::with('apolices')->get();
         $total = Segurado::count();
         $seguradosinativos = Segurado::whereDoesntHave('apolices')->get();

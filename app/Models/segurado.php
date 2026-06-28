@@ -11,7 +11,12 @@ class Segurado extends Model
         return $this->hasMany(apolices::class, 'cliente_id');
     }
 
-    public function status(){
+    // Defina que o atributo customizado 'status' deve ser incluído na serialização do modelo
+    protected $appends = ['status'];
+
+    // Este é o Accessor (Padrão Laravel 9+)
+    public function getStatusAttribute(): string
+    {
         return $this->apolices()->exists() ? 'Ativo' : 'Inativo';
     }
     

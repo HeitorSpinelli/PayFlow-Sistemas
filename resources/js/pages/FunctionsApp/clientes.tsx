@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import CreateSeguradoModal from '@/components/modals/create-segurado-modal'
 import { Button } from "@/components/ui/button";
 import SeguradoProfileModal from "@/components/modals/create-profile-modal";
+import { apolices, pagamentos } from "@/routes";
 
 //Recebe os segurados e o total de clientes como props e declarando seu tipo
 export default function Clientes({segurados, total, seguradosinativos}: {segurados: any[], total: number, seguradosinativos: any[]}): any {
@@ -13,6 +14,19 @@ export default function Clientes({segurados, total, seguradosinativos}: {segurad
     const [openModal, setOpenModal] = useState(false);          // modal de criar
     const [openProfile, setOpenProfile] = useState(false);      // modal de perfil
     const [seguradoSelecionado, setSeguradoSelecionado] = useState<any>(null);
+    const [filtroAberto, setFiltroAberto] = useState(false);
+    const [filtroSelecionado, setFiltroSelecionado] = useState("Todos");
+    const opcoesFiltro = ["Todos", "Confirmados", "Pendentes"];
+
+    const [exportarAberto, setExportarAberto] = useState(false);
+
+    // Filtra a lista exibida com base no dropdown de status selecionado
+    const seguradosFiltrados = segurados?.filter((segurado: any) => {
+        if (filtroSelecionado === "Todos") return true;
+        if (filtroSelecionado === "Confirmados") return segurado.status === "confirmado";
+        if (filtroSelecionado === "Pendentes") return segurado.status === "pendente";
+        return true;
+    }) ?? [];
 
     const abrirPerfil = (segurado: any) => {
         setSeguradoSelecionado(segurado);
@@ -85,12 +99,44 @@ export default function Clientes({segurados, total, seguradosinativos}: {segurad
                                 />
                             </div>
                             
+                            {/* Dropdown de filtro por status */}
                             <div className="relative">
-                                <button className="inline-flex h-9 items-center justify-center rounded-md border border-sidebar-border bg-background px-3 text-sm font-medium gap-2 hover:bg-muted transition-colors min-w-[110px]">
+                                <button
+                                    onClick={() => {
+                                        setFiltroAberto(!filtroAberto);
+                                        // Fecha o dropdown de exportar ao abrir o de filtro
+                                        setExportarAberto(false);
+                                    }}
+                                    className="inline-flex h-9 items-center justify-center rounded-md border border-sidebar-border bg-background px-3 text-sm font-medium gap-2 hover:bg-muted transition-colors min-w-[110px]"
+                                >
                                     <Filter className="size-4 text-muted-foreground" />
-                                    <span>Filtro</span>
-                                    <ChevronDown className="size-4 text-muted-foreground" />
+                                    {filtroSelecionado}
+                                    <ChevronDown className={`size-4 text-muted-foreground transition-transform ${filtroAberto ? 'rotate-180' : ''}`} />
                                 </button>
+
+                                {filtroAberto && (
+                                    <div className="absolute right-0 mt-2 w-40 rounded-lg border border-sidebar-border bg-background shadow-lg z-50 overflow-hidden py-1">
+                                        {opcoesFiltro.map((opcao) => (
+                                            <button
+                                                key={opcao}
+                                                onClick={() => {
+                                                    setFiltroSelecionado(opcao);
+                                                    setFiltroAberto(false);
+                                                }}
+                                                className={`flex w-full items-center justify-between px-3 py-2 text-sm transition-colors ${
+                                                    filtroSelecionado === opcao
+                                                    // Opção ativa: fundo verde escuro com texto branco
+                                                    ? 'bg-[#2D5A43] text-white'
+                                                    : 'hover:bg-muted text-foreground'
+                                                }`}
+                                            >
+                                                {opcao}
+                                                {/* Checkmark visível apenas na opção selecionada */}
+                                                {filtroSelecionado === opcao && <Check className="size-4" />}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
                             <button className="inline-flex h-9 items-center justify-center rounded-md border border-sidebar-border bg-background px-3 text-sm font-medium gap-2 hover:bg-muted transition-colors">
@@ -105,6 +151,7 @@ export default function Clientes({segurados, total, seguradosinativos}: {segurad
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-sidebar-border bg-muted/30 text-muted-foreground font-medium">
+                                    <th className="h-12 px-4 text-left">ID</th>
                                     <th className="h-12 px-4 text-left">Cliente</th>
                                     <th className="h-12 px-4 text-left">CPF/CNPJ</th>
                                     <th className="h-12 px-4 text-left">Telefone</th>
@@ -116,13 +163,19 @@ export default function Clientes({segurados, total, seguradosinativos}: {segurad
                             <tbody>
                                 {segurados.map((segurado: any) => (
                                     <tr key={segurado.id} className="border-b border-sidebar-border hover:bg-muted/30 transition-colors">
+                                        <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                                            #{String(segurado.id).padStart(4, '0')}
+                                        </td>
                                         <td className="h-12 px-4">{segurado.nome_completo}</td>
                                         <td className="h-12 px-4">{segurado.cpf_cnpj}</td>
                                         <td className="h-12 px-4">{segurado.telefone_fixo}</td>
                                         <td className="h-12 px-4">{segurado.cidade} - {segurado.estado}</td>
                                         <td className="h-12 px-4">
-                                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${segurado.status === 'Ativo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                                {segurado.status === 'Ativo' ? <Check className="size-3" /> : <X className="size-3" />}
+                                            <span className={`inline-flex px-2.5 py-0.5 rounded-md text-xs font-medium capitalize ${
+                                                segurado.status === 'Ativo'
+                                                ? 'bg-green-50 text-green-600'
+                                                : 'bg-orange-50 text-orange-600'
+                                            }`}>
                                                 {segurado.status}
                                             </span>
                                         </td>

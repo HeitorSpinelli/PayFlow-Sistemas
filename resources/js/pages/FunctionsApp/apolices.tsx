@@ -96,7 +96,7 @@ export default function Apolices({ segurados, seguradoras, total, ramos, apolice
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-sidebar-border bg-muted/30 text-muted-foreground font-medium">
-                                    <th className="h-12 px-4 text-left">Cliente</th>
+                                    <th className="h-12 px-4 text-left">ID</th>
                                     <th className="h-12 px-4 text-left">Apólice</th>
                                     <th className="h-12 px-4 text-left">Tipo/Seguradora</th>
                                     <th className="h-12 px-4 text-left">Valor</th>
@@ -108,6 +108,9 @@ export default function Apolices({ segurados, seguradoras, total, ramos, apolice
                             <tbody>
                                 {apolices.map((apolice: any) => (
                                     <tr key={apolice.id} className="border-b border-sidebar-border hover:bg-muted/50 transition-colors">
+                                        <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                                            #{String(apolice.id).padStart(4, '0')}
+                                        </td>
                                         <td className="h-12 px-4">{apolice.nome_completo}</td>
                                         <td className="h-12 px-4">{apolice.numero_apolice}</td>
                                         <td className="h-12 px-4">{apolice.nome_ramo} / {apolice.nome_fantasia}</td>

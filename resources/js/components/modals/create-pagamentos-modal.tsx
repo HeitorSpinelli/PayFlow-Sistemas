@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useForm } from '@inertiajs/react';
 import { Search, Check } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function CreatePagamentoModal({ open, setOpen, segurados, apolices }: any) {
     const { data, setData, post, reset, errors } = useForm({
@@ -81,6 +82,7 @@ export default function CreatePagamentoModal({ open, setOpen, segurados, apolice
         post('/pagamentos', {
             onSuccess: () => {
                 reset();
+                toast.success('Pagamento registrado com sucesso!');
                 setBuscaSegurado("");
                 setOpen(false);
             },

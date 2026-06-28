@@ -39,4 +39,25 @@ class StoreSeguradoRequest extends FormRequest
             'observacoes'              => 'nullable|string',
         ];
     }
+    public function messages(): array
+    {
+        return [
+            'nome_completo.required' => 'O campo nome completo é obrigatório.',
+            'tipo_pessoa.required' => 'O campo tipo de pessoa é obrigatório.',
+            'tipo_pessoa.in' => 'O campo tipo de pessoa deve ser "pf" ou "pj".',
+            'cpf_cnpj.required' => 'O campo CPF/CNPJ é obrigatório.',
+            'cpf_cnpj.unique' => 'O CPF/CNPJ informado já está cadastrado.',
+            'data_nascimento_fundacao.required' => 'O campo data de nascimento/fundação é obrigatório.',
+            'data_nascimento_fundacao.date' => 'O campo data de nascimento/fundação deve ser uma data válida.',
+            'email.required' => 'O campo e-mail é obrigatório.',
+            'email.email' => 'O campo e-mail deve ser um endereço de e-mail válido.',
+            'telefone_fixo.string' => 'O campo telefone fixo deve ser uma string.',
+            'celular_whatsapp.required' => 'O campo celular/WhatsApp é obrigatório.',
+            'endereco.required' => 'O campo endereço é obrigatório.',
+            'cidade.required' => 'O campo cidade é obrigatório.',
+            'estado.required' => 'O campo estado é obrigatório.',
+            'estado.size' => 'O campo estado deve ter exatamente 2 caracteres.',
+            'cep.required' => 'O campo CEP é obrigatório.',
+        ];
+    }
 }
