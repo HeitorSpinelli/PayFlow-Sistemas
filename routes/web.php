@@ -5,6 +5,7 @@ use Laravel\Fortify\Features;
 use App\Http\Controllers\SeguradoController;
 use App\Http\Controllers\ApolicesController;
 use App\Http\Controllers\SeguradoraController;
+use App\Http\Controllers\pagamentoController;
 
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
@@ -37,9 +38,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return inertia('FunctionsApp/cobrancas');
     })->name('cobrancas');
 
-    Route::get('/pagamentos', function () {
-        return inertia('FunctionsApp/pagamentos');
-    })->name('pagamentos');
+    //funciona pelo amor de Deus
+    Route::get('/pagamentos', [pagamentoController::class, 'show'])->name('pagamentos');
+    Route::post('/pagamentos', [pagamentoController::class, 'store']);
+    Route::delete('/pagamentos/{id}', [pagamentoController::class, 'destroy'])->name('pagamentos.destroy');
+    Route::put('/pagamentos/{id}', [pagamentoController::class, 'update'])->name('pagamentos.update');
 
     Route::get('/agenda', function () {
         return inertia('FunctionsApp/agenda');

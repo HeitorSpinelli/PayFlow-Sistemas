@@ -8,7 +8,15 @@ import {
 import { Button } from "@/components/ui/button";
 import CreatePagamentoModal from "@/components/modals/create-pagamentos-modal";
 
-export default function Pagamentos({ clientes, apolices }: any) {
+export default function Pagamentos({
+    pagamentos,
+    totalRecebido,
+    totalRegistrado,
+    totalConfirmados,
+    totalPendentes,
+    segurados,
+    apolices,
+}: any) {
     const [filtroAberto, setFiltroAberto] = useState(false);
     const [filtroSelecionado, setFiltroSelecionado] = useState("Todos");
     const opcoesFiltro = ["Todos", "Confirmados", "Pendentes"];
@@ -16,6 +24,25 @@ export default function Pagamentos({ clientes, apolices }: any) {
     const [exportarAberto, setExportarAberto] = useState(false);
 
     const [openModal, setOpenModal] = useState(false);
+
+    // Filtra a lista exibida com base no dropdown de status selecionado
+    const pagamentosFiltrados = pagamentos?.filter((p: any) => {
+        if (filtroSelecionado === "Todos") return true;
+        if (filtroSelecionado === "Confirmados") return p.status === "confirmado";
+        if (filtroSelecionado === "Pendentes") return p.status === "pendente";
+        return true;
+    }) ?? [];
+
+    // Formata número para o padrão monetário brasileiro
+    const formatarMoeda = (valor: number) =>
+        new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(valor ?? 0);
+
+    // Formata a data ISO (vinda do banco) para dd/mm/aaaa
+    const formatarData = (data: string) => {
+        if (!data) return '—';
+        const [ano, mes, dia] = data.split('T')[0].split('-');
+        return `${dia}/${mes}/${ano}`;
+    };
 
     return (
         <>
@@ -36,12 +63,12 @@ export default function Pagamentos({ clientes, apolices }: any) {
                     </Button>
                 </div>
 
-                {/* Cards de resumo financeiro */}
+                {/* Cards de resumo financeiro — valores reais vindos do PagamentoController */}
                 <div className="flex gap-4 justify-center">
                     <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 p-6 bg-card shadow-sm">
                         <div className="flex flex-col gap-1">
                             <h2 className="text-sm font-medium text-muted-foreground">Total Recebido</h2>
-                            <p className="text-3xl font-bold tracking-tight text-green-500">R$ 20,00</p>
+                            <p className="text-3xl font-bold tracking-tight text-green-500">R$ {formatarMoeda(totalRecebido)}</p>
                         </div>
                         <DollarSign className="size-10 text-muted-foreground/50" />
                     </div>
@@ -49,7 +76,7 @@ export default function Pagamentos({ clientes, apolices }: any) {
                     <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 p-6 bg-card shadow-sm">
                         <div className="flex flex-col gap-1">
                             <h2 className="text-sm font-medium text-muted-foreground">Total Registrado</h2>
-                            <p className="text-3xl font-bold tracking-tight text-green-500">20,00</p>
+                            <p className="text-3xl font-bold tracking-tight text-green-500">R$ {formatarMoeda(totalRegistrado)}</p>
                         </div>
                         <Receipt className="size-10 text-muted-foreground/50" />
                     </div>
@@ -57,7 +84,7 @@ export default function Pagamentos({ clientes, apolices }: any) {
                     <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 p-6 bg-card shadow-sm">
                         <div className="flex flex-col gap-1">
                             <h2 className="text-sm font-medium text-muted-foreground">Confirmados</h2>
-                            <p className="text-3xl font-bold tracking-tight text-green-500">20,00</p>
+                            <p className="text-3xl font-bold tracking-tight text-green-500">{totalConfirmados ?? 0}</p>
                         </div>
                         <CircleCheck className="size-10 text-muted-foreground/50" />
                     </div>
@@ -66,7 +93,7 @@ export default function Pagamentos({ clientes, apolices }: any) {
                         <div className="flex flex-col gap-1">
                             <h2 className="text-sm font-medium text-muted-foreground">Pendentes</h2>
                             {/* Pendentes usa laranja para indicar atenção, diferente dos outros cards */}
-                            <p className="text-3xl font-bold tracking-tight text-orange-500">7,00</p>
+                            <p className="text-3xl font-bold tracking-tight text-orange-500">{totalPendentes ?? 0}</p>
                         </div>
                         <Calendar className="size-10 text-muted-foreground/50" />
                     </div>
@@ -77,7 +104,7 @@ export default function Pagamentos({ clientes, apolices }: any) {
                     <div className="p-4 border-b border-sidebar-border flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <h3 className="text-lg font-semibold">Lista de Pagamentos</h3>
-                            <p className="text-xs text-muted-foreground">67 pagamento(s) encontrado(s)</p>
+                            <p className="text-xs text-muted-foreground">{pagamentosFiltrados.length} pagamento(s) encontrado(s)</p>
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -142,7 +169,7 @@ export default function Pagamentos({ clientes, apolices }: any) {
                         </div>
                     </div>
 
-                    {/* Tabela — tbody ainda sem dados, aguardando integração com API */}
+                    {/* Tabela populada com dados reais do PagamentoController */}
                     <div className="overflow-x-auto overflow-y-visible">
                         <table className="w-full text-sm">
                             <thead>
@@ -158,6 +185,35 @@ export default function Pagamentos({ clientes, apolices }: any) {
                                 </tr>
                             </thead>
                             <tbody>
+                                {pagamentosFiltrados.length === 0 && (
+                                    <tr>
+                                        <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
+                                            Nenhum pagamento encontrado
+                                        </td>
+                                    </tr>
+                                )}
+                                {pagamentosFiltrados.map((p: any) => (
+                                    <tr key={p.id} className="border-b border-sidebar-border hover:bg-muted/30 transition-colors last:border-b-0">
+                                        <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                                            #{String(p.id).padStart(4, '0')}
+                                        </td>
+                                        <td className="px-4 py-3 font-medium">{p.cliente}</td>
+                                        <td className="px-4 py-3 text-muted-foreground">{p.apolice} / {p.parcela}ª</td>
+                                        <td className="px-4 py-3">R$ {formatarMoeda(p.valor)}</td>
+                                        <td className="px-4 py-3 text-muted-foreground">{formatarData(p.data_pagamento)}</td>
+                                        <td className="px-4 py-3 capitalize text-muted-foreground">{p.forma_pagamento}</td>
+                                        <td className="px-4 py-3">
+                                            <span className={`inline-flex px-2.5 py-0.5 rounded-md text-xs font-medium capitalize ${
+                                                p.status === 'confirmado'
+                                                ? 'bg-green-50 text-green-600'
+                                                : 'bg-orange-50 text-orange-600'
+                                            }`}>
+                                                {p.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3"></td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>
@@ -165,7 +221,7 @@ export default function Pagamentos({ clientes, apolices }: any) {
                     {/* Paginação */}
                     <div className="flex items-center justify-between px-4 py-4 border-t border-sidebar-border bg-muted/10">
                         <div className="text-sm text-muted-foreground">
-                            Mostrando <span className="font-medium text-foreground">1</span> de <span className="font-medium text-foreground">1</span> resultados
+                            Mostrando <span className="font-medium text-foreground">{pagamentosFiltrados.length}</span> de <span className="font-medium text-foreground">{pagamentos?.length ?? 0}</span> resultados
                         </div>
                         <div className="flex items-center gap-2">
                             <button className="inline-flex h-8 items-center justify-center rounded-md border border-sidebar-border bg-background px-3 text-xs font-medium gap-1 hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
@@ -185,7 +241,7 @@ export default function Pagamentos({ clientes, apolices }: any) {
             <CreatePagamentoModal
                 open={openModal}
                 setOpen={setOpenModal}
-                clientes={clientes}
+                segurados={segurados}
                 apolices={apolices}
             />
         </>
