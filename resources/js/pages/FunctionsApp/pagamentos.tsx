@@ -3,10 +3,11 @@ import { useState } from "react";
 import {
     Search, Download, Filter, Plus,
     Check, ChevronDown, ChevronLeft, ChevronRight,
-    CircleCheck, DollarSign, Receipt, Calendar
+    CircleCheck, DollarSign, Receipt, Calendar, MoreHorizontal
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CreatePagamentoModal from "@/components/modals/create-pagamentos-modal";
+import PagamentoProfileModal from "@/components/modals/create-pagamento-profile-modal";
 
 export default function Pagamentos({
     pagamentos,
@@ -24,6 +25,15 @@ export default function Pagamentos({
     const [exportarAberto, setExportarAberto] = useState(false);
 
     const [openModal, setOpenModal] = useState(false);
+
+    // Modal de detalhes/exclusão do pagamento (mesmo padrão do perfil de Cliente)
+    const [openProfile, setOpenProfile] = useState(false);
+    const [pagamentoSelecionado, setPagamentoSelecionado] = useState<any>(null);
+
+    const abrirPerfil = (pagamento: any) => {
+        setPagamentoSelecionado(pagamento);
+        setOpenProfile(true);
+    };
 
     // Filtra a lista exibida com base no dropdown de status selecionado
     const pagamentosFiltrados = pagamentos?.filter((p: any) => {
@@ -211,7 +221,17 @@ export default function Pagamentos({
                                                 {p.status}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3"></td>
+                                        <td className="px-4 py-3">
+                                            {/* Mesmo padrão usado em Clientes: clique abre o modal de detalhes */}
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="rounded-lg"
+                                                onClick={() => abrirPerfil(p)}
+                                            >
+                                                <MoreHorizontal className="size-4" />
+                                            </Button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -237,13 +257,22 @@ export default function Pagamentos({
                 </div>
             </div>
 
-            {/* Modal fora do div principal para não herdar estilos de layout */}
+            {/* Modal de criação */}
             <CreatePagamentoModal
                 open={openModal}
                 setOpen={setOpenModal}
                 segurados={segurados}
                 apolices={apolices}
             />
+
+            {/* Modal de detalhes/exclusão — só renderiza quando há um pagamento selecionado */}
+            {pagamentoSelecionado && (
+                <PagamentoProfileModal
+                    open={openProfile}
+                    setOpen={setOpenProfile}
+                    pagamento={pagamentoSelecionado}
+                />
+            )}
         </>
     );
 }

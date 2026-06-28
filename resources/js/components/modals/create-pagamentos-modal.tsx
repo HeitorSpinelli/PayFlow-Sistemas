@@ -247,10 +247,10 @@ export default function CreatePagamentoModal({ open, setOpen, segurados, apolice
                         )}
                     </div>
                         
-                        //eu mantive esses botões de status por enquanto,
-                        //provavelmente isso no futuro vai ser substituido por alguma coisa
-                        //mas isso vai servir por um tempo e pra encher linguiça por
-                        //E S P E R M E Z O N
+                        {/*eu mantive esses botões de status por enquanto,
+                          provavelmente isso no futuro vai ser substituido por alguma coisa
+                          mas isso vai servir por um tempo e pra encher linguiça por
+                          E S P E R M E Z O N*/}
                     <div className="flex flex-col gap-1">
                         <p className="text-sm font-medium">Status *</p>
                         <div className="flex gap-2">
