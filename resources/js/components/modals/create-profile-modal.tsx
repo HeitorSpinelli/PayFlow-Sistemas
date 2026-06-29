@@ -93,8 +93,8 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                             {/* Título dinâmico — muda conforme o modo */}
                             <DialogTitle className="text-xl font-bold">
                                 {modo === 'visualizar' && segurado.nome_completo}
-                                {modo === 'editar'     && 'Editar Cliente'}
-                                {modo === 'excluir'    && 'Excluir Cliente'}
+                                {modo === 'editar'     && `Editar Cliente: ${segurado.nome_completo}`}
+                                {modo === 'excluir'    && `Excluir Cliente: ${segurado.nome_completo}`}
                             </DialogTitle>
 
                             {/* Badge de status — verde se Ativo, vermelho se não */}

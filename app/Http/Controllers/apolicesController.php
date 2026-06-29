@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 use App\Services\ApoliceService;
 use App\Http\Requests\StoreApoliceRequest;
+use App\Http\Requests\UpdateApoliceRequest;
 use App\Http\Controllers\Controller;
 
 
@@ -28,6 +29,24 @@ class ApolicesController extends Controller
             return redirect()->back()->with('success', 'Apólice cadastrada com sucesso!');
         }catch(\Exception $e){
             return redirect()->back()->with('error', 'Erro ao cadastrar apólice: ' . $e->getMessage());
+        }
+    }
+
+    public function destroy(int $id){
+        try {
+            $this->apoliceService->destroy($id);
+            return redirect()->back()->with('success', 'Apólice excluída com sucesso!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erro ao excluir apólice: ' . $e->getMessage());
+        }
+    }
+    public function update(UpdateApoliceRequest $request, int $id){
+        try {
+            $data = $request->validated();
+            $this->apoliceService->update($id, $data);
+            return redirect()->back()->with('success', 'Apólice atualizada com sucesso!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erro ao atualizar apólice: ' . $e->getMessage());
         }
     }
 

@@ -7,6 +7,7 @@ import CreateSeguradoModal from '@/components/modals/create-segurado-modal'
 import { Button } from "@/components/ui/button";
 import SeguradoProfileModal from "@/components/modals/create-profile-modal";
 import { apolices, pagamentos } from "@/routes";
+import { Input } from "@/components/ui/input";
 
 //Recebe os segurados e o total de clientes como props e declarando seu tipo
 export default function Clientes({segurados, total, seguradosinativos}: {segurados: any[], total: number, seguradosinativos: any[]}): any {
@@ -16,17 +17,27 @@ export default function Clientes({segurados, total, seguradosinativos}: {segurad
     const [seguradoSelecionado, setSeguradoSelecionado] = useState<any>(null);
     const [filtroAberto, setFiltroAberto] = useState(false);
     const [filtroSelecionado, setFiltroSelecionado] = useState("Todos");
-    const opcoesFiltro = ["Todos", "Confirmados", "Pendentes"];
+    const opcoesFiltro = ["Todos", "Ativos", "Inativos"];
+    const [seguradoPesquisado, setSeguradoPesquisado] = useState("");
 
     const [exportarAberto, setExportarAberto] = useState(false);
 
     // Filtra a lista exibida com base no dropdown de status selecionado
     const seguradosFiltrados = segurados?.filter((segurado: any) => {
         if (filtroSelecionado === "Todos") return true;
-        if (filtroSelecionado === "Confirmados") return segurado.status === "confirmado";
-        if (filtroSelecionado === "Pendentes") return segurado.status === "pendente";
+        if (filtroSelecionado === "Ativos") return segurado.status === "Ativo";
+        if (filtroSelecionado === "Inativos") return segurado.status === "Inativo";
         return true;
     }) ?? [];
+
+    //Filtra com base na pesquisa do usuário
+    const seguradosFiltradosComPesquisa = seguradosFiltrados.filter((segurado: any) => {
+        const termoPesquisa = seguradoPesquisado.toLowerCase();
+        return (
+            segurado.nome_completo.toLowerCase().includes(termoPesquisa) ||
+            segurado.cpf_cnpj.toLowerCase().includes(termoPesquisa)
+        );
+    });
 
     const abrirPerfil = (segurado: any) => {
         setSeguradoSelecionado(segurado);
@@ -92,10 +103,11 @@ export default function Clientes({segurados, total, seguradosinativos}: {segurad
                         <div className="flex items-center gap-2">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                                <input 
-                                    type="text" 
+                                <Input 
                                     placeholder="Buscar por nome, CPF..." 
                                     className="h-9 w-64 rounded-md border border-sidebar-border bg-background pl-9 pr-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    value={seguradoPesquisado}
+                                    onChange={(e) => setSeguradoPesquisado(e.target.value)}
                                 />
                             </div>
                             
@@ -161,7 +173,14 @@ export default function Clientes({segurados, total, seguradosinativos}: {segurad
                                 </tr>
                             </thead>
                             <tbody>
-                                {segurados.map((segurado: any) => (
+                                {segurados === null || seguradosFiltradosComPesquisa.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={7} className="h-12 px-4 text-center text-muted-foreground">
+                                            Nenhum cliente encontrado.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    seguradosFiltradosComPesquisa.map((segurado: any) => (
                                     <tr key={segurado.id} className="border-b border-sidebar-border hover:bg-muted/30 transition-colors">
                                         <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
                                             #{String(segurado.id).padStart(4, '0')}
@@ -190,7 +209,7 @@ export default function Clientes({segurados, total, seguradosinativos}: {segurad
                                             </Button>
                                         </td>
                                     </tr>
-                                ))}
+                                )))}   
                             </tbody>
                         </table>
                     </div>

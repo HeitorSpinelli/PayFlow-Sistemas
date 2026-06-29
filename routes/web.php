@@ -31,6 +31,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //Rota para exibir a página de apolices, chamando a classe ApolicesController e a função index
     Route::get('/apolices', [ApolicesController::class, 'index'])->name('apolices');
 
+    Route::delete('/apolices/{id}', [ApolicesController::class, 'destroy'])->name('apolices.destroy');
+    Route::put('/apolices/{id}', [ApolicesController::class, 'update'])->name('apolices.update');
+
     //Rota para salvar apolices via post, chamando a classe ApolicesController e a função store
     Route::post('/apolices', [ApolicesController::class, 'store']);
 
@@ -38,7 +41,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return inertia('FunctionsApp/cobrancas');
     })->name('cobrancas');
 
-    //funciona pelo amor de Deus
+    //Rota para exibir a página de pagamentos, chamando a classe pagamentoController e a função show
     Route::get('/pagamentos', [pagamentoController::class, 'show'])->name('pagamentos');
     Route::post('/pagamentos', [pagamentoController::class, 'store']);
     Route::delete('/pagamentos/{id}', [pagamentoController::class, 'destroy'])->name('pagamentos.destroy');

@@ -18,6 +18,45 @@ import { useForm } from '@inertiajs/react';
 import { toast } from 'sonner';
 import 'react-toastify/dist/ReactToastify.css';
 
+// --- FUNÇÕES DE MÁSCARA (REGEX) ---
+const aplicarMascaraCPFCNPJ = (valor: string, tipo: string) => {
+    const num = valor.replace(/\D/g, "");
+    if (tipo === 'pf') {
+        // CPF: 000.000.000-00
+        return num.substring(0, 11)
+            .replace(/(\d{3})(\d)/, "$1.$2")
+            .replace(/(\d{3})(\d)/, "$1.$2")
+            .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    } else {
+        // CNPJ: 00.000.000/0001-00
+        return num.substring(0, 14)
+            .replace(/(\d{2})(\d)/, "$1.$2")
+            .replace(/(\d{3})(\d)/, "$1.$2")
+            .replace(/(\d{3})(\d)/, "$1/$2")
+            .replace(/(\d{4})(\d{1,2})$/, "$1-$2");
+    }
+};
+
+const aplicarMascaraCelular = (valor: string) => {
+    const num = valor.replace(/\D/g, "").substring(0, 11);
+    if (num.length <= 2) return `(${num}`;
+    if (num.length <= 6) return `(${num.substring(0, 2)}) ${num.substring(2)}`;
+    return `(${num.substring(0, 2)}) ${num.substring(2, 7)}-${num.substring(7)}`;
+};
+
+const aplicarMascaraFixo = (valor: string) => {
+    const num = valor.replace(/\D/g, "").substring(0, 10);
+    if (num.length <= 2) return `(${num}`;
+    if (num.length <= 6) return `(${num.substring(0, 2)}) ${num.substring(2)}`;
+    return `(${num.substring(0, 2)}) ${num.substring(2, 6)}-${num.substring(6)}`;
+};
+
+const aplicarMascaraCEP = (valor: string) => {
+    const num = valor.replace(/\D/g, "").substring(0, 8);
+    return num.replace(/(\d{5})(\d)/, "$1-$2");
+};
+
+
 export default function CreateSeguradoModal({ open, setOpen }: any) {
     const [tipoPessoa, setTipoPessoa] = useState("pf");
     const [estados, setEstados] = useState([]);
@@ -56,13 +95,10 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
     const salvarClientes = () => {
         post('/clientes', {
             onSuccess: () => {
-                //1. Mostrar notificação de sucesso
                 toast.success("Segurado Salvo com Sucesso!");
-                //2. fechar o modal
                 setOpen(false);
             }, 
             onError: () => {
-                //Se tiver um erro ou campo faltando
                 toast.error("Falha ao Salvar, Verifique os campos")
             }
         });
@@ -102,7 +138,11 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                         </label>
                         <Select onValueChange={(valor) => {
                                 setTipoPessoa(valor);
-                                setData('tipo_pessoa', valor);
+                                setData((prev) => ({
+                                    ...prev,
+                                    tipo_pessoa: valor,
+                                    cpf_cnpj: "" // Limpa o documento para não misturar máscara de CPF com CNPJ
+                                }));
                             }}
                             defaultValue={tipoPessoa}
                         >
@@ -133,9 +173,9 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                 {labelDocumento}*
                             </label>
                             <Input
-                                placeholder='12345678910'
+                                placeholder={isPF ? '000.000.000-00' : '00.000.000/0001-00'}
                                 value={data.cpf_cnpj}
-                                onChange={(e) => setData('cpf_cnpj', e.target.value)}
+                                onChange={(e) => setData('cpf_cnpj', aplicarMascaraCPFCNPJ(e.target.value, tipoPessoa))}
                                 className="h-12 border-muted-foreground/20 rounded-xl"
                             />
                         </div>
@@ -180,7 +220,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                 type='tel'
                                 placeholder='(11) 99999-9999'
                                 value={data.celular_whatsapp}
-                                onChange={(e) => setData('celular_whatsapp', e.target.value)}
+                                onChange={(e) => setData('celular_whatsapp', aplicarMascaraCelular(e.target.value))}
                                 className="h-12 border-muted-foreground/20 rounded-xl"
                             />
                         </div>
@@ -194,7 +234,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                             type='tel'
                             placeholder='(11) 3333-3333'
                             value={data.telefone_fixo}
-                            onChange={(e) => setData('telefone_fixo', e.target.value)}
+                            onChange={(e) => setData('telefone_fixo', aplicarMascaraFixo(e.target.value))}
                             className="h-12 border-muted-foreground/20 rounded-xl"
                         />
                     </div>
@@ -242,7 +282,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                             <Input
                                 placeholder='00000-000'
                                 value={data.cep}
-                                onChange={(e) => setData('cep', e.target.value)}
+                                onChange={(e) => setData('cep', aplicarMascaraCEP(e.target.value))}
                                 className="h-12 border-muted-foreground/20 rounded-xl"
                             />
                         </div>
