@@ -73,22 +73,22 @@ class ApoliceService{
     public function destroy(int $id)
     {
         try {
-            $segurado = Segurado::findOrFail($id);
-            $segurado->delete();
+            $apolice = Apolices::findOrFail($id);
+            $apolice->delete();
         } 
         catch (\Exception $e) {
-            throw new \Exception('Erro ao excluir segurado: ' . $e->getMessage());
+            throw new \Exception('Erro ao excluir apólice: ' . $e->getMessage());
         }
     }
 
     public function update(int $id, array $data)
     {
         try {
-            $segurado = Segurado::findOrFail($id);
-            $segurado->update($data);
+            $apolice = Apolices::findOrFail($id);
+            $apolice->update($data);
         } 
         catch (\Exception $e) {
-            throw new \Exception('Erro ao atualizar segurado: ' . $e->getMessage());
+            throw new \Exception('Erro ao atualizar apólice: ' . $e->getMessage());
         }
     }
 
@@ -98,6 +98,17 @@ class ApoliceService{
             return Apolices::count();
         }catch(\Exception $e){
             throw new \Exception('Erro ao contar apólices: ' . $e->getMessage());
+        }
+    }
+
+    public function AlterarRamo(int $apoliceId, int $novoRamoId)
+    {
+        try {
+            $apolice = Apolices::findOrFail($apoliceId);
+            $apolice->ramo_id = $novoRamoId;
+            $apolice->save();
+        } catch (\Exception $e) {
+            throw new \Exception('Erro ao alterar o ramo da apólice: ' . $e->getMessage());
         }
     }
 }

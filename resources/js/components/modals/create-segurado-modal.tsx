@@ -72,7 +72,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
         nome_completo: "",
         cpf_cnpj: "",
         data_nascimento_fundacao: "",
-        email: "",
+        email: "",          
         celular_whatsapp: "",
         telefone_fixo: "",
         endereco: "",

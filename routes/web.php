@@ -34,6 +34,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/apolices/{id}', [ApolicesController::class, 'destroy'])->name('apolices.destroy');
     Route::put('/apolices/{id}', [ApolicesController::class, 'update'])->name('apolices.update');
 
+    //Rotas Patch são usadas para atualizar parcialmente um recurso existente, nesse caso a rota é usada para alterar o ramo de uma apólice específica, chamando a 
+    //função atualizarRamo da classe ApolicesController
+    Route::patch('/apolices/{id}/alterar-ramo', [ApolicesController::class, 'atualizarRamo']);
+
     //Rota para salvar apolices via post, chamando a classe ApolicesController e a função store
     Route::post('/apolices', [ApolicesController::class, 'store']);
 

@@ -9,10 +9,12 @@ import { Input } from '@/components/ui/input';
 import { useState, useEffect } from 'react';
 import { useForm, router } from '@inertiajs/react';
 import { toast } from 'sonner';
+import { Plus } from 'lucide-react';
 
 type Modo = 'visualizar' | 'editar' | 'excluir';
 
-export default function CreateApoliceProfileModal({ open, setOpen, apolice }: any) {
+export default function CreateApoliceProfileModal({ open, setOpen, apolice, ramos }: any) {
+
     const [modo, setModo] = useState<Modo>('visualizar');
 
     const { data, setData, put, processing, setData: resetForm } = useForm({
@@ -49,6 +51,13 @@ export default function CreateApoliceProfileModal({ open, setOpen, apolice }: an
             });
         }
     }, [apolice, open]);
+
+    const formatarDataBR = (dataString: string) => {
+        if (!dataString) return '-';
+        // Divide a string no 'T' para pegar apenas a parte da data (AAAA-MM-DD)
+        const [ano, mes, dia] = dataString.split('T')[0].split('-');
+        return `${dia}/${mes}/${ano}`;
+    };
 
     const fechar = () => {
         setModo('visualizar');
@@ -89,7 +98,6 @@ export default function CreateApoliceProfileModal({ open, setOpen, apolice }: an
                                 {apolice.nome_completo?.charAt(0).toUpperCase() || 'A'}
                             </span>
                         </div>
-
                         <div>
                             <DialogTitle className="text-xl font-bold">
                                 {modo === 'visualizar' && `Apólice #${apolice.numero_apolice}`}
@@ -97,17 +105,19 @@ export default function CreateApoliceProfileModal({ open, setOpen, apolice }: an
                                 {modo === 'excluir' && `Excluir Apólice: #${apolice.numero_apolice}`}
                             </DialogTitle>
                             <p className="text-xs text-muted-foreground">Segurado: {apolice.nome_completo}</p>
-                            <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                                apolice.status === 'Ativo'
-                                    ? 'bg-green-500/10 text-green-500'
-                                    : 'bg-red-500/10 text-red-500'
-                            }`}>
-                                {apolice.status}
+                            {apolice.status_vigencia === 'Vigente' && (
+                            <span className="px-2 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800">
+                                Vigente
                             </span>
+                        )}
+                        {apolice.status_vigencia === 'Para Renovar' && (
+                            <span className="px-2 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-800 animate-pulse">
+                                Para Renovar
+                            </span>
+                        )}
                         </div>
                     </div>
                 </DialogHeader>
-
                 {/* ── MODO VISUALIZAR ── */}
                 {modo === 'visualizar' && (
                     <div className="space-y-4">
@@ -142,12 +152,12 @@ export default function CreateApoliceProfileModal({ open, setOpen, apolice }: an
                         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Vigência</p>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="rounded-xl border border-muted-foreground/20 p-3">
-                                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Início da Vigência</p>
-                                <p className="text-sm font-medium">{apolice.inicio_vigencia}</p>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Início</p>
+                                <p className="text-sm font-medium">{formatarDataBR(apolice.inicio_vigencia)}</p>
                             </div>
                             <div className="rounded-xl border border-muted-foreground/20 p-3">
-                                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Fim da Vigência</p>
-                                <p className="text-sm font-medium">{apolice.fim_vigencia}</p>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Fim</p>
+                                <p className="text-sm font-medium">{formatarDataBR(apolice.fim_vigencia)}</p>
                             </div>
                         </div>
 
@@ -174,6 +184,22 @@ export default function CreateApoliceProfileModal({ open, setOpen, apolice }: an
                                 <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</label>
                                 <Input value={data.status} onChange={e => setData('status', e.target.value)} className="h-11 rounded-xl" placeholder="Ativo / Inativo" />
                             </div>
+                            <div className="space-y-1">
+                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ramo</label>
+                                <select 
+                                    value={data.ramo_id} 
+                                    onChange={e => setData('ramo_id', e.target.value)} 
+                                    className="w-full h-11 rounded-xl border border-muted-foreground/20 bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500"
+                                >
+                                    <option value="">Selecione um ramo</option>
+                                    {ramos?.map((ramo: any) => (
+                                        <option key={ramo.id} value={ramo.id}>
+                                            {ramo.nome_ramo}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
                             <div className="space-y-1">
                                 <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Valor do Prêmio Total</label>
                                 <Input value={data.valor_premio_total} onChange={e => setData('valor_premio_total', e.target.value)} className="h-11 rounded-xl" type="number" />
@@ -206,7 +232,6 @@ export default function CreateApoliceProfileModal({ open, setOpen, apolice }: an
                                     className="w-full min-h-[80px] rounded-xl border border-muted-foreground/20 bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500 resize-none"
                                 />
                             </div>
-                        </div>
                     </div>
                 )}
 

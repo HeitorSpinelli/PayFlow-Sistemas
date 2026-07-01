@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Head } from "@inertiajs/react";
-import { Plus, ScrollText, Search, MoreHorizontal, Download, Filter, ChevronDown, UserRound } from "lucide-react";
+import { Plus, ScrollText, Search, MoreHorizontal, Download, Filter, ChevronDown, UserRound, ChevronRight, ChevronLeft } from "lucide-react";
 import CreateApoliceModal from "@/components/modals/create-apolice-modal";
 import CreateApoliceProfileModal from "@/components/modals/create-apolice-profile-modal";
 import { Button } from "@/components/ui/button";
@@ -11,10 +11,16 @@ export default function Apolices({ segurados, seguradoras, total, ramos, apolice
     const [openApoliceProfile, setOpenApoliceProfile] = useState(false);     // modal de perfil da apólice
     const [apoliceSelecionada, setApoliceSelecionada] = useState(null);       // apólice selecionada para o perfil
     const [busca, setBusca] = useState("");                          // campo de busca
-
     const abrirPerfil = (apolice: any) => {
         setApoliceSelecionada(apolice);
         setOpenApoliceProfile(true);
+    };
+
+    const formatarDataBR = (dataString: string) => {
+    if (!dataString) return '-';
+    // Divide a string no 'T' para pegar apenas a parte da data (AAAA-MM-DD)
+    const [ano, mes, dia] = dataString.split('T')[0].split('-');
+    return `${dia}/${mes}/${ano}`;
     };
 
     // Filtro em tempo real das apólices
@@ -27,11 +33,9 @@ export default function Apolices({ segurados, seguradoras, total, ramos, apolice
             apolice.nome_fantasia?.toLowerCase().includes(termo)
         );
     });
-
     return (
         <>
             <Head title="Apólices" />
-
             <div className="flex flex-col gap-6 p-6">
                 
                 {/* 1. Header da Página */}
@@ -47,7 +51,6 @@ export default function Apolices({ segurados, seguradoras, total, ramos, apolice
                         Nova Apólice
                     </Button>
                 </div>
-
                 {/* 2. Cards de Estatísticas */}
                 <div className="flex gap-4 justify-center">
                     <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 p-6 bg-card shadow-sm">
@@ -64,7 +67,6 @@ export default function Apolices({ segurados, seguradoras, total, ramos, apolice
                         </div>
                         <ScrollText className="size-10 text-muted-foreground/50" />
                     </div>
-
                     <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 p-6 bg-card shadow-sm">
                         <div className="flex flex-col gap-1">
                             <h2 className="text-sm font-medium text-muted-foreground">Apólices Inativas</h2>
@@ -73,7 +75,6 @@ export default function Apolices({ segurados, seguradoras, total, ramos, apolice
                         <ScrollText className="size-10 text-muted-foreground/50" />
                     </div>
                 </div>
-
                 {/* 3. Seção da Tabela */}
                 <div className="rounded-xl border border-sidebar-border bg-card shadow-sm overflow-hidden">
                     
@@ -85,7 +86,6 @@ export default function Apolices({ segurados, seguradoras, total, ramos, apolice
                                 {apolicesFiltradas.length} apólice(s) encontrada(s)
                             </p>
                         </div>
-
                         <div className="flex items-center gap-2">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -105,14 +105,12 @@ export default function Apolices({ segurados, seguradoras, total, ramos, apolice
                                     <ChevronDown className="size-4 text-muted-foreground" />
                                 </button>
                             </div>
-
                             <button className="inline-flex h-9 items-center justify-center rounded-md border border-sidebar-border bg-background px-3 text-sm font-medium gap-2 hover:bg-muted transition-colors">
                                 <Download className="size-4 text-muted-foreground" />
                                 Exportar
                             </button>
                         </div>
                     </div>
-
                     {/* Tabela de Apólices */}
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
@@ -140,7 +138,7 @@ export default function Apolices({ segurados, seguradoras, total, ramos, apolice
                                             <td className="h-12 px-4">{apolice.nome_ramo} / {apolice.nome_fantasia}</td>
                                             <td className="h-12 px-4">R$ {apolice.valor_premio_total}</td>
                                             <td className="h-12 px-4">{apolice.quantidade_parcelas}</td>
-                                            <td className="h-12 px-4">{apolice.inicio_vigencia} a {apolice.fim_vigencia}</td>
+                                            <td className="h-12 px-4">{formatarDataBR(apolice.inicio_vigencia)} - {formatarDataBR(apolice.fim_vigencia)}</td>
                                             <td className="h-12 px-4">
                                                 <Button
                                                     variant="outline"
@@ -162,10 +160,25 @@ export default function Apolices({ segurados, seguradoras, total, ramos, apolice
                                 )}
                             </tbody>
                         </table>
+                        {/* 4. Paginação */}
+                        <div className="flex items-center justify-between px-4 py-4 border-t border-sidebar-border bg-muted/10">
+                            <div className="text-sm text-muted-foreground">
+                                Mostrando <span className="font-medium text-foreground">1</span> de <span className="font-medium text-foreground">1</span> resultados
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button className="inline-flex h-8 items-center justify-center rounded-md border border-sidebar-border bg-background px-3 text-xs font-medium gap-1 hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <ChevronLeft className="size-3"/>
+                                    Anterior
+                                </button>
+                                <button className="inline-flex h-8 items-center justify-center rounded-md border border-sidebar-border bg-background px-3 text-xs font-medium gap-1 hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                    Próxima
+                                    <ChevronRight className="size-3" />
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-
             {/* Modais da Aplicação */}
             <CreateApoliceModal 
                 open={openModal} 
@@ -176,10 +189,10 @@ export default function Apolices({ segurados, seguradoras, total, ramos, apolice
                 apolices={apolices} 
                 Profile={seguradoProfile} 
             />
-
             {apoliceSelecionada && (
                 <CreateApoliceProfileModal
                     open={openApoliceProfile}
+                    ramos={ramos}
                     setOpen={setOpenApoliceProfile}
                     apolice={apoliceSelecionada}
                 />

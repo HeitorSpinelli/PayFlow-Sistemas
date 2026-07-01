@@ -5,7 +5,7 @@ use App\Services\ApoliceService;
 use App\Http\Requests\StoreApoliceRequest;
 use App\Http\Requests\UpdateApoliceRequest;
 use App\Http\Controllers\Controller;
-
+use GuzzleHttp\Psr7\Request;
 
 class ApolicesController extends Controller
 {
@@ -48,6 +48,12 @@ class ApolicesController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Erro ao atualizar apólice: ' . $e->getMessage());
         }
+    }
+    
+    public function updateRamo(Request $request, int $id){
+        $ramoId = $request->input('novo_ramo_id');  
+        $this->apoliceService->AlterarRamo($id, $ramoId);
+        return redirect()->back()->with('success', 'Ramo da apólice atualizado com sucesso!');
     }
 
     public function index(){
