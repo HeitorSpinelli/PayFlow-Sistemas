@@ -26,24 +26,33 @@ class apolices extends Model
      */
     public function getStatusVigenciaAttribute(): string
     {
+        // 1. Se não houver fim de vigência cadastrado, define um status padrão
+        if (!$this->fim_vigencia || !$this->inicio_vigencia) {
+            return 'N/A';
+        }
+
         $hoje = Carbon::today();
 
+        // Garante que ambos os lados sejam instâncias do Carbon
+        $fimVigencia = Carbon::parse($this->fim_vigencia);
+        $inicioVigencia = Carbon::parse($this->inicio_vigencia);
+
         // Se a data de hoje já passou do fim da vigência
-        if ($hoje->gt($this->fim_vigencia)) {
+        if ($hoje->gt($fimVigencia)) {
             return 'Para Renovar';
         }
 
         // Se a data de hoje está dentro do período de vigência
-        if ($hoje->between($this->inicio_vigencia, $this->fim_vigencia)) {
+        if ($hoje->between($inicioVigencia, $fimVigencia)) {
             return 'Vigente';
         }
 
-        // Caso a apólice tenha sido cadastrada mas o início seja no futuro
-        if ($hoje->lt($this->inicio_vigencia)) {
+        // Caso o início seja no futuro
+        if ($hoje->lt($inicioVigencia)) {
             return 'A Iniciar';
         }
 
-        return 'Indefinido';
+        return 'Pendente';
     }
 
     protected $fillable = [

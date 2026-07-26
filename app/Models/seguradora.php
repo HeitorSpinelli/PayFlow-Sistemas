@@ -13,6 +13,7 @@ class Seguradora extends Model
         'razao_social',
         'cnpj',
         'contato_nome',
-        'email_suporte'
+        'email_suporte',
+        'ramo_id',
     ];
 }

@@ -55,7 +55,7 @@ class ApolicesController extends Controller
         $this->apoliceService->AlterarRamo($id, $ramoId);
         return redirect()->back()->with('success', 'Ramo da apólice atualizado com sucesso!');
     }
-
+    
     public function index(){
     $segurados = $this->apoliceService->buscar();
     $total = $this->apoliceService->count();

@@ -111,7 +111,7 @@ export default function CreateApoliceProfileModal({ open, setOpen, apolice, ramo
                             </span>
                         )}
                         {apolice.status_vigencia === 'Para Renovar' && (
-                            <span className="px-2 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-800 animate-pulse">
+                            <span className="px-3 py-1 text-xs font-bold rounded-full bg-red-950 text-red-400 border border-red-500 animate-[pulse_1.5s_infinite] shadow-[0_0_15px_rgba(239,68,68,0.7)] text-shadow-[0_0_8px_rgba(239,68,68,0.5)]">
                                 Para Renovar
                             </span>
                         )}
@@ -179,10 +179,6 @@ export default function CreateApoliceProfileModal({ open, setOpen, apolice, ramo
                             <div className="space-y-1">
                                 <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Número da Apólice</label>
                                 <Input value={data.numero_apolice} onChange={e => setData('numero_apolice', e.target.value)} className="h-11 rounded-xl" />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</label>
-                                <Input value={data.status} onChange={e => setData('status', e.target.value)} className="h-11 rounded-xl" placeholder="Ativo / Inativo" />
                             </div>
                             <div className="space-y-1">
                                 <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ramo</label>

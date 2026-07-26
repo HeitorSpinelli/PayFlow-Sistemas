@@ -17,7 +17,6 @@ class ApoliceService{
             throw new \Exception('Erro ao cadastrar apólice: ' . $e->getMessage());
         }
     }
-
     //Função para buscar os segurados cadastrados no banco, selecionando apenas os campos id, nome_completo e cpf_cnpj
     public function buscar(){
         try{
@@ -26,7 +25,6 @@ class ApoliceService{
             throw new \Exception('Erro ao buscar segurados: ' . $e->getMessage());
         }
     }
-
     public function buscarSeguradoras(){
         try{
             return Seguradora::select('id', 'nome_fantasia')-> get();
@@ -34,15 +32,13 @@ class ApoliceService{
             throw new \Exception('Erro ao buscar seguradoras: ' . $e->getMessage());
         }
     }
-
     public function buscarRamos(){
         try{
-            return Ramo::select('id', 'nome_ramo')-> get();
+            return Ramo::select('id', 'nome_ramo', 'seguradora_id')->get();
         }catch(\Exception $e){
             throw new \Exception('Erro ao buscar ramos: ' . $e->getMessage());
         }
     }
-
     public function buscarApolices()
     {
     try {
@@ -64,12 +60,10 @@ class ApoliceService{
             ->join('ramos',       'apolices.ramo_id',       '=', 'ramos.id')
             ->join('seguradoras', 'apolices.seguradora_id', '=', 'seguradoras.id')
             ->get();
-
         } catch (\Exception $e) {
             throw new \Exception('Erro ao buscar apólices: ' . $e->getMessage());
         }
     }   
-
     public function destroy(int $id)
     {
         try {
@@ -80,7 +74,6 @@ class ApoliceService{
             throw new \Exception('Erro ao excluir apólice: ' . $e->getMessage());
         }
     }
-
     public function update(int $id, array $data)
     {
         try {
@@ -91,7 +84,6 @@ class ApoliceService{
             throw new \Exception('Erro ao atualizar apólice: ' . $e->getMessage());
         }
     }
-
     //Função para contar o total de apolices cadastradas no banco
     public function count(){
         try{
@@ -100,7 +92,6 @@ class ApoliceService{
             throw new \Exception('Erro ao contar apólices: ' . $e->getMessage());
         }
     }
-
     public function AlterarRamo(int $apoliceId, int $novoRamoId)
     {
         try {

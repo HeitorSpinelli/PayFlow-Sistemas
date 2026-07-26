@@ -141,17 +141,16 @@ export default function CreateApoliceModal({ open, setOpen, segurados, ramos, se
                                         <span className="text-sm text-muted-foreground">{segurado.tipo_pessoa === 'F' ? 'CPF' : 'CNPJ'}</span>
                                         <span className="font-medium text-sm">{segurado.nome_completo}</span>
                                         <span className="text-xs text-muted-foreground">{formataCpfCnpj(segurado.cpf_cnpj)}</span>
+                                        <span className="text-sm text-muted-foreground">{segurado.status}</span>
                                     </div>
                                 ))}
                             </div>
                         )}
-
                         {/* Nenhum resultado */}
                         {mostrarLista && busca.length > 0 && resultados.length === 0 && (
                             <p className="text-sm text-red-500">Nenhum cliente encontrado</p>
                         )}
                     </div>
-
                     {/* Número da apólice */}
                     <div className="space-y-2">
                         <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -165,13 +164,12 @@ export default function CreateApoliceModal({ open, setOpen, segurados, ramos, se
                             className="h-12 border-muted-foreground/20 rounded-xl"
                         />
                     </div>
-
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                 Seguradora*
                             </label>
-                            <Select onValueChange={(v) => setData('seguradora_id', v)}>
+                            <Select value={data.seguradora_id ? String(data.seguradora_id) : ""} onValueChange={(v) => setData('seguradora_id', v)}>
                                 <SelectTrigger className="h-12 border-muted-foreground/20 rounded-xl">
                                     <SelectValue placeholder="Selecione" />
                                 </SelectTrigger>
@@ -188,15 +186,27 @@ export default function CreateApoliceModal({ open, setOpen, segurados, ramos, se
                             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                 Ramo*
                             </label>
-                            <Select onValueChange={(v) => setData('ramo_id', v)}>
+                            <Select 
+                                value={data.ramo_id ? String(data.ramo_id) : ""} 
+                                onValueChange={(v) => setData('ramo_id', v)}
+                                disabled={!data.seguradora_id} // Desabilita se não tiver seguradora selecionada
+                            >
                                 <SelectTrigger className="h-12 border-muted-foreground/20 rounded-xl">
-                                    <SelectValue placeholder="Selecione" />
+                                <SelectValue 
+                                    placeholder={
+                                    data.seguradora_id 
+                                        ? "Selecione o ramo" 
+                                        : "Selecione a seguradora primeiro"
+                                    } 
+                                />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {ramos.map((ramo:any) => (
-                                        <SelectItem key={ramo.id} value={String(ramo.id)}>
-                                            {ramo.nome_ramo}
-                                        </SelectItem>
+                                {ramos
+                                    .filter((ramo: any) => String(ramo.seguradora_id) === String(data.seguradora_id))
+                                    .map((ramo: any) => (
+                                    <SelectItem key={ramo.id} value={String(ramo.id)}>
+                                        {ramo.nome_ramo}
+                                    </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -234,7 +244,6 @@ export default function CreateApoliceModal({ open, setOpen, segurados, ramos, se
                         </div>
                     </div>
                 </div>
-
                 {/* Valores e Pagamento */}
                 <div className="space-y-4 mt-4">
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -297,7 +306,6 @@ export default function CreateApoliceModal({ open, setOpen, segurados, ramos, se
                         </div>
                     </div>
                 </div>
-
                 {/* Observação */}
                 <div className="space-y-2 mt-4">
                     <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
