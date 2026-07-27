@@ -17,6 +17,16 @@ class SeguradoraController extends Controller
         $this->seguradorasService = $seguradorasService;
     }
 
+    public function index()
+    {
+        $seguradoras = $this->seguradorasService->buscarSeguradorasComRamos();
+
+        // Verifique se o nome aqui bate com a pasta/arquivo em resources/js/Pages/
+        return inertia('FunctionsApp/seguradoras', [
+            'seguradoras' => $seguradoras
+        ]);
+    }
+
     public function store(StoreSeguradoraRequest $request)
     {
         try {

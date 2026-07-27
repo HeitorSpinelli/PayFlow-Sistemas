@@ -10,8 +10,7 @@ class SeguradoService
     {
         try {
             Segurado::create($data);
-        } 
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             throw new \Exception('Erro ao cadastrar segurado: ' . $e->getMessage());
         }
     }
@@ -26,8 +25,7 @@ class SeguradoService
         try {
             $segurado = Segurado::findOrFail($id);
             $segurado->delete();
-        } 
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             throw new \Exception('Erro ao excluir segurado: ' . $e->getMessage());
         }
     }
@@ -37,8 +35,7 @@ class SeguradoService
         try {
             $segurado = Segurado::findOrFail($id);
             $segurado->update($data);
-        } 
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             throw new \Exception('Erro ao atualizar segurado: ' . $e->getMessage());
         }
     }

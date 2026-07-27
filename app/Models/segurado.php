@@ -2,13 +2,17 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory; // 1. Import da trait HasFactory
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Apolice;
+use App\Models\Apolices; // Ajuste no nome da Model de Apólices
 
 class Segurado extends Model
 {
-    public function apolices(){
-        return $this->hasMany(apolices::class, 'cliente_id');
+    use HasFactory; // 2. HasFactory com H maiúsculo
+
+    public function apolices()
+    {
+        return $this->hasMany(Apolices::class, 'cliente_id');
     }
 
     // Defina que o atributo customizado 'status' deve ser incluído na serialização do modelo
@@ -28,12 +32,12 @@ class Segurado extends Model
 
         return $temApoliceVigente ? 'Ativo' : 'Para Renovar';
     }
-    
-    protected $fillable = [              
+
+    protected $fillable = [
         'nome_completo',
         'tipo_pessoa',
-        'cpf_cnpj',                        
-        'data_nascimento_fundacao', 
+        'cpf_cnpj',
+        'data_nascimento_fundacao',
         'email',
         'telefone_fixo',
         'celular_whatsapp',

@@ -10,8 +10,7 @@ class PagamentoService
     {
         try {
             pagamento::create($data);
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             throw new \Exception('Erro ao registrar pagamento: ' . $e->getMessage());
         }
     }
@@ -26,8 +25,7 @@ class PagamentoService
         try {
             $pagamento = pagamento::findOrFail($id);
             $pagamento->delete();
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             throw new \Exception('Erro ao excluir pagamento: ' . $e->getMessage());
         }
     }
@@ -37,8 +35,7 @@ class PagamentoService
         try {
             $pagamento = pagamento::findOrFail($id);
             $pagamento->update($data);
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             throw new \Exception('Erro ao atualizar pagamento: ' . $e->getMessage());
         }
     }
