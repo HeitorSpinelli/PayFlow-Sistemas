@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Head, Link } from '@inertiajs/react'; // Adicionado Link para a paginação
+import { useState, useEffect } from 'react';
+import { Head, Link, router } from '@inertiajs/react'; // Adicionado router
 import {
     Plus,
     ScrollText,
@@ -54,29 +54,27 @@ export default function Clientes({
     const [seguradoPesquisado, setSeguradoPesquisado] = useState('');
     const [exportarAberto, setExportarAberto] = useState(false);
 
-    // 1. Extrai a lista real de segurados
-    const listaDeSegurados =
-        segurados?.data ?? (Array.isArray(segurados) ? segurados : []);
-
-    // 2. Filtra por status
-    const seguradosFiltrados = listaDeSegurados.filter((segurado: any) => {
-        if (filtroSelecionado === 'Todos') return true;
-        if (filtroSelecionado === 'Ativos') return segurado.status === 'Ativo';
-        if (filtroSelecionado === 'Inativos')
-            return segurado.status === 'Inativo';
-        return true;
-    });
-
-    // 3. Filtra por pesquisa (Nome ou CPF/CNPJ)
-    const seguradosFiltradosComPesquisa = seguradosFiltrados.filter(
-        (segurado: any) => {
-            const termoPesquisa = seguradoPesquisado.toLowerCase();
-            return (
-                segurado.nome_completo?.toLowerCase().includes(termoPesquisa) ||
-                segurado.cpf_cnpj?.toLowerCase().includes(termoPesquisa)
+    // Efeito para disparar a busca no Back-end (Server-side)
+    useEffect(() => {
+        // Delay de 500ms para não pesquisar a cada letra digitada
+        const delaySearch = setTimeout(() => {
+            router.get(
+                window.location.pathname, // Usa a mesma URL da página atual
+                {
+                    busca: seguradoPesquisado,
+                    status:
+                        filtroSelecionado === 'Todos' ? '' : filtroSelecionado,
+                },
+                {
+                    preserveState: true, // Mantém os modais/inputs abertos
+                    preserveScroll: true, // Mantém a rolagem da tela
+                    replace: true, // Substitui no histórico do navegador
+                },
             );
-        },
-    );
+        }, 500);
+
+        return () => clearTimeout(delaySearch);
+    }, [seguradoPesquisado, filtroSelecionado]);
 
     const abrirPerfil = (segurado: any) => {
         setSeguradoSelecionado(segurado);
@@ -123,12 +121,8 @@ export default function Clientes({
                                 Clientes Ativos
                             </h2>
                             <p className="text-3xl font-bold tracking-tight text-green-500">
-                                {
-                                    seguradosFiltrados.filter(
-                                        (segurado: any) =>
-                                            segurado.status === 'Ativo',
-                                    ).length
-                                }
+                                {/* Corrigido: Agora usa as props totais do banco para não bugar com a paginação */}
+                                {total - totalInativos}
                             </p>
                         </div>
                         <ScrollText className="size-10 text-muted-foreground/50" />
@@ -156,7 +150,7 @@ export default function Clientes({
                                 Lista de Clientes
                             </h3>
                             <p className="text-xs text-muted-foreground">
-                                {total} cliente(s) encontrado(s)
+                                {segurados?.total ?? 0} cliente(s) encontrado(s)
                             </p>
                         </div>
 
@@ -178,7 +172,6 @@ export default function Clientes({
                                 <button
                                     onClick={() => {
                                         setFiltroAberto(!filtroAberto);
-                                        // Fecha o dropdown de exportar ao abrir o de filtro
                                         setExportarAberto(false);
                                     }}
                                     className="inline-flex h-9 min-w-[110px] items-center justify-center gap-2 rounded-md border border-sidebar-border bg-background px-3 text-sm font-medium transition-colors hover:bg-muted"
@@ -201,13 +194,11 @@ export default function Clientes({
                                                 }}
                                                 className={`flex w-full items-center justify-between px-3 py-2 text-sm transition-colors ${
                                                     filtroSelecionado === opcao
-                                                        ? // Opção ativa: fundo verde escuro com texto branco
-                                                          'bg-[#2D5A43] text-white'
+                                                        ? 'bg-[#2D5A43] text-white'
                                                         : 'text-foreground hover:bg-muted'
                                                 }`}
                                             >
                                                 {opcao}
-                                                {/* Checkmark visível apenas na opção selecionada */}
                                                 {filtroSelecionado ===
                                                     opcao && (
                                                     <Check className="size-4" />
@@ -217,11 +208,13 @@ export default function Clientes({
                                     </div>
                                 )}
                             </div>
-
-                            <button className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-sidebar-border bg-background px-3 text-sm font-medium transition-colors hover:bg-muted">
+                            <a
+                                href="/segurados/exportar"
+                                className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-sidebar-border bg-background px-3 text-sm font-medium transition-colors hover:bg-muted"
+                            >
                                 <Download className="size-4 text-muted-foreground" />
-                                Exportar
-                            </button>
+                                Exportar CSV
+                            </a>
                         </div>
                     </div>
 
@@ -253,7 +246,7 @@ export default function Clientes({
                             </thead>
                             <tbody>
                                 {segurados === null ||
-                                seguradosFiltradosComPesquisa.length === 0 ? (
+                                segurados?.data?.length === 0 ? (
                                     <tr>
                                         <td
                                             colSpan={7}
@@ -263,60 +256,57 @@ export default function Clientes({
                                         </td>
                                     </tr>
                                 ) : (
-                                    seguradosFiltradosComPesquisa.map(
-                                        (segurado: any) => (
-                                            <tr
-                                                key={segurado.id}
-                                                className="border-b border-sidebar-border transition-colors hover:bg-muted/30"
-                                            >
-                                                <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
-                                                    #
-                                                    {String(
-                                                        segurado.id,
-                                                    ).padStart(4, '0')}
-                                                </td>
-                                                <td className="h-12 px-4">
-                                                    {segurado.nome_completo}
-                                                </td>
-                                                <td className="h-12 px-4">
-                                                    {segurado.cpf_cnpj}
-                                                </td>
-                                                <td className="h-12 px-4">
-                                                    {segurado.telefone_fixo}
-                                                </td>
-                                                <td className="h-12 px-4">
-                                                    {segurado.cidade} -{' '}
-                                                    {segurado.estado}
-                                                </td>
-                                                <td className="h-12 px-4">
-                                                    <span
-                                                        className={`inline-flex rounded-md px-2.5 py-0.5 text-xs font-medium capitalize ${
-                                                            segurado.status ===
-                                                            'Ativo'
-                                                                ? 'bg-green-50 text-green-600'
-                                                                : 'bg-orange-50 text-orange-600'
-                                                        }`}
-                                                    >
-                                                        {segurado.status}
-                                                    </span>
-                                                </td>
-                                                <td className="h-12 px-4">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className="rounded-lg"
-                                                        onClick={() =>
-                                                            abrirPerfil(
-                                                                segurado,
-                                                            )
-                                                        } // ← abre o perfil, não o de criar
-                                                    >
-                                                        <MoreHorizontal className="size-4" />
-                                                    </Button>
-                                                </td>
-                                            </tr>
-                                        ),
-                                    )
+                                    segurados.data.map((segurado: any) => (
+                                        <tr
+                                            key={segurado.id}
+                                            className="border-b border-sidebar-border transition-colors hover:bg-muted/30"
+                                        >
+                                            <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                                                #
+                                                {String(segurado.id).padStart(
+                                                    4,
+                                                    '0',
+                                                )}
+                                            </td>
+                                            <td className="h-12 px-4">
+                                                {segurado.nome_completo}
+                                            </td>
+                                            <td className="h-12 px-4">
+                                                {segurado.cpf_cnpj}
+                                            </td>
+                                            <td className="h-12 px-4">
+                                                {segurado.telefone_fixo}
+                                            </td>
+                                            <td className="h-12 px-4">
+                                                {segurado.cidade} -{' '}
+                                                {segurado.estado}
+                                            </td>
+                                            <td className="h-12 px-4">
+                                                <span
+                                                    className={`inline-flex rounded-md px-2.5 py-0.5 text-xs font-medium capitalize ${
+                                                        segurado.status ===
+                                                        'Ativo'
+                                                            ? 'bg-green-50 text-green-600'
+                                                            : 'bg-orange-50 text-orange-600'
+                                                    }`}
+                                                >
+                                                    {segurado.status}
+                                                </span>
+                                            </td>
+                                            <td className="h-12 px-4">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="rounded-lg"
+                                                    onClick={() =>
+                                                        abrirPerfil(segurado)
+                                                    }
+                                                >
+                                                    <MoreHorizontal className="size-4" />
+                                                </Button>
+                                            </td>
+                                        </tr>
+                                    ))
                                 )}
                             </tbody>
                         </table>
@@ -366,7 +356,6 @@ export default function Clientes({
                                 <Link
                                     href={segurados.next_page_url}
                                     preserveScroll
-                                    
                                     className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-sidebar-border bg-background px-3 text-xs font-medium transition-colors hover:bg-muted"
                                 >
                                     Próxima

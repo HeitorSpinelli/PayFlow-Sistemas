@@ -2,30 +2,28 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory; // 1. Import da trait HasFactory
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Apolices; // Ajuste no nome da Model de Apólices
+use App\Models\Apolices;
 
 class Segurado extends Model
 {
-    use HasFactory; // 2. HasFactory com H maiúsculo
+    use HasFactory;
 
     public function apolices()
     {
         return $this->hasMany(Apolices::class, 'cliente_id');
     }
 
-    // Defina que o atributo customizado 'status' deve ser incluído na serialização do modelo
     protected $appends = ['status'];
 
+    // MANTENHA ISSO: É usado para mostrar o texto na tela do cliente
     public function getStatusAttribute(): string
     {
-        // Se não tem nenhuma apólice, está inativo
         if (!$this->apolices()->exists()) {
             return 'Inativo';
         }
 
-        // Verifica se existe alguma apólice cuja vigência ainda não terminou
         $temApoliceVigente = $this->apolices()
             ->where('fim_vigencia', '>=', now()->today())
             ->exists();
