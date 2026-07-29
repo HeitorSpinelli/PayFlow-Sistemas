@@ -34,12 +34,28 @@ class SeguradoController extends Controller
         // 1. Inicia a query base sem executar no banco ainda
         $query = Segurado::query();
 
-        // 2. Se o usuário digitar algo na busca (Nome ou CPF)
+        // 2. Se o usuário digitou algo na busca (Nome ou CPF)
         if ($request->filled('busca')) {
             $busca = $request->input('busca');
-            $query->where(function ($q) use ($busca) {
-                $q->where('nome_completo', 'like', "%{$busca}%")
-                    ->orWhere('cpf_cnpj', 'like', "%{$busca}%");
+            $buscaNumeros = preg_replace('/\D/', '', $busca);
+
+            $query->where(function ($q) use ($busca, $buscaNumeros) {
+                // Se o usuário digitou números (CPF/CNPJ com 3 ou mais dígitos)
+                if (!empty($buscaNumeros) && strlen($buscaNumeros) >= 3) {
+                    $q->where('cpf_cnpj', 'like', "{$buscaNumeros}%");
+                } else {
+                    // Se for Nome, divide por palavras para permitir pesquisar "João Silva" 
+                    // e encontrar "João Carlos da Silva"
+                    $termos = explode(' ', trim($busca));
+                    $q->where(function ($subQ) use ($termos) {
+                        foreach ($termos as $termo) {
+                            if (!empty($termo)) {
+                                $termoMinusculo = '%' . mb_strtolower($termo, 'UTF-8') . '%';
+                                $subQ->whereRaw('LOWER(nome_completo) LIKE ?', [$termoMinusculo]);
+                            }
+                        }
+                    });
+                }
             });
         }
 
@@ -77,7 +93,6 @@ class SeguradoController extends Controller
             ->orWhereDoesntHave('apolices', function ($query) {
                 $query->where('fim_vigencia', '>=', now()->today());
             })->count();
-
 
         return inertia('FunctionsApp/clientes', [
             'segurados'     => $segurados,
@@ -133,7 +148,7 @@ class SeguradoController extends Controller
             fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
             // Cabeçalho da Tabela (A primeira linha do Excel)
-            fputcsv($file, ['ID', 'Nome Completo', 'CPF/CNPJ','Telefone Fixo', 'Celular/WhatsApp', 'Endereço', 'Cidade', 'Estado', 'CEP', 'Observações', 'Data de Criação']);
+            fputcsv($file, ['ID', 'Nome Completo', 'CPF/CNPJ', 'Telefone Fixo', 'Celular/WhatsApp', 'Endereço', 'Cidade', 'Estado', 'CEP', 'Observações', 'Data de Criação']);
 
             // Loop por cada segurado cadastrado para preencher as linhas
             foreach ($segurados as $segurado) {

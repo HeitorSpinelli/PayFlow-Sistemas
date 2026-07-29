@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Seguradora extends Model
 {
+
+    use HasFactory;
+
     //Seguradoras parceiras, como Porto Seguro, Bradesco Seguros, SulAmérica, etc.
     protected $table = 'seguradoras';
 

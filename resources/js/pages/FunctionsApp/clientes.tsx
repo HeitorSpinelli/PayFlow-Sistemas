@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Head, Link, router } from '@inertiajs/react'; // Adicionado router
+import { useState, useRef } from 'react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     Plus,
     ScrollText,
@@ -12,16 +12,15 @@ import {
     ChevronLeft,
     ChevronRight,
     UserRound,
-    X,
 } from 'lucide-react';
 
 import CreateSeguradoModal from '@/components/modals/create-segurado-modal';
+import { formataCpfCnpj } from '@/utils/cpfMask';
 import { Button } from '@/components/ui/button';
 import SeguradoProfileModal from '@/components/modals/create-profile-modal';
-import { apolices, pagamentos } from '@/routes';
 import { Input } from '@/components/ui/input';
+import { formataInputBusca } from '@/utils/Searchformatter';
 
-// Interface para o objeto de paginação do Laravel
 interface PaginatedSegurados {
     data: any[];
     current_page: number;
@@ -47,34 +46,81 @@ export default function Clientes({
 }: PageProps) {
     const [openModal, setOpenModal] = useState(false);
     const [openProfile, setOpenProfile] = useState(false);
-    const [seguradoSelecionado, setSeguradoSelecionado] = useState<any>(null);
     const [filtroAberto, setFiltroAberto] = useState(false);
-    const [filtroSelecionado, setFiltroSelecionado] = useState('Todos');
     const opcoesFiltro = ['Todos', 'Ativos', 'Inativos'];
-    const [seguradoPesquisado, setSeguradoPesquisado] = useState('');
-    const [exportarAberto, setExportarAberto] = useState(false);
+    const [seguradoSelecionado, setSeguradoSelecionado] = useState<any>(null);
 
-    // Efeito para disparar a busca no Back-end (Server-side)
-    useEffect(() => {
-        // Delay de 500ms para não pesquisar a cada letra digitada
-        const delaySearch = setTimeout(() => {
+    // Lê os parâmetros atuais da URL para inicializar os estados corretamente
+    const urlParams =
+        typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search)
+            : new URLSearchParams();
+
+    const [seguradoPesquisado, setSeguradoPesquisado] = useState(
+        urlParams.get('busca') || '',
+    );
+    const [filtroSelecionado, setFiltroSelecionado] = useState(
+        urlParams.get('status') || 'Todos',
+    );
+
+    // Ref para controlar o debounce da busca sem precisar do useEffect
+    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Função de busca acionada ao digitar (com debounce de 500ms)
+    const handleBuscaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const valor = e.target.value;
+        setSeguradoPesquisado(valor);
+
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        searchTimeoutRef.current = setTimeout(() => {
+            const params = new URLSearchParams(window.location.search);
+
+            if (valor.trim() !== '') {
+                params.set('busca', valor);
+            } else {
+                params.delete('busca');
+            }
+            params.delete('page'); // Reseta para a página 1 ao realizar uma nova busca
+
             router.get(
-                window.location.pathname, // Usa a mesma URL da página atual
+                window.location.pathname,
+                Object.fromEntries(params.entries()),
                 {
-                    busca: seguradoPesquisado,
-                    status:
-                        filtroSelecionado === 'Todos' ? '' : filtroSelecionado,
-                },
-                {
-                    preserveState: true, // Mantém os modais/inputs abertos
-                    preserveScroll: true, // Mantém a rolagem da tela
-                    replace: true, // Substitui no histórico do navegador
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
                 },
             );
-        }, 500);
+        });
+    };
 
-        return () => clearTimeout(delaySearch);
-    }, [seguradoPesquisado, filtroSelecionado]);
+    // Função acionada ao selecionar um filtro de status
+    const handleFiltroChange = (opcao: string) => {
+        setFiltroSelecionado(opcao);
+        setFiltroAberto(false);
+
+        const params = new URLSearchParams(window.location.search);
+
+        if (opcao !== 'Todos') {
+            params.set('status', opcao);
+        } else {
+            params.delete('status');
+        }
+        params.delete('page'); // Reseta para a página 1 ao alterar o filtro
+
+        router.get(
+            window.location.pathname,
+            Object.fromEntries(params.entries()),
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            },
+        );
+    };
 
     const abrirPerfil = (segurado: any) => {
         setSeguradoSelecionado(segurado);
@@ -121,7 +167,6 @@ export default function Clientes({
                                 Clientes Ativos
                             </h2>
                             <p className="text-3xl font-bold tracking-tight text-green-500">
-                                {/* Corrigido: Agora usa as props totais do banco para não bugar com a paginação */}
                                 {total - totalInativos}
                             </p>
                         </div>
@@ -160,10 +205,8 @@ export default function Clientes({
                                 <Input
                                     placeholder="Buscar por nome, CPF..."
                                     className="h-9 w-64 rounded-md border border-sidebar-border bg-background pr-3 pl-9 text-sm focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
-                                    value={seguradoPesquisado}
-                                    onChange={(e) =>
-                                        setSeguradoPesquisado(e.target.value)
-                                    }
+                                    value={formataInputBusca(seguradoPesquisado)}
+                                    onChange={handleBuscaChange}
                                 />
                             </div>
 
@@ -172,7 +215,6 @@ export default function Clientes({
                                 <button
                                     onClick={() => {
                                         setFiltroAberto(!filtroAberto);
-                                        setExportarAberto(false);
                                     }}
                                     className="inline-flex h-9 min-w-[110px] items-center justify-center gap-2 rounded-md border border-sidebar-border bg-background px-3 text-sm font-medium transition-colors hover:bg-muted"
                                 >
@@ -188,10 +230,9 @@ export default function Clientes({
                                         {opcoesFiltro.map((opcao) => (
                                             <button
                                                 key={opcao}
-                                                onClick={() => {
-                                                    setFiltroSelecionado(opcao);
-                                                    setFiltroAberto(false);
-                                                }}
+                                                onClick={() =>
+                                                    handleFiltroChange(opcao)
+                                                }
                                                 className={`flex w-full items-center justify-between px-3 py-2 text-sm transition-colors ${
                                                     filtroSelecionado === opcao
                                                         ? 'bg-[#2D5A43] text-white'
@@ -272,7 +313,11 @@ export default function Clientes({
                                                 {segurado.nome_completo}
                                             </td>
                                             <td className="h-12 px-4">
-                                                {segurado.cpf_cnpj}
+                                                {segurado.cpf_cnpj
+                                                    ? formataCpfCnpj(
+                                                        segurado.cpf_cnpj,
+                                                    )
+                                                : '-'}
                                             </td>
                                             <td className="h-12 px-4">
                                                 {segurado.telefone_fixo}
@@ -374,7 +419,7 @@ export default function Clientes({
                     </div>
                 </div>
             </div>
-            {/* Modal de criar cliente */}
+
             <CreateSeguradoModal open={openModal} setOpen={setOpenModal} />
             {seguradoSelecionado && (
                 <SeguradoProfileModal

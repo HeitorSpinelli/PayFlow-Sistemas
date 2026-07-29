@@ -2,13 +2,23 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model; // Corrigido o ;; duplo
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Database\Factories\ApoliceFactory; // Importa a Factory correspondente
 
 class apolices extends Model
 {
-    //modelo da apólice, com os campos necessários para o cadastro e gerenciamento das apólices
+    use HasFactory;
+
+    /**
+     * Define explicitamente qual Factory essa Model deve utilizar
+     */
+    protected static function newFactory()
+    {
+        return ApoliceFactory::new();
+    }
 
     protected $table = 'apolices';
 
@@ -26,28 +36,23 @@ class apolices extends Model
      */
     public function getStatusVigenciaAttribute(): string
     {
-        // 1. Se não houver fim de vigência cadastrado, define um status padrão
         if (!$this->fim_vigencia || !$this->inicio_vigencia) {
             return 'N/A';
         }
 
         $hoje = Carbon::today();
 
-        // Garante que ambos os lados sejam instâncias do Carbon
         $fimVigencia = Carbon::parse($this->fim_vigencia);
         $inicioVigencia = Carbon::parse($this->inicio_vigencia);
 
-        // Se a data de hoje já passou do fim da vigência
         if ($hoje->gt($fimVigencia)) {
             return 'Para Renovar';
         }
 
-        // Se a data de hoje está dentro do período de vigência
         if ($hoje->between($inicioVigencia, $fimVigencia)) {
             return 'Vigente';
         }
 
-        // Caso o início seja no futuro
         if ($hoje->lt($inicioVigencia)) {
             return 'A Iniciar';
         }
@@ -70,12 +75,8 @@ class apolices extends Model
         'observacoes'
     ];
 
-    //isso daqui e um atalho para conectar a apolice com segurado,
-    // assim eu não preciso fazer um query manual para buscar o cliente
-    //so preciso usar o apolice->cliente, moro?
-public function cliente(): BelongsTo
-{
-    return $this->belongsTo(segurado::class, 'cliente_id');
-}
-
+    public function cliente(): BelongsTo
+    {
+        return $this->belongsTo(Segurado::class, 'cliente_id');
+    }
 }

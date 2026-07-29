@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Services\ApoliceService;
+use App\Models\apolices;
 use Illuminate\Http\Request;
 
 class ApolicesController extends Controller
@@ -33,6 +34,24 @@ class ApolicesController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Erro ao cadastrar apólice: ' . $e->getMessage());
         }
+    }
+
+    public function show(int $id){
+
+    $query = apolices::query();
+
+    $apolices = $query->orderBy('id')->paginate(10)->withQueryString();
+
+    $total = apolices::count();
+
+    $totalAtivos = apolices::where('fim_vigencia', '>=', now()->today())->count();
+    
+    }
+
+    public function status(int $id){
+        $query = apolices::query();
+
+
     }
 
     public function update(int $id, Request $request)
