@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreRamoRequest;
+use App\Http\Controllers\Controller;
+use App\Services\RamoService;
 
-class ramosController extends Controller
+class RamosController extends Controller
 {
     private $ramoService;
 
