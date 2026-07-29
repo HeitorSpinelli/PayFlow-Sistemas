@@ -1,6 +1,9 @@
 {
     "$schema": "https://www.schemastore.org/package.json",
     "private": true,
+    "overrides": {
+        "brace-expansion": "^5.0.8"
+    },
     "type": "module",
     "scripts": {
         "build": "vite build",

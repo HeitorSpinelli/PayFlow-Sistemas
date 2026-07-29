@@ -41,7 +41,7 @@ class SeguradoController extends Controller
 
             $query->where(function ($q) use ($busca, $buscaNumeros) {
                 // Se o usuário digitou números (CPF/CNPJ com 3 ou mais dígitos)
-                if (!empty($buscaNumeros) && strlen($buscaNumeros) >= 3) {
+                if (!empty($buscaNumeros) && strlen($buscaNumeros) >= 1) {
                     $q->where('cpf_cnpj', 'like', "{$buscaNumeros}%");
                 } else {
                     // Se for Nome, divide por palavras para permitir pesquisar "João Silva" 
