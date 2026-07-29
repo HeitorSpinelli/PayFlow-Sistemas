@@ -21,6 +21,7 @@ import SeguradoProfileModal from '@/components/modals/create-profile-modal';
 import { Input } from '@/components/ui/input';
 import { formataInputBusca } from '@/utils/Searchformatter';
 
+// Tipagem para os dados paginados de segurados, incluindo informações de paginação e links para navegação
 interface PaginatedSegurados {
     data: any[];
     current_page: number;
@@ -33,6 +34,7 @@ interface PaginatedSegurados {
     links: { url: string | null; label: string; active: boolean }[];
 }
 
+// Tipagem para as props da página, incluindo os dados paginados de segurados e estatísticas
 interface PageProps {
     segurados: PaginatedSegurados;
     total: number;
@@ -43,6 +45,8 @@ export default function Clientes({
     segurados,
     total,
     totalInativos,
+
+    //PageProps são passadas como props para o componente Clientes, permitindo que ele acesse os dados de segurados e estatísticas diretamente e ja inicialize os estados de busca e filtro com base nos parâmetros da URL com sua devida tipagem
 }: PageProps) {
     const [openModal, setOpenModal] = useState(false);
     const [openProfile, setOpenProfile] = useState(false);
@@ -52,9 +56,8 @@ export default function Clientes({
 
     // Lê os parâmetros atuais da URL para inicializar os estados corretamente
     const urlParams =
-        typeof window !== 'undefined'
-            ? new URLSearchParams(window.location.search)
-            : new URLSearchParams();
+    //define a tipagem de urlParams como URLSearchParams, que é uma interface nativa do JavaScript para manipular os parâmetros da URL. Isso permite que o código acesse e modifique os parâmetros de busca e filtro diretamente da URL, garantindo que a interface do usuário reflita corretamente o estado atual da aplicação.
+        typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
 
     const [seguradoPesquisado, setSeguradoPesquisado] = useState(
         urlParams.get('busca') || '',
@@ -205,7 +208,9 @@ export default function Clientes({
                                 <Input
                                     placeholder="Buscar por nome, CPF..."
                                     className="h-9 w-64 rounded-md border border-sidebar-border bg-background pr-3 pl-9 text-sm focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
-                                    value={formataInputBusca(seguradoPesquisado)}
+                                    value={formataInputBusca(
+                                        seguradoPesquisado,
+                                    )}
                                     onChange={handleBuscaChange}
                                 />
                             </div>
@@ -315,9 +320,9 @@ export default function Clientes({
                                             <td className="h-12 px-4">
                                                 {segurado.cpf_cnpj
                                                     ? formataCpfCnpj(
-                                                        segurado.cpf_cnpj,
-                                                    )
-                                                : '-'}
+                                                          segurado.cpf_cnpj,
+                                                      )
+                                                    : '-'}
                                             </td>
                                             <td className="h-12 px-4">
                                                 {segurado.telefone_fixo}
