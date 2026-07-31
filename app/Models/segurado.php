@@ -38,16 +38,24 @@ class Segurado extends Model
     }
 
     public function getStatusAttribute(): string
-    {
-        //Se segurado nn tiver apolices retorna status Inativo
-        if (!$this->apolices->isEmpty()) {
-            return 'Inativo';
-        }
-
-        $temApoliceVigente = $this->apolices
-            ->where('fim_vigencia', '>=', now()->today())
-            ->isNotEmpty();
-
-        return $temApoliceVigente ? 'Ativo' : 'Para Renovar';
+{
+    // 1. Se o segurado não tiver apólices cadastradas
+    if ($this->apolices->isEmpty()) {
+        return 'Inativo';
     }
+
+    $hoje = \Carbon\Carbon::today();
+
+    // 2. Verifica se tem alguma apólice vigente
+    $temApoliceVigente = $this->apolices->contains(function ($apolice) use ($hoje) {
+        return $apolice->fim_vigencia && $apolice->fim_vigencia->gte($hoje);
+    });
+
+    if ($temApoliceVigente) {
+        return 'Ativo';
+    }
+
+    // 3. Se tem apólices, mas nenhuma está vigente (todas vencidas)
+    return 'Para Renovar';
+}
 }

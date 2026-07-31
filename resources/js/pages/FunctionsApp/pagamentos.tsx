@@ -152,12 +152,11 @@ export default function Pagamentos({
                                                     setFiltroSelecionado(opcao);
                                                     setFiltroAberto(false);
                                                 }}
-                                                className={`flex w-full items-center justify-between px-3 py-2 text-sm transition-colors ${
-                                                    filtroSelecionado === opcao
+                                                className={`flex w-full items-center justify-between px-3 py-2 text-sm transition-colors ${filtroSelecionado === opcao
                                                     // Opção ativa: fundo verde escuro com texto branco
                                                     ? 'bg-[#2D5A43] text-white'
                                                     : 'hover:bg-muted text-foreground'
-                                                }`}
+                                                    }`}
                                             >
                                                 {opcao}
                                                 {/* Checkmark visível apenas na opção selecionada */}
@@ -213,16 +212,14 @@ export default function Pagamentos({
                                         <td className="px-4 py-3 text-muted-foreground">{formatarData(p.data_pagamento)}</td>
                                         <td className="px-4 py-3 capitalize text-muted-foreground">{p.forma_pagamento}</td>
                                         <td className="px-4 py-3">
-                                            <span className={`inline-flex px-2.5 py-0.5 rounded-md text-xs font-medium capitalize ${
-                                                p.status === 'confirmado'
+                                            <span className={`inline-flex px-2.5 py-0.5 rounded-md text-xs font-medium capitalize ${p.status === 'confirmado'
                                                 ? 'bg-green-50 text-green-600'
                                                 : 'bg-orange-50 text-orange-600'
-                                            }`}>
+                                                }`}>
                                                 {p.status}
                                             </span>
                                         </td>
                                         <td className="px-4 py-3">
-                                            {/* Mesmo padrão usado em Clientes: clique abre o modal de detalhes */}
                                             <Button
                                                 variant="outline"
                                                 size="sm"

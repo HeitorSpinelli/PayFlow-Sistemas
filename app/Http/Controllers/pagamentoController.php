@@ -6,7 +6,7 @@ use App\Http\Requests\StorePagamentoRequest;
 use App\Http\Requests\UpdatePagamentoRequest;
 use App\Models\pagamento;
 use App\Models\segurado;
-use App\Models\apolices;
+use App\Models\Apolice;
 use App\Services\PagamentoService;
 
 class pagamentoController extends Controller
@@ -47,7 +47,7 @@ class pagamentoController extends Controller
             'totalConfirmados' => pagamento::where('status', 'confirmado')->count(),
             'totalPendentes' => pagamento::where('status', 'pendente')->count(),
             'segurados' => segurado::select('id', 'nome_completo', 'cpf_cnpj')->get(),
-            'apolices' => apolices::select('id', 'numero_apolice', 'cliente_id')->get(),
+            'apolices' => Apolice::select('id', 'numero_apolice', 'cliente_id')->get(),
         ]);
     }
 
