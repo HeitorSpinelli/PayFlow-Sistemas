@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Services\ApoliceService;
-use App\Models\apolices;
 use Illuminate\Http\Request;
 
 class ApolicesController extends Controller
@@ -13,22 +12,28 @@ class ApolicesController extends Controller
 
     public function __construct(ApoliceService $apoliceService)
     {
-        $this->apoliceService = $apoliceService;
+        $this->apoliceService =$apoliceService;
     }
 
-    public function index()
+    /**
+     * Exibe a listagem de apólices com paginação, filtros e dados auxiliares.
+     */
+    public function index(Request $request)
     {
-        return inertia('FunctionsApp/apolices', [
-            'apolices'    => $this->apoliceService->buscarApolices(),
-            'segurados'   => $this->apoliceService->buscar(),
-            'seguradoras' => $this->apoliceService->buscarSeguradoras(),
-            'ramos'       => $this->apoliceService->buscarRamos(),
-        ]);
+        //toda a lógica pesada de busca e filtros para o Service
+        $dados = $this->apoliceService->filtrarEListar($request);
+
+        return inertia('FunctionsApp/apolices', $dados);
     }
 
+    /**
+     * Cadastra uma nova apólice.
+     */
     public function store(Request $request)
     {
         try {
+            // Nota: Se você estiver usando FormRequest (ex: StoreApoliceRequest), 
+            // basta substituir Request por StoreApoliceRequest nos parâmetros.
             $this->apoliceService->store($request->all());
             return redirect()->back()->with('success', 'Apólice cadastrada com sucesso!');
         } catch (\Exception $e) {
@@ -36,34 +41,22 @@ class ApolicesController extends Controller
         }
     }
 
-    public function show(int $id){
-
-    $query = apolices::query();
-
-    $apolices = $query->orderBy('id')->paginate(10)->withQueryString();
-
-    $total = apolices::count();
-
-    $totalAtivos = apolices::where('fim_vigencia', '>=', now()->today())->count();
-    
-    }
-
-    public function status(int $id){
-        $query = apolices::query();
-
-
-    }
-
-    public function update(int $id, Request $request)
+    /**
+     * Atualiza uma apólice existente.
+     */
+    public function update(Request $request, int$id)
     {
         try {
-            $this->apoliceService->update($id, $request->all());
+            $this->apoliceService->update($id,$request->all());
             return redirect()->back()->with('success', 'Apólice atualizada com sucesso!');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Erro ao atualizar apólice: ' . $e->getMessage());
         }
     }
 
+    
+    //Exclui uma apólice.
+    
     public function destroy(int $id)
     {
         try {
@@ -74,13 +67,14 @@ class ApolicesController extends Controller
         }
     }
 
-    public function atualizarRamo(int $id, Request $request)
+    public function atualizarRamo(Request $request, int $id)
     {
         try {
-            $this->apoliceService->AlterarRamo($id, $request->input('ramo_id'));
-            return redirect()->back()->with('success', 'Ramo da apólice alterado com sucesso!');
+            // Passamos apenas o ID do ramo extraído do request
+            $this->apoliceService->alterarRamo($id, $request->input('ramo_id'));
+            return redirect()->back()->with('success', 'Ramo atualizado com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao alterar ramo: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erro ao atualizar ramo: ' . $e->getMessage());
         }
     }
 }

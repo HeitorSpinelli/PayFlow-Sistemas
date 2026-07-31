@@ -27,7 +27,7 @@ class StoreSeguradoRequest extends FormRequest
             'nome_completo'            => 'required|string|max:255',
             'tipo_pessoa'              => 'required|in:pf,pj',
             'cpf_cnpj'                 => 'required|string|max:20|unique:segurados,cpf_cnpj',
-            'data_nascimento_fundacao' => 'required|date',
+            'data_nascimento_fundacao' => 'required|date|before_or_equal:today',
             'email'                    => 'required|email|max:255',
             'telefone_fixo'            => 'nullable|string|max:20',
             'celular_whatsapp'         => 'required|string|max:20',
@@ -35,7 +35,6 @@ class StoreSeguradoRequest extends FormRequest
             'cidade'                   => 'required|string|max:100',
             'estado'                   => 'required|string|size:2',
             'cep'                      => 'required|string|max:15',
-            'status'                   => 'nullable|string|in:Ativo,Inativo,Pendente',
             'observacoes'              => 'nullable|string',
         ];
     }
@@ -46,8 +45,9 @@ class StoreSeguradoRequest extends FormRequest
             'tipo_pessoa.required' => 'O campo tipo de pessoa é obrigatório.',
             'tipo_pessoa.in' => 'O campo tipo de pessoa deve ser "pf" ou "pj".',
             'cpf_cnpj.required' => 'O campo CPF/CNPJ é obrigatório.',
-            'cpf_cnpj.unique' => 'O CPF/CNPJ informado já está cadastrado.',
+            'cpf_cnpj.unique' => 'O CPF/CNPJ já está cadastrado.',
             'data_nascimento_fundacao.required' => 'O campo data de nascimento/fundação é obrigatório.',
+            'data_nascimento_fundacao.before_or_equal' => 'A data não pode ser superior à data atual.',
             'data_nascimento_fundacao.date' => 'O campo data de nascimento/fundação deve ser uma data válida.',
             'email.required' => 'O campo e-mail é obrigatório.',
             'email.email' => 'O campo e-mail deve ser um endereço de e-mail válido.',

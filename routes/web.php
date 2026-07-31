@@ -31,7 +31,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/segurados/exportar', [SeguradoController::class, 'exportar']);
 
     //Rota para exibir a página de apolices, chamando a classe ApolicesController e a função index
-    Route::get('/apolices', [ApolicesController::class, 'index'])->name('apolices');
+    Route::get('/apolices', [ApolicesController::class, 'index'])->name('apolices.index');
 
     Route::delete('/apolices/{id}', [ApolicesController::class, 'destroy'])->name('apolices.destroy');
     Route::put('/apolices/{id}', [ApolicesController::class, 'update'])->name('apolices.update');

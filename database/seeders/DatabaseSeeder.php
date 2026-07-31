@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
         User::factory(8)->create();
 
         // 2. Cria 2500 clientes/segurados
-        Segurado::factory(200)->create();
+        Segurado::factory(100)->create();
 
         // 3. Cria as Seguradoras e Ramos primeiro (invertido para evitar erro de FK)
         Seguradora::factory(86)->create();

@@ -2,10 +2,11 @@
 
 namespace App\Services;
 
-use App\Models\Apolices;
+use App\Models\Apolice; // Padronizado para o singular
 use App\Models\Ramo;
 use App\Models\Seguradora;
 use App\Models\Segurado;
+use Illuminate\Http\Request;
 
 class ApoliceService
 {
@@ -16,10 +17,55 @@ class ApoliceService
         $this->seguradorasService = $seguradorasService;
     }
 
+    /**
+     * Responsável por filtrar, paginar e buscar dados auxiliares para a tela de apólices.
+     */
+    public function filtrarEListar(Request $request)
+    {
+        $query = Apolice::with(['cliente', 'ramo', 'seguradora']);
+
+        // Filtro de Busca (Número da Apólice ou Nome do Cliente)
+        if ($request->filled('busca')) {
+            $busca = trim($request->input('busca'));
+            $buscaNumeros = preg_replace('/\D/', '', $busca);
+
+            $query->where(function ($q) use ($busca, $buscaNumeros) {
+                if (!empty($buscaNumeros)) {
+                    $q->where('numero_apolice', 'iLIKE', "%{$buscaNumeros}%");
+                }
+
+                $q->orWhereHas('cliente', function ($subQ) use ($busca) {
+                    $subQ->where('nome_completo', 'iLIKE', "%{$busca}%");
+                });
+            });
+        }
+
+        // Filtro de Status unificado por data
+        if ($request->filled('status')) {
+            $status = $request->input('status');
+
+            if ($status === 'Renovadas' || $status === 'Renovada') {
+                $query->where('fim_vigencia', '>=', now()->today());
+            } elseif ($status === 'Vencidas') {
+                $query->where('fim_vigencia', '<', now()->today());
+            }
+        }
+
+        return [
+            'apolices'       => $query->orderBy('id')->paginate(10)->withQueryString(),
+            'total'          => Apolice::count(),
+            'totalRenovadas' => Apolice::where('fim_vigencia', '>=', now()->today())->count(),
+            'totalVencidas'  => Apolice::where('fim_vigencia', '<', now()->today())->count(),
+            'segurados'      => $this->buscar(),
+            'seguradoras'    => $this->buscarSeguradoras(),
+            'ramos'          => $this->buscarRamos(),
+        ];
+    }
+
     public function store(array $data)
     {
         try {
-            $apolice = Apolices::create($data);
+            $apolice = Apolice::create($data);
 
             // Atualiza status da seguradora vinculada
             $this->seguradorasService->activeInativeSeguradora($apolice->seguradora_id);
@@ -57,34 +103,10 @@ class ApoliceService
         }
     }
 
-    public function buscarApolices()
-    {
-        try {
-            return Apolices::select(
-                'apolices.id',
-                'apolices.numero_apolice',
-                'apolices.valor_premio_total',
-                'apolices.quantidade_parcelas',
-                'apolices.inicio_vigencia',
-                'apolices.fim_vigencia',
-                'apolices.status',
-                'segurados.nome_completo',
-                'ramos.nome_ramo',
-                'seguradoras.nome_fantasia'
-            )
-                ->join('segurados',   'apolices.cliente_id',    '=', 'segurados.id')
-                ->join('ramos',       'apolices.ramo_id',       '=', 'ramos.id')
-                ->join('seguradoras', 'apolices.seguradora_id', '=', 'seguradoras.id')
-                ->get();
-        } catch (\Exception $e) {
-            throw new \Exception('Erro ao buscar apólices: ' . $e->getMessage());
-        }
-    }
-
     public function destroy(int $id)
     {
         try {
-            $apolice = Apolices::findOrFail($id);
+            $apolice = Apolice::findOrFail($id);
             $seguradoraId = $apolice->seguradora_id;
 
             $apolice->delete();
@@ -99,7 +121,7 @@ class ApoliceService
     public function update(int $id, array $data)
     {
         try {
-            $apolice = Apolices::findOrFail($id);
+            $apolice = Apolice::findOrFail($id);
             $seguradoraAntigaId = $apolice->seguradora_id;
 
             $apolice->update($data);
@@ -117,16 +139,16 @@ class ApoliceService
     public function count()
     {
         try {
-            return Apolices::count();
+            return Apolice::count();
         } catch (\Exception $e) {
             throw new \Exception('Erro ao contar apólices: ' . $e->getMessage());
         }
     }
 
-    public function AlterarRamo(int $apoliceId, int $novoRamoId)
+    public function alterarRamo(int $apoliceId, int $novoRamoId) // Ajustado para camelCase
     {
         try {
-            $apolice = Apolices::findOrFail($apoliceId);
+            $apolice = Apolice::findOrFail($apoliceId);
             $apolice->ramo_id = $novoRamoId;
             $apolice->save();
         } catch (\Exception $e) {

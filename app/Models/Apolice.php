@@ -3,18 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model; // Corrigido o ;; duplo
+use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Database\Factories\ApoliceFactory; // Importa a Factory correspondente
+use Database\Factories\ApoliceFactory;
 
-class apolices extends Model
+class Apolice extends Model
 {
     use HasFactory;
 
-    /**
-     * Define explicitamente qual Factory essa Model deve utilizar
-     */
     protected static function newFactory()
     {
         return ApoliceFactory::new();
@@ -22,18 +19,13 @@ class apolices extends Model
 
     protected $table = 'apolices';
 
-    // Inclui o status_vigencia automaticamente na serialização (Inertia/React)
     protected $appends = ['status_vigencia'];
 
-    // Garante que o Laravel trate os campos como objetos Carbon (datas)
     protected $casts = [
         'inicio_vigencia' => 'date',
         'fim_vigencia' => 'date',
     ];
 
-    /**
-     * Accessor para calcular o status da vigência em tempo real
-     */
     public function getStatusVigenciaAttribute(): string
     {
         if (!$this->fim_vigencia || !$this->inicio_vigencia) {
@@ -75,8 +67,20 @@ class apolices extends Model
         'observacoes'
     ];
 
+    // --- Relacionamentos Eloquent ---
+
     public function cliente(): BelongsTo
     {
         return $this->belongsTo(Segurado::class, 'cliente_id');
+    }
+
+    public function ramo(): BelongsTo
+    {
+        return $this->belongsTo(Ramo::class, 'ramo_id');
+    }
+
+    public function seguradora(): BelongsTo
+    {
+        return $this->belongsTo(Seguradora::class, 'seguradora_id');
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreSeguradoRequest;
 use App\Http\Requests\UpdateSeguradoRequest;
+use App\Models\apolices;
 use App\Models\Segurado;
 use App\Services\SeguradoService;
 use Illuminate\Http\Request; // <-- IMPORTANTE: Adicionado para receber os dados da pesquisa
@@ -32,7 +33,7 @@ class SeguradoController extends Controller
     public function show(Request $request)
     {
         // 1. Inicia a query base sem executar no banco ainda
-        $query = Segurado::query();
+        $query = Segurado::with('apolices');
 
         // 2. Se o usuário digitou algo na busca (Nome ou CPF)
         if ($request->filled('busca')) {
@@ -42,7 +43,7 @@ class SeguradoController extends Controller
             $query->where(function ($q) use ($busca, $buscaNumeros) {
                 // Se o usuário digitou números (CPF/CNPJ com 3 ou mais dígitos)
                 if (!empty($buscaNumeros) && strlen($buscaNumeros) >= 1) {
-                    $q->where('cpf_cnpj', 'like', "{$buscaNumeros}%");
+                    $q->where('cpf_cnpj', 'iLIKE', "{$buscaNumeros}%");
                 } else {
                     // Se for Nome, divide por palavras para permitir pesquisar "João Silva" 
                     // e encontrar "João Carlos da Silva"
@@ -51,7 +52,7 @@ class SeguradoController extends Controller
                         foreach ($termos as $termo) {
                             if (!empty($termo)) {
                                 $termoMinusculo = '%' . mb_strtolower($termo, 'UTF-8') . '%';
-                                $subQ->whereRaw('LOWER(nome_completo) LIKE ?', [$termoMinusculo]);
+                                $subQ->whereRaw('LOWER(nome_completo) iLIKE ?', [$termoMinusculo]);
                             }
                         }
                     });

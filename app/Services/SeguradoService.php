@@ -39,12 +39,4 @@ class SeguradoService
             throw new \Exception('Erro ao atualizar segurado: ' . $e->getMessage());
         }
     }
-
-    public function activeInative(int $id)
-    {
-        if ($id) {
-            $segurado = Segurado::findOrFail($id);
-            $segurado->ativo = !$segurado->ativo;
-        }
-    }
 }
