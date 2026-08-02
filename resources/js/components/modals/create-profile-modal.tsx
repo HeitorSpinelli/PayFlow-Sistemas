@@ -350,7 +350,7 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                             <span className="font-semibold text-foreground">
                                 {segurado.nome_completo}
                             </span>{' '}
-                            e todos os seus dados serão removidos permanentemente do sistema.
+                            Será inativado e não poderá mais ser utilizado em cadastros futuros. Tem certeza que deseja prosseguir com a exclusão?
                         </p>
                     </div>
                 )}

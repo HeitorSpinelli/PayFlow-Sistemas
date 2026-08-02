@@ -24,6 +24,7 @@ return new class extends Migration
             $table->string('cep', 15)->nullable();
             $table->text('observacoes')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

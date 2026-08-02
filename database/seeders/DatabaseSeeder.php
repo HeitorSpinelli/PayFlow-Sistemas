@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use App\Models\Segurado;
-use App\Models\Apolices;
+use App\Models\Apolice;
 use App\Models\Seguradora;
 use App\Models\Ramo;
 use Illuminate\Database\Seeder;
@@ -24,6 +24,6 @@ class DatabaseSeeder extends Seeder
         Ramo::factory(5)->create();
 
         // 4. Cria 521 apólices vinculadas aos clientes e seguradoras já existentes
-        Apolices::factory(521)->create();
+        Apolice::factory(521)->create();
     }
 }

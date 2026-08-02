@@ -17,17 +17,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return inertia('dashboard');
     })->name('dashboard');
 
-    //Rota para consulta no banco dos segurados cadastrados no sistema
+    //rota de busca
+    Route::get('/clientes/buscar-por-cpf/{cpf}', [SeguradoController::class, 'buscarPorCpf'])->name('clientes.buscar-por-cpf');
+
     Route::get('/clientes', [SeguradoController::class, 'show'])->name('clientes');
-
-    //Rota para salvar clientes via post chamando a classe SeguradoController e a função store
     Route::post('/clientes', [SeguradoController::class, 'store']);
-
-    //Rotas para apagar e atualizar clientes
-
     Route::delete('/clientes/{id}', [SeguradoController::class, 'destroy'])->name('clientes.destroy');
     Route::put('/clientes/{id}', [SeguradoController::class, 'update'])->name('clientes.update');
-    // Rota para exportar os dados
     Route::get('/segurados/exportar', [SeguradoController::class, 'exportar']);
 
     //Rota para exibir a página de apolices, chamando a classe ApolicesController e a função index

@@ -9,9 +9,25 @@ class SeguradoService
     public function store(array $data)
     {
         try {
-            Segurado::create($data);
+
+            //Define o valor do segurado existente como o valor retornado pela consulta ao banco de dados, buscando por um registro com o mesmo CPF/CNPJ que não esteja excluído
+            $seguradoExistente = Segurado::withoutTrashed()
+                ->where('cpf_cnpj', $data['cpf_cnpj'])
+                //First é usado para retornar o primeiro registro encontrado, caso exista algum registro com o mesmo CPF/CNPJ
+                ->first();
+
+            //Se o segurado existente for um que tenha sido excluído, ele será restaurado e atualizado com os novos dados recebidos
+            if ($seguradoExistente->trashed()) {
+                $seguradoExistente->restore();
+
+                //Se o segurado existente for um que tenha sido excluído, ele será restaurado e atualizado com os novos dados recebidos
+                $seguradoExistente->update($data);
+                return $seguradoExistente;
+            }
+
+            return Segurado::create($data);
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao cadastrar segurado: ' . $e->getMessage());
+            throw new \Exception('Erro ao criar ou reativar segurado: ' . $e->getMessage());
         }
     }
 

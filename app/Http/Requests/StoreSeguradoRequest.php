@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreSeguradoRequest extends FormRequest
@@ -26,7 +27,14 @@ class StoreSeguradoRequest extends FormRequest
                 //Validação dos dados recebidos do form segurados
             'nome_completo'            => 'required|string|max:255',
             'tipo_pessoa'              => 'required|in:pf,pj',
-            'cpf_cnpj'                 => 'required|string|max:20|unique:segurados,cpf_cnpj',
+            //Smart Registration para validar CPF ou CNPJ dependendo do tipo de pessoa e reativar um cliente caso tenha sido excluído anteriormente
+            'cpf_cnpj'                 => [
+                'required', 
+                'string', 
+                'max:20', 
+                //mantem a regra de cpf ser unico menos os registros dos que foram deletados
+                Rule::unique('segurados', 'cpf_cnpj')->withoutTrashed(),
+            ],
             'data_nascimento_fundacao' => 'required|date|before_or_equal:today',
             'email'                    => 'required|email|max:255',
             'telefone_fixo'            => 'nullable|string|max:20',

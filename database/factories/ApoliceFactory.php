@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\apolices;
+use App\Models\Apolice;
 use App\Models\Segurado;
 use App\Models\Seguradora;
 use App\Models\Ramo;
@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ApoliceFactory extends Factory
 {
-    protected $model = apolices::class;
+    protected $model = Apolice::class;
 
     public function definition(): array
     {
