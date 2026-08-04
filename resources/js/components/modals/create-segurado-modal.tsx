@@ -1,330 +1,453 @@
+import { useForm } from '@inertiajs/react';
+import {
+    Check,
+    ChevronRight,
+    FileText,
+    MapPin,
+    Phone,
+    UserRound,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select";
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useEffect, useState } from 'react';
-import { useForm } from '@inertiajs/react';
-import { toast } from 'sonner';
+} from '@/components/ui/select';
 import 'react-toastify/dist/ReactToastify.css';
 
-// --- FUNÇÕES DE MÁSCARA (REGEX) ---
 const aplicarMascaraCPFCNPJ = (valor: string, tipo: string) => {
-    const num = valor.replace(/\D/g, "");
+    const num = valor.replace(/\D/g, '');
+
     if (tipo === 'pf') {
-        // CPF: 000.000.000-00
-        return num.substring(0, 11)
-            .replace(/(\d{3})(\d)/, "$1.$2")
-            .replace(/(\d{3})(\d)/, "$1.$2")
-            .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-    } else {
-        // CNPJ: 00.000.000/0001-00
-        return num.substring(0, 14)
-            .replace(/(\d{2})(\d)/, "$1.$2")
-            .replace(/(\d{3})(\d)/, "$1.$2")
-            .replace(/(\d{3})(\d)/, "$1/$2")
-            .replace(/(\d{4})(\d{1,2})$/, "$1-$2");
+        return num
+            .substring(0, 11)
+            .replace(/(\d{3})(\d)/, '$1.$2')
+            .replace(/(\d{3})(\d)/, '$1.$2')
+            .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
     }
+
+    return num
+        .substring(0, 14)
+        .replace(/(\d{2})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1/$2')
+        .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
 };
 
 const aplicarMascaraCelular = (valor: string) => {
-    const num = valor.replace(/\D/g, "").substring(0, 11);
-    if (num.length <= 2) return `(${num}`;
-    if (num.length <= 6) return `(${num.substring(0, 2)}) ${num.substring(2)}`;
+    const num = valor.replace(/\D/g, '').substring(0, 11);
+
+    if (num.length <= 2) {
+        return `(${num}`;
+    }
+
+    if (num.length <= 6) {
+        return `(${num.substring(0, 2)}) ${num.substring(2)}`;
+    }
+
     return `(${num.substring(0, 2)}) ${num.substring(2, 7)}-${num.substring(7)}`;
 };
 
 const aplicarMascaraFixo = (valor: string) => {
-    const num = valor.replace(/\D/g, "").substring(0, 10);
-    if (num.length <= 2) return `(${num}`;
-    if (num.length <= 6) return `(${num.substring(0, 2)}) ${num.substring(2)}`;
+    const num = valor.replace(/\D/g, '').substring(0, 10);
+
+    if (num.length <= 2) {
+        return `(${num}`;
+    }
+
+    if (num.length <= 6) {
+        return `(${num.substring(0, 2)}) ${num.substring(2)}`;
+    }
+
     return `(${num.substring(0, 2)}) ${num.substring(2, 6)}-${num.substring(6)}`;
 };
 
-const aplicarMascaraCEP = (valor: string) => {
-    const num = valor.replace(/\D/g, "").substring(0, 8);
-    return num.replace(/(\d{5})(\d)/, "$1-$2");
-};
+const aplicarMascaraCEP = (valor: string) =>
+    valor
+        .replace(/\D/g, '')
+        .substring(0, 8)
+        .replace(/(\d{5})(\d)/, '$1-$2');
 
+
+function Section({ icon, title, description, children }: any) {
+    return (
+        <section className="rounded-2xl border border-border/70 bg-muted/[0.18] p-4 sm:p-5">
+            <div className="mb-5 flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+                    {icon}
+                </span>
+                <div>
+                    <h3 className="text-sm font-bold">{title}</h3>
+                    <p className="text-xs text-muted-foreground">
+                        {description}
+                    </p>
+                </div>
+            </div>
+            {children}
+        </section>
+    );
+}
 
 export default function CreateSeguradoModal({ open, setOpen }: any) {
-    const [tipoPessoa, setTipoPessoa] = useState("pf");
-    const [estados, setEstados] = useState([]);
-    const [cidades, setCidades] = useState([]);
-    const isPF = tipoPessoa === "pf";
-    const labelNome = isPF ? "Nome Completo" : "Nome Fantasia";
-    const labelDocumento = isPF ? "CPF" : "CNPJ";
-    const labelData = isPF ? "Data de Nascimento" : "Data de Fundação";
-    const placeholder = isPF ? "Nome Segurado" : "Nome Empresa";
+    const [tipoPessoa, setTipoPessoa] = useState('pf');
+    const [estados, setEstados] = useState<any[]>([]);
+    const isPF = tipoPessoa === 'pf';
+    const labelNome = isPF ? 'Nome completo' : 'Nome fantasia';
+    const labelDocumento = isPF ? 'CPF' : 'CNPJ';
+    const labelData = isPF ? 'Data de nascimento' : 'Data de fundação';
 
-    const { data, setData, post, processing, errors } = useForm({
-        tipo_pessoa: "pf",
-        nome_completo: "",
-        cpf_cnpj: "",
-        data_nascimento_fundacao: "",
-        email: "",          
-        celular_whatsapp: "",
-        telefone_fixo: "",
-        endereco: "",
-        cidade: "",
-        estado: "",
-        cep: "",
-        observacoes: "",
+    const { data, setData, post, processing } = useForm({
+        tipo_pessoa: 'pf',
+        nome_completo: '',
+        cpf_cnpj: '',
+        data_nascimento_fundacao: '',
+        email: '',
+        celular_whatsapp: '',
+        telefone_fixo: '',
+        endereco: '',
+        cidade: '',
+        estado: '',
+        cep: '',
+        observacoes: '',
     });
 
-    const buscarEstados = async () => {
-        const resposta = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome')
-        const dados = await resposta.json();
-        setEstados(dados);
-    }
-
     useEffect(() => {
-        buscarEstados();
-    }, [])
+        fetch(
+            'https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome',
+        )
+            .then((resposta) => resposta.json())
+            .then(setEstados)
+            .catch(() => setEstados([]));
+    }, []);
 
-    const salvarClientes = () => {
+    const salvarClientes = () =>
         post('/clientes', {
             onSuccess: () => {
-                toast.success("Segurado Salvo com Sucesso!");
+                toast.success('Segurado salvo com sucesso!',
+                    { position: 'top-right',
+                        style: {
+                            color: '#e0ebe4',
+                        },
+                    });
                 setOpen(false);
-            }, 
-            onError: () => {
-                toast.error("Falha ao Salvar, Verifique os campos")
-            }
+            },
+            onError: () => toast.error('Falha ao salvar. Verifique os campos.',
+                { position: 'top-right',
+                    style: {
+                        color: '#b61212',
+                    },
+                }),
         });
-    };
 
-    return(
+    return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-
-                {/* Header */}
-                <DialogHeader className="mb-2">
-                    <div className="flex items-center gap-2 mb-1">
-                        <div className="h-8 w-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                            <div className="h-4 w-4 border-2 border-white rounded-sm rotate-45"></div>
+            <DialogContent className="!flex max-h-[92vh] max-w-3xl flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 shadow-2xl">
+                <DialogHeader className="relative shrink-0 overflow-hidden border-b border-border/70 bg-gradient-to-br from-emerald-500/[0.12] via-background to-background px-6 py-6 pr-12 sm:px-8">
+                    <div className="absolute -top-12 -right-10 h-36 w-36 rounded-full bg-emerald-500/10 blur-2xl" />
+                    <div className="relative flex items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25">
+                            <UserRound className="h-5 w-5" />
                         </div>
-                        <span className="text-sm font-black tracking-tighter text-emerald-600 uppercase italic">
-                            PayFlow-Sistemas
-                        </span>
+                        <div>
+                            <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-[0.16em] text-emerald-600 uppercase">
+                                <span>Segurados</span>
+                                <ChevronRight className="h-3 w-3" />
+                                <span>Novo cadastro</span>
+                            </div>
+                            <DialogTitle className="text-xl font-bold tracking-tight sm:text-2xl">
+                                Cadastrar segurado
+                            </DialogTitle>
+                        </div>
                     </div>
-                    <DialogTitle className="text-2xl font-bold tracking-tight">
-                        Cadastrar Segurado
-                    </DialogTitle>
-                    <p className="text-sm text-muted-foreground">
-                        Preencha todas as informações do segurado
+                    <p className="relative mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
+                        Informe os dados abaixo para criar o perfil do segurado.
                     </p>
                 </DialogHeader>
 
-                {/* Dados Base */}
-                <div className="space-y-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        Dados Principais
-                    </p>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            Tipo Cliente*
-                        </label>
-                        <Select onValueChange={(valor) => {
-                                setTipoPessoa(valor);
-                                setData((prev) => ({
-                                    ...prev,
-                                    tipo_pessoa: valor,
-                                    cpf_cnpj: "" // Limpa o documento para não misturar máscara de CPF com CNPJ
-                                }));
-                            }}
-                            defaultValue={tipoPessoa}
-                        >
-                            <SelectTrigger className="h-12 border-muted-foreground/20 rounded-xl">
-                                <SelectValue placeholder='Selecione PF ou PJ'/>
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value='pf'>Pessoa Física</SelectItem>
-                                <SelectItem value='pj'>Pessoa Jurídica</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                {labelNome}*
-                            </label>
-                            <Input
-                                placeholder={placeholder}
-                                value={data.nome_completo}
-                                onChange={(e) => setData('nome_completo', e.target.value)}
-                                className="h-12 border-muted-foreground/20 rounded-xl"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                {labelDocumento}*
-                            </label>
-                            <Input
-                                placeholder={isPF ? '000.000.000-00' : '00.000.000/0001-00'}
-                                value={data.cpf_cnpj}
-                                onChange={(e) => setData('cpf_cnpj', aplicarMascaraCPFCNPJ(e.target.value, tipoPessoa))}
-                                className="h-12 border-muted-foreground/20 rounded-xl"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            {labelData}*
-                        </label>
-                        <Input
-                            type='date'
-                            value={data.data_nascimento_fundacao}
-                            onChange={(e) => setData('data_nascimento_fundacao', e.target.value)}
-                            className="h-12 border-muted-foreground/20 rounded-xl"
-                        />
-                    </div>
-                </div>
-
-                {/* Contato */}
-                <div className="space-y-4 mt-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        Contato
-                    </p>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                Email*
-                            </label>
-                            <Input
-                                placeholder='exemplo@payflow.com'
-                                value={data.email}
-                                onChange={(e) => setData('email', e.target.value)}
-                                className="h-12 border-muted-foreground/20 rounded-xl"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                Celular/WhatsApp*
-                            </label>
-                            <Input
-                                type='tel'
-                                placeholder='(11) 99999-9999'
-                                value={data.celular_whatsapp}
-                                onChange={(e) => setData('celular_whatsapp', aplicarMascaraCelular(e.target.value))}
-                                className="h-12 border-muted-foreground/20 rounded-xl"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            Telefone Fixo
-                        </label>
-                        <Input
-                            type='tel'
-                            placeholder='(11) 3333-3333'
-                            value={data.telefone_fixo}
-                            onChange={(e) => setData('telefone_fixo', aplicarMascaraFixo(e.target.value))}
-                            className="h-12 border-muted-foreground/20 rounded-xl"
-                        />
-                    </div>
-                </div>
-
-                {/* Localização */}
-                <div className="space-y-4 mt-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        Localização
-                    </p>
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            Estado*
-                        </label>
-                        <Select onValueChange={(v) => setData('estado', v)}>
-                            <SelectTrigger className="h-12 border-muted-foreground/20 rounded-xl">
-                                <SelectValue placeholder='Selecione o Estado' />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {estados.map((estado:any) => (
-                                    <SelectItem key={estado.id} value={estado.sigla}>
-                                        {estado.nome}
-                                    </SelectItem>
-                                ))}                             
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                Cidade*
-                            </label>
-                            <Input
-                                placeholder='São Paulo'
-                                value={data.cidade}
-                                onChange={(e) => setData('cidade', e.target.value)}
-                                className="h-12 border-muted-foreground/20 rounded-xl"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                CEP*
-                            </label>
-                            <Input
-                                placeholder='00000-000'
-                                value={data.cep}
-                                onChange={(e) => setData('cep', aplicarMascaraCEP(e.target.value))}
-                                className="h-12 border-muted-foreground/20 rounded-xl"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            Endereço*
-                        </label>
-                        <Input
-                            placeholder='Avenida Bernardino de Campos'
-                            value={data.endereco}
-                            onChange={(e) => setData('endereco', e.target.value)}
-                            className="h-12 border-muted-foreground/20 rounded-xl"
-                        />
-                    </div>
-                </div>
-
-                {/* Observação */}
-                <div className="space-y-2 mt-4">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        Observação
-                    </label>
-                    <textarea
-                        value={data.observacoes}
-                        onChange={(e) => setData('observacoes', e.target.value)}
-                        className="w-full min-h-[80px] rounded-xl border border-muted-foreground/20 bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500 resize-none"
-                        placeholder="Observações adicionais..."
-                    />
-                </div>
-
-                {/* Botões */}
-                <div className="flex justify-end gap-2 mt-4">
-                    <Button
-                        onClick={salvarClientes}
-                        disabled={processing}
-                        className="h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98]"
+                <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6 sm:px-8">
+                    <Section
+                        icon={<UserRound className="h-4 w-4" />}
+                        title="Dados principais"
+                        description="Identificação do segurado"
                     >
-                        {processing ? 'Salvando...' : 'Salvar'}
-                    </Button>
-                </div>         
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label>
+                                    Tipo de pessoa *
+                                </label>
+                                <Select
+                                    value={tipoPessoa}
+                                    onValueChange={(valor) => {
+                                        setTipoPessoa(valor);
+                                        setData((prev) => ({
+                                            ...prev,
+                                            tipo_pessoa: valor,
+                                            cpf_cnpj: '',
+                                        }));
+                                    }}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecione PF ou PJ" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="pf">
+                                            Pessoa física
+                                        </SelectItem>
+                                        <SelectItem value="pj">
+                                            Pessoa jurídica
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                    <label>
+                                        {labelNome} *
+                                    </label>
+                                    <Input
+                                        placeholder={
+                                            isPF
+                                                ? 'Nome do segurado'
+                                                : 'Nome da empresa'
+                                        }
+                                        value={data.nome_completo}
+                                        onChange={(e) =>
+                                            setData(
+                                                'nome_completo',
+                                                e.target.value,
+                                            )
+                                        }
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label>
+                                        {labelDocumento} *
+                                    </label>
+                                    <Input
+                                        placeholder={
+                                            isPF
+                                                ? '000.000.000-00'
+                                                : '00.000.000/0001-00'
+                                        }
+                                        value={data.cpf_cnpj}
+                                        onChange={(e) =>
+                                            setData(
+                                                'cpf_cnpj',
+                                                aplicarMascaraCPFCNPJ(
+                                                    e.target.value,
+                                                    tipoPessoa,
+                                                ),
+                                            )
+                                        }
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label>
+                                    {labelData} *
+                                </label>
+                                <Input
+                                    type="date"
+                                    value={data.data_nascimento_fundacao}
+                                    onChange={(e) =>
+                                        setData(
+                                            'data_nascimento_fundacao',
+                                            e.target.value,
+                                        )
+                                    }
+                                />
+                            </div>
+                        </div>
+                    </Section>
+
+                    <Section
+                        icon={<Phone className="h-4 w-4" />}
+                        title="Contato"
+                        description="Canais para comunicação"
+                    >
+                        <div className="space-y-4">
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                    <label>
+                                        E-mail *
+                                    </label>
+                                    <Input
+                                        type="email"
+                                        placeholder="exemplo@payflow.com"
+                                        value={data.email}
+                                        onChange={(e) =>
+                                            setData('email', e.target.value)
+                                        }
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label>
+                                        Celular / WhatsApp *
+                                    </label>
+                                    <Input
+                                        type="tel"
+                                        placeholder="(11) 99999-9999"
+                                        value={data.celular_whatsapp}
+                                        onChange={(e) =>
+                                            setData(
+                                                'celular_whatsapp',
+                                                aplicarMascaraCelular(
+                                                    e.target.value,
+                                                ),
+                                            )
+                                        }
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label>
+                                    Telefone fixo
+                                </label>
+                                <Input
+                                    type="tel"
+                                    placeholder="(11) 3333-3333"
+                                    value={data.telefone_fixo}
+                                    onChange={(e) =>
+                                        setData(
+                                            'telefone_fixo',
+                                            aplicarMascaraFixo(e.target.value),
+                                        )
+                                    }
+                                />
+                            </div>
+                        </div>
+                    </Section>
+
+                    <Section
+                        icon={<MapPin className="h-4 w-4" />}
+                        title="Localização"
+                        description="Endereço principal"
+                    >
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label>Estado *</label>
+                                <Select
+                                    value={data.estado}
+                                    onValueChange={(valor) =>
+                                        setData('estado', valor)
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecione o estado" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {estados.map((estado) => (
+                                            <SelectItem
+                                                key={estado.id}
+                                                value={estado.sigla}
+                                            >
+                                                {estado.nome}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                    <label>
+                                        Cidade *
+                                    </label>
+                                    <Input
+                                        placeholder="São Paulo"
+                                        value={data.cidade}
+                                        onChange={(e) =>
+                                            setData('cidade', e.target.value)
+                                        }
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label>CEP *</label>
+                                    <Input
+                                        placeholder="00000-000"
+                                        value={data.cep}
+                                        onChange={(e) =>
+                                            setData(
+                                                'cep',
+                                                aplicarMascaraCEP(
+                                                    e.target.value,
+                                                ),
+                                            )
+                                        }
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label>Endereço *</label>
+                                <Input
+                                    placeholder="Avenida Bernardino de Campos"
+                                    value={data.endereco}
+                                    onChange={(e) =>
+                                        setData('endereco', e.target.value)
+                                    }
+                                />
+                            </div>
+                        </div>
+                    </Section>
+
+                    <Section
+                        icon={<FileText className="h-4 w-4" />}
+                        title="Observações"
+                        description="Informações complementares, se necessário"
+                    >
+                        <textarea
+                            value={data.observacoes}
+                            onChange={(e) =>
+                                setData('observacoes', e.target.value)
+                            }
+                            className="min-h-24 w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-3 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                            placeholder="Adicione observações relevantes..."
+                        />
+                    </Section>
+                </div>
+
+                <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-border/70 bg-background px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+                    <p className="text-xs text-muted-foreground">
+                        Campos com{' '}
+                        <span className="font-bold text-emerald-600">*</span>{' '}
+                        são obrigatórios.
+                    </p>
+                    <div className="flex gap-3">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => setOpen(false)}
+                            className="h-11 rounded-xl px-5"
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            onClick={salvarClientes}
+                            disabled={processing}
+                            className="h-11 rounded-xl bg-emerald-500 px-5 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
+                        >
+                            {processing ? (
+                                'Salvando...'
+                            ) : (
+                                <>
+                                    <Check className="mr-2 h-4 w-4" />
+                                    Salvar segurado
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                </div>
             </DialogContent>
         </Dialog>
-    )
+    );
 }
