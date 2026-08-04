@@ -25,25 +25,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import 'react-toastify/dist/ReactToastify.css';
-
-const aplicarMascaraCPFCNPJ = (valor: string, tipo: string) => {
-    const num = valor.replace(/\D/g, '');
-
-    if (tipo === 'pf') {
-        return num
-            .substring(0, 11)
-            .replace(/(\d{3})(\d)/, '$1.$2')
-            .replace(/(\d{3})(\d)/, '$1.$2')
-            .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-    }
-
-    return num
-        .substring(0, 14)
-        .replace(/(\d{2})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d)/, '$1/$2')
-        .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
-};
+import { formataCpfCnpj } from '@/utils/cpfMask';
 
 const aplicarMascaraCelular = (valor: string) => {
     const num = valor.replace(/\D/g, '').substring(0, 11);
@@ -79,7 +61,6 @@ const aplicarMascaraCEP = (valor: string) =>
         .substring(0, 8)
         .replace(/(\d{5})(\d)/, '$1-$2');
 
-
 function Section({ icon, title, description, children }: any) {
     return (
         <section className="rounded-2xl border border-border/70 bg-muted/[0.18] p-4 sm:p-5">
@@ -107,20 +88,39 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
     const labelDocumento = isPF ? 'CPF' : 'CNPJ';
     const labelData = isPF ? 'Data de nascimento' : 'Data de fundação';
 
-    const { data, setData, post, processing } = useForm({
-        tipo_pessoa: 'pf',
-        nome_completo: '',
-        cpf_cnpj: '',
-        data_nascimento_fundacao: '',
-        email: '',
-        celular_whatsapp: '',
-        telefone_fixo: '',
-        endereco: '',
-        cidade: '',
-        estado: '',
-        cep: '',
-        observacoes: '',
-    });
+    const { data, setData, post, processing, errors, reset, clearErrors } =
+        useForm({
+            tipo_pessoa: 'pf',
+            nome_completo: '',
+            cpf_cnpj: '',
+            data_nascimento_fundacao: '',
+            email: '',
+            celular_whatsapp: '',
+            telefone_fixo: '',
+            endereco: '',
+            bairro: '', // Adicionado para corresponder ao ViaCEP
+            cidade: '',
+            estado: '',
+            cep: '',
+            observacoes: '',
+        });
+
+    useEffect(() => {
+        if (!open) {
+            reset();
+            clearErrors();
+            setTipoPessoa('pf');
+        }
+    }, [open]);
+
+    const handleClose = (isOpen: boolean) => {
+        if (!isOpen) {
+            reset();
+            clearErrors();
+            setTipoPessoa('pf');
+        }
+        setOpen(isOpen);
+    };
 
     useEffect(() => {
         fetch(
@@ -131,19 +131,48 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
             .catch(() => setEstados([]));
     }, []);
 
+    const buscarCep = async (cep: string) => {
+        const cepLimpo = cep.replace(/\D/g, '');
+
+        if (cepLimpo.length === 8) {
+            try {
+                const response = await fetch(
+                    `https://viacep.com.br/ws/${cepLimpo}/json/`,
+                );
+                const resultado = await response.json();
+
+                if (!resultado.erro) {
+                    setData((prev) => ({
+                        ...prev,
+                        cep: cepLimpo,
+                        endereco: resultado.logradouro,
+                        bairro: resultado.bairro,
+                        cidade: resultado.localidade,
+                        estado: resultado.uf,
+                    }));
+                } else {
+                    console.log('CEP não encontrado.');
+                }
+            } catch (error) {
+                console.error('Erro ao buscar o CEP:', error);
+            }
+        }
+    };
+
     const salvarClientes = () =>
         post('/clientes', {
             onSuccess: () => {
-                toast.success('Segurado salvo com sucesso!',
-                    { position: 'top-right',
-                        style: {
-                            color: '#e0ebe4',
-                        },
-                    });
+                toast.success('Segurado salvo com sucesso!', {
+                    position: 'top-right',
+                    style: {
+                        color: '#e0ebe4',
+                    },
+                });
                 setOpen(false);
             },
-            onError: () => toast.error('Falha ao salvar. Verifique os campos.',
-                { position: 'top-right',
+            onError: () =>
+                toast.error('Falha ao salvar. Verifique os campos.', {
+                    position: 'top-right',
                     style: {
                         color: '#b61212',
                     },
@@ -151,7 +180,18 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
         });
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog
+            open={open}
+            onOpenChange={(isOpen) => {
+                // Se o modal está fechando (isOpen vira false)
+                if (!isOpen) {
+                    reset(); // Reseta os campos do formulário do Inertia
+                    clearErrors(); // Limpa os erros de validação
+                    setTipoPessoa('pf'); // Reseta estados locais extras (se houver)
+                }
+                setOpen(isOpen); // Atualiza o estado no componente pai
+            }}
+        >
             <DialogContent className="!flex max-h-[92vh] max-w-3xl flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 shadow-2xl">
                 <DialogHeader className="relative shrink-0 overflow-hidden border-b border-border/70 bg-gradient-to-br from-emerald-500/[0.12] via-background to-background px-6 py-6 pr-12 sm:px-8">
                     <div className="absolute -top-12 -right-10 h-36 w-36 rounded-full bg-emerald-500/10 blur-2xl" />
@@ -171,7 +211,9 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                         </div>
                     </div>
                     <p className="relative mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
-                        Informe os dados abaixo para criar o perfil do segurado.
+                        Informe os dados abaixo para cadastrar um novo segurado.
+                        Campos obrigatórios estão marcados com{' '}
+                        <span className="font-bold text-emerald-600">*</span>.
                     </p>
                 </DialogHeader>
 
@@ -183,7 +225,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                     >
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <label>
+                                <label className="text-sm leading-none font-medium">
                                     Tipo de pessoa *
                                 </label>
                                 <Select
@@ -197,14 +239,20 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                         }));
                                     }}
                                 >
-                                    <SelectTrigger>
+                                    <SelectTrigger className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none">
                                         <SelectValue placeholder="Selecione PF ou PJ" />
                                     </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="pf">
+                                    <SelectContent className="rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-md">
+                                        <SelectItem
+                                            value="pf"
+                                            className="cursor-pointer rounded-lg"
+                                        >
                                             Pessoa física
                                         </SelectItem>
-                                        <SelectItem value="pj">
+                                        <SelectItem
+                                            value="pj"
+                                            className="cursor-pointer rounded-lg"
+                                        >
                                             Pessoa jurídica
                                         </SelectItem>
                                     </SelectContent>
@@ -212,10 +260,11 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                             </div>
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="space-y-2">
-                                    <label>
+                                    <label className="text-sm leading-none font-medium">
                                         {labelNome} *
                                     </label>
                                     <Input
+                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                         placeholder={
                                             isPF
                                                 ? 'Nome do segurado'
@@ -229,35 +278,46 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                             )
                                         }
                                     />
+                                    {errors.nome_completo && (
+                                        <span className="text-xs font-medium text-rose-500">
+                                            {errors.nome_completo}
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="space-y-2">
-                                    <label>
+                                    <label className="text-sm leading-none font-medium">
                                         {labelDocumento} *
                                     </label>
                                     <Input
-                                        placeholder={
-                                            isPF
-                                                ? '000.000.000-00'
-                                                : '00.000.000/0001-00'
-                                        }
+                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                        type="text"
                                         value={data.cpf_cnpj}
                                         onChange={(e) =>
                                             setData(
                                                 'cpf_cnpj',
-                                                aplicarMascaraCPFCNPJ(
-                                                    e.target.value,
-                                                    tipoPessoa,
-                                                ),
+                                                formataCpfCnpj(e.target.value),
                                             )
                                         }
+                                        placeholder={
+                                            isPF
+                                                ? '000.000.000-00'
+                                                : '00.000.000/0000-00'
+                                        }
+                                        maxLength={isPF ? 14 : 18}
                                     />
+                                    {errors.cpf_cnpj && (
+                                        <span className="text-xs font-medium text-rose-500">
+                                            {errors.cpf_cnpj}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label>
+                                <label className="text-sm leading-none font-medium">
                                     {labelData} *
                                 </label>
                                 <Input
+                                    className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                     type="date"
                                     value={data.data_nascimento_fundacao}
                                     onChange={(e) =>
@@ -267,6 +327,11 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                         )
                                     }
                                 />
+                                {errors.data_nascimento_fundacao && (
+                                    <span className="text-xs font-medium text-rose-500">
+                                        {errors.data_nascimento_fundacao}
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </Section>
@@ -279,10 +344,11 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                         <div className="space-y-4">
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="space-y-2">
-                                    <label>
+                                    <label className="text-sm leading-none font-medium">
                                         E-mail *
                                     </label>
                                     <Input
+                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                         type="email"
                                         placeholder="exemplo@payflow.com"
                                         value={data.email}
@@ -290,12 +356,18 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                             setData('email', e.target.value)
                                         }
                                     />
+                                    {errors.email && (
+                                        <span className="text-xs font-medium text-rose-500">
+                                            {errors.email}
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="space-y-2">
-                                    <label>
+                                    <label className="text-sm leading-none font-medium">
                                         Celular / WhatsApp *
                                     </label>
                                     <Input
+                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                         type="tel"
                                         placeholder="(11) 99999-9999"
                                         value={data.celular_whatsapp}
@@ -308,13 +380,19 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                             )
                                         }
                                     />
+                                    {errors.celular_whatsapp && (
+                                        <span className="text-xs font-medium text-rose-500">
+                                            {errors.celular_whatsapp}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label>
+                                <label className="text-sm leading-none font-medium">
                                     Telefone fixo
                                 </label>
                                 <Input
+                                    className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                     type="tel"
                                     placeholder="(11) 3333-3333"
                                     value={data.telefone_fixo}
@@ -325,6 +403,11 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                         )
                                     }
                                 />
+                                {errors.telefone_fixo && (
+                                    <span className="text-xs font-medium text-rose-500">
+                                        {errors.telefone_fixo}
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </Section>
@@ -336,66 +419,99 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                     >
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <label>Estado *</label>
+                                <label className="text-sm leading-none font-medium">
+                                    Estado *
+                                </label>
                                 <Select
                                     value={data.estado}
                                     onValueChange={(valor) =>
                                         setData('estado', valor)
                                     }
                                 >
-                                    <SelectTrigger>
+                                    <SelectTrigger className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none">
                                         <SelectValue placeholder="Selecione o estado" />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-md">
                                         {estados.map((estado) => (
                                             <SelectItem
                                                 key={estado.id}
                                                 value={estado.sigla}
+                                                className="cursor-pointer rounded-lg"
                                             >
                                                 {estado.nome}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
+                                {errors.estado && (
+                                    <span className="text-xs font-medium text-rose-500">
+                                        {errors.estado}
+                                    </span>
+                                )}
                             </div>
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="space-y-2">
-                                    <label>
+                                    <label className="text-sm leading-none font-medium">
                                         Cidade *
                                     </label>
                                     <Input
+                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                         placeholder="São Paulo"
                                         value={data.cidade}
                                         onChange={(e) =>
                                             setData('cidade', e.target.value)
                                         }
                                     />
+                                    {errors.cidade && (
+                                        <span className="text-xs font-medium text-rose-500">
+                                            {errors.cidade}
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="space-y-2">
-                                    <label>CEP *</label>
+                                    <label className="text-sm leading-none font-medium">
+                                        CEP *
+                                    </label>
                                     <Input
+                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                        type="text"
                                         placeholder="00000-000"
                                         value={data.cep}
-                                        onChange={(e) =>
-                                            setData(
-                                                'cep',
+                                        onChange={(e) => {
+                                            const cepMascarado =
                                                 aplicarMascaraCEP(
                                                     e.target.value,
-                                                ),
-                                            )
+                                                );
+                                            setData('cep', cepMascarado);
+                                        }}
+                                        onBlur={(e) =>
+                                            buscarCep(e.target.value)
                                         }
                                     />
+                                    {errors.cep && (
+                                        <span className="text-xs font-medium text-rose-500">
+                                            {errors.cep}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label>Endereço *</label>
+                                <label className="text-sm leading-none font-medium">
+                                    Endereço *
+                                </label>
                                 <Input
+                                    className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                     placeholder="Avenida Bernardino de Campos"
                                     value={data.endereco}
                                     onChange={(e) =>
                                         setData('endereco', e.target.value)
                                     }
                                 />
+                                {errors.endereco && (
+                                    <span className="text-xs font-medium text-rose-500">
+                                        {errors.endereco}
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </Section>
@@ -414,8 +530,14 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                             placeholder="Adicione observações relevantes..."
                         />
                     </Section>
+                    {errors.observacoes && (
+                        <span className="text-xs font-medium text-rose-500">
+                            {errors.observacoes}
+                        </span>
+                    )}
                 </div>
 
+                {/* Correção realizada aqui removendo 'sm:classes' */}
                 <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-border/70 bg-background px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
                     <p className="text-xs text-muted-foreground">
                         Campos com{' '}

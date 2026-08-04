@@ -3,37 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Apolice;
 
 class Segurado extends Model
 {
-    public function apolices(){
-        return $this->hasMany(apolices::class, 'cliente_id');
-    }
+    protected $table = 'segurados';
 
-    // Defina que o atributo customizado 'status' deve ser incluído na serialização do modelo
-    protected $appends = ['status'];
-
-    public function getStatusAttribute(): string
-    {
-        // Se não tem nenhuma apólice, está inativo
-        if (!$this->apolices()->exists()) {
-            return 'Inativo';
-        }
-
-        // Verifica se existe alguma apólice cuja vigência ainda não terminou
-        $temApoliceVigente = $this->apolices()
-            ->where('fim_vigencia', '>=', now()->today())
-            ->exists();
-
-        return $temApoliceVigente ? 'Ativo' : 'Para Renovar';
-    }
-    
-    protected $fillable = [              
+    protected $fillable = [
         'nome_completo',
         'tipo_pessoa',
-        'cpf_cnpj',                        
-        'data_nascimento_fundacao', 
+        'cpf_cnpj',
+        'data_nascimento_fundacao',
         'email',
         'telefone_fixo',
         'celular_whatsapp',
@@ -43,4 +22,41 @@ class Segurado extends Model
         'cep',
         'observacoes'
     ];
+
+    public function apolices()
+    {
+        return $this->hasMany(Apolice::class, 'cliente_id');
+    }
+    
+    public function getStatusAttribute(): string
+    {
+        // Se a relação 'apolices' já foi trazida com with('apolices'), usa ela em memória
+        if ($this->relationLoaded('apolices')) {
+            return $this->apolices->isNotEmpty() ? 'Ativo' : 'Inativo';
+        }
+
+        // Caso contrário, faz a verificação rápida
+        return $this->apolices()->exists() ? 'Ativo' : 'Inativo';
+    }
+    
+    public function scopeFilter($query, array $filters)
+    {
+        //Se usuario digitou algo no campo que seja diferente de nulo, ele entra no function anonimo
+        // onde define q onde nome for parecidos ao busca ou cpf_cnpj
+        $query->when($filters['busca'] ?? null, function ($q, $busca) {
+            $q->where('nome_completo', 'ilike', "%{$busca}%")
+                ->orWhere('cpf_cnpj', 'ilike', "%{$busca}%");
+        });
+
+        $query->when($filters['status'] ?? null, function ($q, $status) {
+            if ($status === 'Ativos') {
+                $q->has('apolices');
+            } elseif ($status === 'Inativos') {
+                $q->doesntHave('apolices');
+            }
+        });
+    }
+
+
+    protected $appends = ['status'];
 }

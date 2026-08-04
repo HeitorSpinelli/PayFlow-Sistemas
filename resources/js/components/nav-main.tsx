@@ -15,7 +15,7 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
     return (
         <SidebarGroup className="px-2 py-7">
             {}
-            <SidebarGroupLabel className="text-zinc-500 dark:text-zinc-400">Platform</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-zinc-500 dark:text-zinc-400">Navegação</SidebarGroupLabel>
             <SidebarMenu>
                 {items.map((item) => (
                     <SidebarMenuItem key={item.title}>

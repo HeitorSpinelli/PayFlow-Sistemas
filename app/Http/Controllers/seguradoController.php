@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreSeguradoRequest;
 use App\Http\Requests\UpdateSeguradoRequest;
+use Illuminate\Http\Request;
 use App\Models\Segurado;
 use App\Services\SeguradoService;
+use App\Services\ExportacaoService;
 
 
 class SeguradoController extends Controller
@@ -20,28 +22,35 @@ class SeguradoController extends Controller
     }
 
     //3. Usa no store
-    public function store(StoreSeguradoRequest $request){
+    public function store(StoreSeguradoRequest $request)
+    {
 
         $data = $request->validated();
         $this->seguradoService->store($data);
         return redirect()->back()->with('success', 'Segurado cadastrado com sucesso!');
     }
 
-    public function show()
+    public function show(Request $request)
     {
-        // Cada segurado aqui dentro agora terá a propriedade 'status' anexada automaticamente
-        $segurados = Segurado::with('apolices')->get();
+        $segurados = Segurado::with('apolices')
+            ->filter($request->all())
+            ->paginate(10)
+            ->withQueryString();
+
         $total = Segurado::count();
-        $seguradosinativos = Segurado::whereDoesntHave('apolices')->get();
-        
+        $totalAtivos = Segurado::has('apolices')->count();
+        $totalInativos = Segurado::doesntHave('apolices')->count();
+
         return inertia('FunctionsApp/clientes', [
             'segurados' => $segurados,
             'total' => $total,
-            'seguradosinativos' => $seguradosinativos,
+            'totalAtivos' => $totalAtivos,
+            'totalInativos' => $totalInativos,
         ]);
     }
 
-    public function destroy(int $id){
+    public function destroy(int $id)
+    {
         try {
             $this->seguradoService->destroy($id);
             return redirect()->back()->with('success', 'Segurado excluído com sucesso!');
@@ -49,7 +58,8 @@ class SeguradoController extends Controller
             return redirect()->back()->with('error', 'Erro ao excluir segurado: ' . $e->getMessage());
         }
     }
-    public function update(UpdateSeguradoRequest $request, int $id){
+    public function update(UpdateSeguradoRequest $request, int $id)
+    {
         try {
             $data = $request->validated();
             $this->seguradoService->update($id, $data);
@@ -57,5 +67,10 @@ class SeguradoController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Erro ao atualizar segurado: ' . $e->getMessage());
         }
+    }
+
+    public function exportar(ExportacaoService $exportacaoService)
+    {
+        return $exportacaoService->exportarSeguradosCsv();
     }
 }

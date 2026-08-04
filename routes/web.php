@@ -22,11 +22,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     //Rota para salvar clientes via post chamando a classe SeguradoController e a função store
     Route::post('/clientes', [SeguradoController::class, 'store']);
-
-    //Rotas para apagar e atualizar clientes
-
     Route::delete('/clientes/{id}', [SeguradoController::class, 'destroy'])->name('clientes.destroy');
     Route::put('/clientes/{id}', [SeguradoController::class, 'update'])->name('clientes.update');
+
+    // Rota para exportar os dados
+    Route::get('/segurados/exportar', [SeguradoController::class, 'exportar']);
 
     //Rota para exibir a página de apolices, chamando a classe ApolicesController e a função index
     Route::get('/apolices', [ApolicesController::class, 'index'])->name('apolices');
@@ -58,11 +58,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/importar', function () {
         return inertia('FunctionsApp/importar');
     })->name('importar');
-
 });
 
 //Rotas de funções exclusivas para admins, utilizadno middlware para verificar se é admin pelo appserviceprovider
-Route::middleware('auth', 'can:is-admin')->group(function(){
+Route::middleware('auth', 'can:is-admin')->group(function () {
     Route::get('/seguradoras', function () {
         return inertia('FunctionsApp/seguradoras');
     })->name('seguradoras');
@@ -78,4 +77,4 @@ Route::middleware('auth', 'can:is-admin')->group(function(){
     })->name('administracao');
 });
 
-require __DIR__.'/settings.php';
+require __DIR__ . '/settings.php';
