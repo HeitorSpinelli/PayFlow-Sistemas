@@ -265,17 +265,16 @@ export default function Clientes({
                                                 onClick={() =>
                                                     handleFiltroChange(opcao)
                                                 }
-                                                className={`flex w-full cursor-pointer items-center justify-between px-3 py-2 text-sm transition-colors ${
-                                                    filtroSelecionado === opcao
+                                                className={`flex w-full cursor-pointer items-center justify-between px-3 py-2 text-sm transition-colors ${filtroSelecionado === opcao
                                                         ? 'bg-emerald-500 font-medium text-white'
                                                         : 'text-popover-foreground hover:bg-muted'
-                                                }`}
+                                                    }`}
                                             >
                                                 {opcao}
                                                 {filtroSelecionado ===
                                                     opcao && (
-                                                    <Check className="size-4" />
-                                                )}
+                                                        <Check className="size-4" />
+                                                    )}
                                             </button>
                                         ))}
                                     </div>
@@ -321,7 +320,7 @@ export default function Clientes({
                             </thead>
                             <tbody>
                                 {!segurados?.data ||
-                                segurados.data.length === 0 ? (
+                                    segurados.data.length === 0 ? (
                                     <tr>
                                         <td
                                             colSpan={7}
@@ -349,8 +348,8 @@ export default function Clientes({
                                             <td className="px-4 py-3.5 text-muted-foreground">
                                                 {segurado.cpf_cnpj
                                                     ? formataCpfCnpj(
-                                                          segurado.cpf_cnpj,
-                                                      )
+                                                        segurado.cpf_cnpj,
+                                                    )
                                                     : '-'}
                                             </td>
                                             <td className="px-4 py-3.5 text-muted-foreground">
@@ -364,24 +363,23 @@ export default function Clientes({
                                             </td>
                                             <td className="px-4 py-3.5">
                                                 <span
-                                                    className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-semibold capitalize ${
-                                                        segurado.status ===
-                                                        'Ativo'
+                                                    className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-semibold capitalize ${segurado.status ===
+                                                            'Ativo'
                                                             ? 'bg-emerald-500/10 text-emerald-500'
                                                             : 'bg-rose-500/10 text-rose-500'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {segurado.status}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3.5 text-right">
                                                 <Button
-                                                    variant="ghost"
+                                                    variant="outline"
                                                     size="sm"
-                                                    className="h-8 w-8 rounded-lg p-0 hover:bg-emerald-500/10 hover:text-emerald-500"
                                                     onClick={() =>
                                                         abrirPerfil(segurado)
                                                     }
+                                                    className="h-8 w-8 rounded-xl border-border/70 p-0 hover:border-emerald-500/40"
                                                 >
                                                     <MoreHorizontal className="size-4" />
                                                 </Button>

@@ -14,10 +14,10 @@ import {
     UserRound,
 } from 'lucide-react';
 
-import CreateApoliceModal from '@/components/modals/create-apolice-modal';
-import CreateApoliceProfileModal from '@/components/modals/create-apolice-profile-modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import CreateApoliceModal from '@/components/modals/create-apolice-modal';
+import CreateApoliceProfileModal from '@/components/modals/create-apolice-profile-modal';
 import seguradoProfile from '@/components/modals/create-profile-modal';
 
 interface PageProps {

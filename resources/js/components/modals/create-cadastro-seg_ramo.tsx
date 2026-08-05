@@ -9,51 +9,59 @@ import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import { useForm } from '@inertiajs/react';
 import { toast } from 'sonner';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, Building2, ChevronRight, FileText, Phone, Mail, Hash } from 'lucide-react';
+
+function Section({ icon, title, description, children }: any) {
+    return (
+        <section className="rounded-2xl border border-border/70 bg-muted/[0.18] p-4 sm:p-5">
+            <div className="mb-5 flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+                    {icon}
+                </span>
+                <div>
+                    <h3 className="text-sm font-bold">{title}</h3>
+                    <p className="text-xs text-muted-foreground">
+                        {description}
+                    </p>
+                </div>
+            </div>
+            {children}
+        </section>
+    );
+}
 
 export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
-
-    // Lista de ramos que o usuário vai adicionando dinamicamente
     const [ramos, setRamos] = useState<string[]>([]);
-
-    // Valor do input de ramo antes de adicionar na lista
     const [novoRamo, setNovoRamo] = useState('');
 
-    // Formulário da seguradora
     const { data, setData, post, processing } = useForm({
         nome_fantasia: '',
-        razao_social:  '',
-        cnpj:          '',
-        contato_nome:  '',
+        razao_social: '',
+        cnpj: '',
+        contato_nome: '',
         email_suporte: '',
-        ramos:         [] as string[], // array de ramos que será enviado junto
+        ramos: [] as string[],
     });
 
-    // Adiciona o ramo na lista local e atualiza o useForm
     const adicionarRamo = () => {
-        //trim para evitar adicionar ramos vazios ou com espaços
         if (!novoRamo.trim()) return;
-        // Verifica se o ramo já foi adicionado
         if (ramos.includes(novoRamo.trim())) {
             toast.error('Ramo já adicionado!');
             return;
         }
 
-        // Adiciona o novo ramo na lista de ramos e sincroniza com o formulário
         const ramosAtualizados = [...ramos, novoRamo.trim()];
         setRamos(ramosAtualizados);
-        setData('ramos', ramosAtualizados); // sincroniza com o formulário
+        setData('ramos', ramosAtualizados);
         setNovoRamo('');
     };
 
-    // Remove um ramo da lista pelo índice
     const removerRamo = (index: number) => {
         const ramosAtualizados = ramos.filter((_, i) => i !== index);
         setRamos(ramosAtualizados);
         setData('ramos', ramosAtualizados);
     };
 
-    // Permite adicionar ramo pressionando Enter
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -79,154 +87,185 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
         });
         const limparFormulario = {
             nome_fantasia: '',
-            razao_social:  '',
-            cnpj:          '',
-            contato_nome:  '',
+            razao_social: '',
+            cnpj: '',
+            contato_nome: '',
             email_suporte: '',
-            ramos:         [] as string[],
+            ramos: [] as string[],
         };
         setData(limparFormulario);
     };
 
     return (
         <Dialog open={open} onOpenChange={fechar}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-
+            <DialogContent className="!flex max-h-[92vh] max-w-3xl flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 shadow-2xl">
+                
                 {/* Header */}
-                <DialogHeader className="mb-2">
-                    <div className="flex items-center gap-2 mb-1">
-                        <div className="h-8 w-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                            <div className="h-4 w-4 border-2 border-white rounded-sm rotate-45"></div>
+                <DialogHeader className="relative shrink-0 overflow-hidden border-b border-border/70 bg-gradient-to-br from-emerald-500/[0.12] via-background to-background px-6 py-6 pr-12 sm:px-8">
+                    <div className="absolute -top-12 -right-10 h-36 w-36 rounded-full bg-emerald-500/10 blur-2xl" />
+                    <div className="relative flex items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25">
+                            <Building2 className="h-5 w-5" />
                         </div>
-                        <span className="text-sm font-black tracking-tighter text-emerald-600 uppercase italic">
-                            PayFlow-Sistemas
-                        </span>
+                        <div>
+                            <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-[0.16em] text-emerald-600 uppercase">
+                                <span>Seguradoras</span>
+                                <ChevronRight className="h-3 w-3" />
+                                <span>Novo cadastro</span>
+                            </div>
+                            <DialogTitle className="text-xl font-bold tracking-tight sm:text-2xl">
+                                Cadastrar seguradora
+                            </DialogTitle>
+                        </div>
                     </div>
-                    <DialogTitle className="text-2xl font-bold tracking-tight">
-                        Cadastrar Seguradora
-                    </DialogTitle>
-                    <p className="text-sm text-muted-foreground">
-                        Preencha os dados da seguradora e adicione seus ramos.
+                    <p className="relative mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
+                        Preencha os dados da seguradora e adicione seus ramos. Campos obrigatórios estão marcados com{' '}
+                        <span className="font-bold text-emerald-600">*</span>.
                     </p>
                 </DialogHeader>
 
-                {/* Dados da Seguradora */}
-                <div className="space-y-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        Dados da Seguradora
-                    </p>
+                {/* Body com Scroll */}
+                <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6 sm:px-8">
+                    
+                    {/* Seção: Dados da Seguradora */}
+                    <Section
+                        icon={<Building2 className="h-4 w-4" />}
+                        title="Dados da seguradora"
+                        description="Informações principais e identificação"
+                    >
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-sm leading-none font-medium">
+                                    Nome Fantasia *
+                                </label>
+                                <Input
+                                    value={data.nome_fantasia}
+                                    onChange={e => setData('nome_fantasia', e.target.value)}
+                                    placeholder="Ex: Porto Seguro"
+                                    className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                />
+                            </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1 col-span-2">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Nome Fantasia*</label>
-                            <Input
-                                value={data.nome_fantasia}
-                                onChange={e => setData('nome_fantasia', e.target.value)}
-                                placeholder="Ex: Porto Seguro"
-                                className="h-11 rounded-xl"
-                            />
-                        </div>
-                        <div className="space-y-1 col-span-2">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Razão Social</label>
-                            <Input
-                                value={data.razao_social}
-                                onChange={e => setData('razao_social', e.target.value)}
-                                placeholder="Ex: Porto Seguro S.A."
-                                className="h-11 rounded-xl"
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">CNPJ*</label>
-                            <Input
-                                value={data.cnpj}
-                                onChange={e => setData('cnpj', e.target.value)}
-                                placeholder="00.000.000/0000-00"
-                                className="h-11 rounded-xl"
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Contato</label>
-                            <Input
-                                value={data.contato_nome}
-                                onChange={e => setData('contato_nome', e.target.value)}
-                                placeholder="Nome do contato"
-                                className="h-11 rounded-xl"
-                            />
-                        </div>
-                        <div className="space-y-1 col-span-2">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Email de Suporte</label>
-                            <Input
-                                value={data.email_suporte}
-                                onChange={e => setData('email_suporte', e.target.value)}
-                                placeholder="suporte@seguradora.com"
-                                className="h-11 rounded-xl"
-                            />
-                        </div>
-                    </div>
-                </div>
+                            <div className="space-y-2">
+                                <label className="text-sm leading-none font-medium">
+                                    Razão Social
+                                </label>
+                                <Input
+                                    value={data.razao_social}
+                                    onChange={e => setData('razao_social', e.target.value)}
+                                    placeholder="Ex: Porto Seguro S.A."
+                                    className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                />
+                            </div>
 
-                {/* Ramos */}
-                <div className="space-y-3 mt-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        Ramos
-                    </p>
-
-                    {/* Input para adicionar ramo */}
-                    <div className="flex gap-2">
-                        <Input
-                            value={novoRamo}
-                            onChange={e => setNovoRamo(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            placeholder="Ex: Automóvel, Vida, Residencial..."
-                            className="h-11 rounded-xl"
-                        />
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={adicionarRamo}
-                            className="h-11 rounded-xl px-4"
-                        >
-                            <Plus className="size-4" />
-                        </Button>
-                    </div>
-
-                    {/* Lista de ramos adicionados */}
-                    {ramos.length > 0 && (
-                        <div className="space-y-2">
-                            {ramos.map((ramo, index) => (
-                                <div
-                                    key={index}
-                                    className="flex items-center justify-between px-3 py-2 rounded-xl border border-muted-foreground/20 bg-muted/30"
-                                >
-                                    <span className="text-sm font-medium">{ramo}</span>
-                                    <button
-                                        onClick={() => removerRamo(index)}
-                                        className="text-muted-foreground hover:text-red-500 transition-colors"
-                                    >
-                                        <X className="size-4" />
-                                    </button>
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                    <label className="text-sm leading-none font-medium">
+                                        CNPJ *
+                                    </label>
+                                    <Input
+                                        value={data.cnpj}
+                                        onChange={e => setData('cnpj', e.target.value)}
+                                        placeholder="00.000.000/0000-00"
+                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                    />
                                 </div>
-                            ))}
-                        </div>
-                    )}
+                                <div className="space-y-2">
+                                    <label className="text-sm leading-none font-medium">
+                                        Contato
+                                    </label>
+                                    <Input
+                                        value={data.contato_nome}
+                                        onChange={e => setData('contato_nome', e.target.value)}
+                                        placeholder="Nome do contato"
+                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                    />
+                                </div>
+                            </div>
 
-                    {/* Mensagem quando não tem ramos */}
-                    {ramos.length === 0 && (
-                        <p className="text-xs text-muted-foreground">
-                            Nenhum ramo adicionado. Digite e pressione Enter ou clique em +.
-                        </p>
-                    )}
+                            <div className="space-y-2">
+                                <label className="text-sm leading-none font-medium">
+                                    Email de Suporte
+                                </label>
+                                <Input
+                                    value={data.email_suporte}
+                                    onChange={e => setData('email_suporte', e.target.value)}
+                                    placeholder="suporte@seguradora.com"
+                                    className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                />
+                            </div>
+                        </div>
+                    </Section>
+
+                    {/* Seção: Ramos */}
+                    <Section
+                        icon={<FileText className="h-4 w-4" />}
+                        title="Ramos de atuação"
+                        description="Adicione os ramos suportados pela seguradora"
+                    >
+                        <div className="space-y-4">
+                            <div className="flex gap-2">
+                                <Input
+                                    value={novoRamo}
+                                    onChange={e => setNovoRamo(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    placeholder="Ex: Automóvel, Vida, Residencial..."
+                                    className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={adicionarRamo}
+                                    className="h-10 rounded-xl border-border/70 px-4 hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-600 transition-all"
+                                >
+                                    <Plus className="h-4 w-4" />
+                                </Button>
+                            </div>
+
+                            {ramos.length > 0 && (
+                                <div className="space-y-2">
+                                    {ramos.map((ramo, index) => (
+                                        <div
+                                            key={index}
+                                            className="flex items-center justify-between px-3.5 py-2 rounded-xl border border-border/70 bg-background shadow-sm"
+                                        >
+                                            <span className="text-sm font-medium">{ramo}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => removerRamo(index)}
+                                                className="text-muted-foreground hover:text-rose-500 transition-colors"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {ramos.length === 0 && (
+                                <p className="text-xs text-muted-foreground">
+                                    Nenhum ramo adicionado. Digite e pressione Enter ou clique em +.
+                                </p>
+                            )}
+                        </div>
+                    </Section>
                 </div>
 
-                {/* Botões */}
-                <div className="flex justify-end gap-2 mt-6">
-                    <Button variant="outline" onClick={fechar} className="rounded-xl">
+                {/* Footer / Botões */}
+                <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border/70 bg-muted/20 px-6 py-4 sm:px-8">
+                    <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={fechar} 
+                        className="h-10 rounded-xl border-border/70 hover:bg-muted/50"
+                    >
                         Cancelar
                     </Button>
                     <Button
+                        type="button"
                         onClick={salvar}
                         disabled={processing}
-                        className="h-11 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20"
+                        className="h-10 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-xl shadow-lg shadow-emerald-500/20 px-5"
                     >
                         Cadastrar Seguradora
                     </Button>
