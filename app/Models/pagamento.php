@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use APP\Models\Apolice;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class pagamento extends Model
@@ -22,6 +23,6 @@ class pagamento extends Model
     //que eu use o pagamento->apolice para acessar os dados da apolice sem precisar fazer o maldito query manual
     public function apolice(): BelongsTo
     {
-        return $this->belongsTo(apolices::class, 'apolice_id');
+        return $this->belongsTo(apolice::class, 'apolice_id');
     }
 }
