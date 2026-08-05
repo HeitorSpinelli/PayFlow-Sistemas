@@ -22,11 +22,4 @@ export default defineConfig({
             formVariants: true,
         }),
     ],
-    // Comente essa parte enquanto estiver usando só o computador da escola:
-    // server: {
-    //     host: '0.0.0.0',
-    //     hmr: {
-    //         host: '192.168.1.149',
-    //     },
-    // },
 });

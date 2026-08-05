@@ -10,92 +10,104 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { formataCpfCnpj } from "@/utils/cpfMask";
+import { formataCpfCnpj } from '@/utils/cpfMask';
 import { ToastContainer, toast } from 'react-toastify';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from '@inertiajs/react';
 
-export default function CreateApoliceModal({ open, setOpen, segurados, ramos, seguradoras }: any) {
-
+export default function CreateApoliceModal({
+    open,
+    setOpen,
+    segurados,
+    ramos,
+    seguradoras,
+}: any) {
     // Estados
     const [busca, setBusca] = useState('');
     const [mostrarLista, setMostrarLista] = useState(false);
-    const [seguradoEncontrado, setSeguradoEncontrado] = useState<any>(null);
+    const [apoliceSelecionada, setapoliceSelecionada] = useState(null);
+    const [seguradoSelecionado, setSeguradoSelecionado] = useState(null);
 
-    // Formulário do Inertia
-    const { data, setData, post } = useForm({
-        numero_apolice:      "",
-        cliente_id:          "",
-        seguradora_id:       "",
-        ramo_id:             "",
-        valor_premio_total:  "",
-        valor_cobertura:     "",
-        quantidade_parcelas: "",
-        forma_pagamento:     "",
-        inicio_vigencia:     "",
-        fim_vigencia:        "",
-        status:              "",
-        observacoes:         "",
+    // Filtra os segurados com base na busca
+    const resultados = segurados.filter((segurado: any) => {
+        const termoBusca = busca.toLowerCase();
+        return (
+            segurado.nome_completo.toLowerCase().includes(termoBusca) ||
+            segurado.cpf_cnpj.includes(termoBusca)
+        );
     });
 
-    // Remove caracteres especiais deixando só números
-    const apenasNumeros = (str: string) => str.replace(/\D/g, '');
-
-    // Filtra segurados conforme digitação
-    const resultados = busca.length > 0
-        ? segurados.filter((segurado: any) =>
-            apenasNumeros(segurado.cpf_cnpj).includes(apenasNumeros(busca)) ||
-            segurado.nome_completo.toLowerCase().includes(busca.toLowerCase())
-        )
-        : [];
-
-    // Manipula a digitação no input de busca
-    const handleBuscaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const valorDigitado = e.target.value;
-        
-        // Se o usuário começar a digitar números, aplicamos a máscara dinamicamente
-        // Se forem letras (nome do cliente), a função mantém o texto normal
-        const valorFormatado = formataCpfCnpj(valorDigitado);
-        
-        setBusca(valorFormatado);
+    // Atualiza o estado da busca
+    const handleBuscaChange = (e: any) => {
+        setBusca(e.target.value);
         setMostrarLista(true);
     };
 
-    // Seleciona o segurado ao clicar na lista de resultados
-    const selecionarSegurado = (segurado: any) => {
-        setSeguradoEncontrado(segurado);
-        setData('cliente_id', segurado.id);
-        
-        // Ao selecionar, você pode escolher mostrar o Nome ou o CPF/CNPJ formatado no Input
-        setBusca(segurado.nome_completo); 
+    // Seleciona um segurado da lista
+    const selecionarApolice = (segurado: any) => {
+        setapoliceSelecionada(segurado);
+        setSeguradoSelecionado(segurado);
+        setData('cliente_id', segurado.id); // Atualiza o cliente_id no formulário do Inertia
         setMostrarLista(false);
-    };
+        setBusca(segurado.nome_completo); // Atualiza a busca
+    }
+
+    // Formulário do Inertia
+    const { data, setData, post, errors, reset, clearErrors } = useForm({
+        numero_apolice: '',
+        cliente_id: '',
+        seguradora_id: '',
+        ramo_id: '',
+        valor_premio_total: '',
+        valor_cobertura: '',
+        quantidade_parcelas: '',
+        forma_pagamento: '',
+        inicio_vigencia: '',
+        fim_vigencia: '',
+        status: '',
+        observacoes: '',
+    });
+
+    useEffect(() => {
+        if (!open) {
+            reset();
+            clearErrors();
+        }
+    }, [open]);
 
     // Envia o formulário
     const salvarApolice = () => {
         post('/apolices', {
             onSuccess: () => {
-                toast.success('Apólice cadastrada com sucesso!');
-                setOpen(false);
+                toast.success('Segurado salvo com sucesso!', {
+                    position: 'top-right',
+                    style: {
+                        color: '#e0ebe4',
+                    },
+                });
             },
             onError: () => {
-                toast.error('Erro ao cadastrar apólice. Verifique os dados e tente novamente.');
-            }
+                toast.error('Falha ao salvar. Verifique os campos.', {
+                    position: 'top-right',
+                    style: {
+                        color: '#b61212',
+                    },
+                });
+            },
         });
     };
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-
+            <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
                 {/* Header */}
                 <DialogHeader className="mb-2">
-                    <div className="flex items-center gap-2 mb-1">
-                        <div className="h-8 w-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                            <div className="h-4 w-4 border-2 border-white rounded-sm rotate-45"></div>
+                    <div className="mb-1 flex items-center gap-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500 shadow-lg shadow-emerald-500/20">
+                            <div className="h-4 w-4 rotate-45 rounded-sm border-2 border-white"></div>
                         </div>
                         <span className="text-sm font-black tracking-tighter text-emerald-600 uppercase italic">
                             PayFlow-Sistemas
@@ -111,18 +123,18 @@ export default function CreateApoliceModal({ open, setOpen, segurados, ramos, se
 
                 {/* Dados da Apólice */}
                 <div className="space-y-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                         Dados da Apólice
                     </p>
 
                     {/* Campo de busca de segurado */}
-                    <div className="space-y-2 relative">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <div className="relative space-y-2">
+                        <label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                             Cliente*
                         </label>
-                        <Input 
-                            type="text" 
-                            placeholder="Buscar por CPF ou CNPJ..." 
+                        <Input
+                            type="text"
+                            placeholder="Buscar por CPF ou CNPJ..."
                             value={busca}
                             onChange={handleBuscaChange}
                             onFocus={() => setMostrarLista(true)}
@@ -131,51 +143,81 @@ export default function CreateApoliceModal({ open, setOpen, segurados, ramos, se
 
                         {/* Lista de resultados */}
                         {mostrarLista && resultados.length > 0 && (
-                            <div className="absolute z-50 w-full mt-1 border border-muted-foreground/20 rounded-xl bg-background shadow-lg overflow-hidden">
+                            <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-muted-foreground/20 bg-background shadow-lg">
                                 {resultados.map((segurado: any) => (
                                     <div
                                         key={segurado.id}
-                                        onClick={() => selecionarSegurado(segurado)}
-                                        className="px-4 py-3 hover:bg-muted cursor-pointer flex justify-between items-center"
+                                        onClick={() =>
+                                            selecionarApolice(segurado)
+                                        }
+                                        className="flex cursor-pointer items-center justify-between px-4 py-3 hover:bg-muted"
                                     >
-                                        <span className="text-sm text-muted-foreground">{segurado.tipo_pessoa === 'F' ? 'CPF' : 'CNPJ'}</span>
-                                        <span className="font-medium text-sm">{segurado.nome_completo}</span>
-                                        <span className="text-xs text-muted-foreground">{formataCpfCnpj(segurado.cpf_cnpj)}</span>
-                                        <span className="text-sm text-muted-foreground">{segurado.status}</span>
+                                        <span className="text-sm text-muted-foreground">
+                                            {segurado.tipo_pessoa === 'F'
+                                                ? 'CPF'
+                                                : 'CNPJ'}
+                                        </span>
+                                        <span className="text-sm font-medium">
+                                            {segurado.nome_completo}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">
+                                            {formataCpfCnpj(segurado.cpf_cnpj)}
+                                        </span>
+                                        <span className="text-sm text-muted-foreground">
+                                            {segurado.status}
+                                        </span>
                                     </div>
                                 ))}
                             </div>
                         )}
                         {/* Nenhum resultado */}
-                        {mostrarLista && busca.length > 0 && resultados.length === 0 && (
-                            <p className="text-sm text-red-500">Nenhum cliente encontrado</p>
-                        )}
+                        {mostrarLista &&
+                            busca.length > 0 &&
+                            resultados.length === 0 && (
+                                <p className="text-sm text-red-500">
+                                    Nenhum cliente encontrado
+                                </p>
+                            )}
                     </div>
                     {/* Número da apólice */}
                     <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        <label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                             Número da Apólice*
                         </label>
                         <Input
                             type="text"
                             placeholder="Ex: 401391234567"
                             value={data.numero_apolice}
-                            onChange={(e) => setData('numero_apolice', e.target.value)}
-                            className="h-12 border-muted-foreground/20 rounded-xl"
+                            onChange={(e) =>
+                                setData('numero_apolice', e.target.value)
+                            }
+                            className="h-12 rounded-xl border-muted-foreground/20"
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                            <label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                 Seguradora*
                             </label>
-                            <Select value={data.seguradora_id ? String(data.seguradora_id) : ""} onValueChange={(v) => setData('seguradora_id', v)}>
-                                <SelectTrigger className="h-12 border-muted-foreground/20 rounded-xl">
+                            <Select
+                                value={
+                                    data.seguradora_id
+                                        ? String(data.seguradora_id)
+                                        : ''
+                                }
+                                onValueChange={(v) =>
+                                    setData('seguradora_id', v)
+                                }
+                            >
+                                <SelectTrigger className="h-12 rounded-xl border-muted-foreground/20">
                                     <SelectValue placeholder="Selecione" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {seguradoras.map((seguradora: any) => (
-                                        <SelectItem key={seguradora.id} value={String(seguradora.id)}>
+                                        <SelectItem
+                                            key={seguradora.id}
+                                            value={String(seguradora.id)}
+                                        >
                                             {seguradora.nome_fantasia}
                                         </SelectItem>
                                     ))}
@@ -183,31 +225,38 @@ export default function CreateApoliceModal({ open, setOpen, segurados, ramos, se
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                            <label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                 Ramo*
                             </label>
-                            <Select 
-                                value={data.ramo_id ? String(data.ramo_id) : ""} 
+                            <Select
+                                value={data.ramo_id ? String(data.ramo_id) : ''}
                                 onValueChange={(v) => setData('ramo_id', v)}
                                 disabled={!data.seguradora_id} // Desabilita se não tiver seguradora selecionada
                             >
-                                <SelectTrigger className="h-12 border-muted-foreground/20 rounded-xl">
-                                <SelectValue 
-                                    placeholder={
-                                    data.seguradora_id 
-                                        ? "Selecione o ramo" 
-                                        : "Selecione a seguradora primeiro"
-                                    } 
-                                />
+                                <SelectTrigger className="h-12 rounded-xl border-muted-foreground/20">
+                                    <SelectValue
+                                        placeholder={
+                                            data.seguradora_id
+                                                ? 'Selecione o ramo'
+                                                : 'Selecione a seguradora primeiro'
+                                        }
+                                    />
                                 </SelectTrigger>
                                 <SelectContent>
-                                {ramos
-                                    .filter((ramo: any) => String(ramo.seguradora_id) === String(data.seguradora_id))
-                                    .map((ramo: any) => (
-                                    <SelectItem key={ramo.id} value={String(ramo.id)}>
-                                        {ramo.nome_ramo}
-                                    </SelectItem>
-                                    ))}
+                                    {ramos
+                                        .filter(
+                                            (ramo: any) =>
+                                                String(ramo.seguradora_id) ===
+                                                String(data.seguradora_id),
+                                        )
+                                        .map((ramo: any) => (
+                                            <SelectItem
+                                                key={ramo.id}
+                                                value={String(ramo.id)}
+                                            >
+                                                {ramo.nome_ramo}
+                                            </SelectItem>
+                                        ))}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -215,112 +264,138 @@ export default function CreateApoliceModal({ open, setOpen, segurados, ramos, se
                 </div>
 
                 {/* Vigência */}
-                <div className="space-y-4 mt-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <div className="mt-4 space-y-4">
+                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                         Vigência
                     </p>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                            <label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                 Início da Vigência*
                             </label>
                             <Input
                                 type="date"
                                 value={data.inicio_vigencia}
-                                onChange={(e) => setData('inicio_vigencia', e.target.value)}
-                                className="h-12 border-muted-foreground/20 rounded-xl"
+                                onChange={(e) =>
+                                    setData('inicio_vigencia', e.target.value)
+                                }
+                                className="h-12 rounded-xl border-muted-foreground/20"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                            <label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                 Fim da Vigência*
                             </label>
                             <Input
                                 type="date"
                                 value={data.fim_vigencia}
-                                onChange={(e) => setData('fim_vigencia', e.target.value)}
-                                className="h-12 border-muted-foreground/20 rounded-xl"
+                                onChange={(e) =>
+                                    setData('fim_vigencia', e.target.value)
+                                }
+                                className="h-12 rounded-xl border-muted-foreground/20"
                             />
                         </div>
                     </div>
                 </div>
                 {/* Valores e Pagamento */}
-                <div className="space-y-4 mt-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <div className="mt-4 space-y-4">
+                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                         Valores e Pagamento
                     </p>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                            <label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                 Valor do Prêmio*
                             </label>
                             <Input
                                 type="number"
                                 placeholder="R$ 0,00"
                                 value={data.valor_premio_total}
-                                onChange={(e) => setData('valor_premio_total', e.target.value)}
-                                className="h-12 border-muted-foreground/20 rounded-xl"
+                                onChange={(e) =>
+                                    setData(
+                                        'valor_premio_total',
+                                        e.target.value,
+                                    )
+                                }
+                                className="h-12 rounded-xl border-muted-foreground/20"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                            <label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                 Valor de Cobertura*
                             </label>
                             <Input
                                 type="number"
                                 placeholder="R$ 0,00"
                                 value={data.valor_cobertura}
-                                onChange={(e) => setData('valor_cobertura', e.target.value)}
-                                className="h-12 border-muted-foreground/20 rounded-xl"
+                                onChange={(e) =>
+                                    setData('valor_cobertura', e.target.value)
+                                }
+                                className="h-12 rounded-xl border-muted-foreground/20"
                             />
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                            <label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                 Quantidade de Parcelas*
                             </label>
                             <Input
                                 type="number"
                                 placeholder="12"
                                 value={data.quantidade_parcelas}
-                                onChange={(e) => setData('quantidade_parcelas', e.target.value)}
-                                className="h-12 border-muted-foreground/20 rounded-xl"
+                                onChange={(e) =>
+                                    setData(
+                                        'quantidade_parcelas',
+                                        e.target.value,
+                                    )
+                                }
+                                className="h-12 rounded-xl border-muted-foreground/20"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                            <label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                 Forma de Pagamento*
                             </label>
-                            <Select onValueChange={(v) => setData('forma_pagamento', v)}>
-                                <SelectTrigger className="h-12 border-muted-foreground/20 rounded-xl">
+                            <Select
+                                onValueChange={(v) =>
+                                    setData('forma_pagamento', v)
+                                }
+                            >
+                                <SelectTrigger className="h-12 rounded-xl border-muted-foreground/20">
                                     <SelectValue placeholder="Selecione" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="boleto">Boleto</SelectItem>
-                                    <SelectItem value="cartao">Cartão</SelectItem>
+                                    <SelectItem value="boleto">
+                                        Boleto
+                                    </SelectItem>
+                                    <SelectItem value="cartao">
+                                        Cartão
+                                    </SelectItem>
                                     <SelectItem value="pix">Pix</SelectItem>
-                                    <SelectItem value="debito">Débito Automático</SelectItem>
+                                    <SelectItem value="debito">
+                                        Débito Automático
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                     </div>
                 </div>
                 {/* Observação */}
-                <div className="space-y-2 mt-4">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <div className="mt-4 space-y-2">
+                    <label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                         Observação
                     </label>
                     <textarea
                         value={data.observacoes}
                         onChange={(e) => setData('observacoes', e.target.value)}
-                        className="w-full min-h-[80px] rounded-xl border border-muted-foreground/20 bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500 resize-none"
+                        className="min-h-[80px] w-full resize-none rounded-xl border border-muted-foreground/20 bg-background px-3 py-2 text-sm focus-visible:ring-1 focus-visible:ring-emerald-500 focus-visible:outline-none"
                         placeholder="Observações adicionais..."
                     />
                 </div>
 
                 {/* Botões */}
-                <div className="flex justify-end gap-2 mt-4">
+                <div className="mt-4 flex justify-end gap-2">
                     <Button
                         variant="outline"
                         onClick={() => setOpen(false)}
@@ -330,12 +405,11 @@ export default function CreateApoliceModal({ open, setOpen, segurados, ramos, se
                     </Button>
                     <Button
                         onClick={salvarApolice}
-                        className="h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98]"
+                        className="h-12 rounded-xl bg-emerald-500 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
                     >
                         Cadastrar Apólice
                     </Button>
                 </div>
-
             </DialogContent>
         </Dialog>
     );

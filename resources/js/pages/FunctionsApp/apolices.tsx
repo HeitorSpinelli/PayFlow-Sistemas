@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Head } from "@inertiajs/react";
+import { useState, useRef } from "react";
+import { Head, router } from "@inertiajs/react";
 import { Plus, ScrollText, Search, MoreHorizontal, Download, Filter, ChevronDown, UserRound, ChevronRight, ChevronLeft } from "lucide-react";
 import CreateApoliceModal from "@/components/modals/create-apolice-modal";
 import CreateApoliceProfileModal from "@/components/modals/create-apolice-profile-modal";
@@ -7,32 +7,67 @@ import { Button } from "@/components/ui/button";
 import seguradoProfile from "@/components/modals/create-profile-modal";
 
 export default function Apolices({ segurados, seguradoras, total, ramos, apolices = [] }: any) {
-    const [openModal, setOpenModal] = useState(false);               // modal de criar
+    const [openModal, setOpenModal] = useState(false);                 // modal de criar
     const [openApoliceProfile, setOpenApoliceProfile] = useState(false);     // modal de perfil da apólice
-    const [apoliceSelecionada, setApoliceSelecionada] = useState(null);       // apólice selecionada para o perfil
-    const [busca, setBusca] = useState("");                          // campo de busca
+    const [apoliceSelecionada, setApoliceSelecionada] = useState(null);       // apólice selecionada para o perfil                     // campo de busca
+    
     const abrirPerfil = (apolice: any) => {
         setApoliceSelecionada(apolice);
         setOpenApoliceProfile(true);
     };
 
     const formatarDataBR = (dataString: string) => {
-    if (!dataString) return '-';
-    // Divide a string no 'T' para pegar apenas a parte da data (AAAA-MM-DD)
-    const [ano, mes, dia] = dataString.split('T')[0].split('-');
-    return `${dia}/${mes}/${ano}`;
+        if (!dataString) return '-';
+        const [ano, mes, dia] = dataString.split('T')[0].split('-');
+        return `${dia}/${mes}/${ano}`;
     };
 
-    // Filtro em tempo real das apólices
-    const apolicesFiltradas = apolices.filter((apolice: any) => {
-        const termo = busca.toLowerCase();
-        return (
-            apolice.numero_apolice?.toLowerCase().includes(termo) ||
-            apolice.nome_completo?.toLowerCase().includes(termo) ||
-            apolice.nome_ramo?.toLowerCase().includes(termo) ||
-            apolice.nome_fantasia?.toLowerCase().includes(termo)
-        );
-    });
+    const urlParams =
+        typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search)
+            : new URLSearchParams();
+
+    const [busca, setBusca] = useState(
+        urlParams.get('busca') || '',
+    );
+
+    // Ref para controlar o debounce da busca
+    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Função de busca acionada ao digitar com debounce (dispara a busca no Back-end via Inertia)
+    const handleBuscaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const valor = e.target.value;
+        setBusca(valor);
+
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        searchTimeoutRef.current = setTimeout(() => {
+            const params = new URLSearchParams(window.location.search);
+
+            if (valor.trim() !== '') {
+                params.set('busca', valor);
+            } else {
+                params.delete('busca');
+            }
+            params.delete('page'); // Reseta para a página 1 ao realizar uma nova busca
+
+            router.get(
+                window.location.pathname,
+                Object.fromEntries(params.entries()),
+                {
+                    preserveState: true, // Mantém os modais/inputs abertos
+                    preserveScroll: true, // Mantém a rolagem da tela
+                    replace: true, // Substitui no histórico do navegador
+                },
+            );
+        }, 500); // 500ms de delay
+    };
+
+    // Usamos diretamente o array de apólices que vem filtrado do backend
+    const apolicesFiltradas = apolices;
+
     return (
         <>
             <Head title="Apólices" />
@@ -51,6 +86,7 @@ export default function Apolices({ segurados, seguradoras, total, ramos, apolice
                         Nova Apólice
                     </Button>
                 </div>
+
                 {/* 2. Cards de Estatísticas */}
                 <div className="flex gap-4 justify-center">
                     <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 p-6 bg-card shadow-sm">
@@ -75,6 +111,7 @@ export default function Apolices({ segurados, seguradoras, total, ramos, apolice
                         <ScrollText className="size-10 text-muted-foreground/50" />
                     </div>
                 </div>
+
                 {/* 3. Seção da Tabela */}
                 <div className="rounded-xl border border-sidebar-border bg-card shadow-sm overflow-hidden">
                     
@@ -91,9 +128,9 @@ export default function Apolices({ segurados, seguradoras, total, ramos, apolice
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                                 <input 
                                     type="text" 
-                                    placeholder="Buscar por apólice, cliente, seguradora..." 
+                                    placeholder="Buscar por apólice, cliente, CPF..." 
                                     value={busca}
-                                    onChange={(e) => setBusca(e.target.value)}
+                                    onChange={handleBuscaChange}
                                     className="h-9 w-64 rounded-md border border-sidebar-border bg-background pl-9 pr-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                 />
                             </div>
@@ -111,6 +148,7 @@ export default function Apolices({ segurados, seguradoras, total, ramos, apolice
                             </button>
                         </div>
                     </div>
+
                     {/* Tabela de Apólices */}
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
@@ -160,6 +198,7 @@ export default function Apolices({ segurados, seguradoras, total, ramos, apolice
                                 )}
                             </tbody>
                         </table>
+
                         {/* 4. Paginação */}
                         <div className="flex items-center justify-between px-4 py-4 border-t border-sidebar-border bg-muted/10">
                             <div className="text-sm text-muted-foreground">
@@ -179,6 +218,7 @@ export default function Apolices({ segurados, seguradoras, total, ramos, apolice
                     </div>
                 </div>
             </div>
+
             {/* Modais da Aplicação */}
             <CreateApoliceModal 
                 open={openModal} 

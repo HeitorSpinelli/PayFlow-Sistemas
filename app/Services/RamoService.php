@@ -10,8 +10,4 @@ class RamoService
     {
         return Ramo::findOrFail($id);
     }
-
-    public function store(array $data){
-        return Ramo::create($data);
-    }
 }

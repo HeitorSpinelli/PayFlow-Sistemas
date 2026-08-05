@@ -21,7 +21,7 @@ import SeguradoProfileModal from '@/components/modals/create-profile-modal';
 import { Input } from '@/components/ui/input';
 import { formataInputBusca } from '@/utils/Searchformatter';
 
-// Tipagem para os dados paginados de segurados, incluindo informações de paginação e links para navegação
+// Interface para o objeto de paginação do Laravel
 interface PaginatedSegurados {
     data: any[];
     current_page: number;
@@ -34,30 +34,32 @@ interface PaginatedSegurados {
     links: { url: string | null; label: string; active: boolean }[];
 }
 
-// Tipagem para as props da página, incluindo os dados paginados de segurados e estatísticas
 interface PageProps {
-    segurados: PaginatedSegurados;
-    total: number;
-    totalInativos: number;
+    segurados?: PaginatedSegurados;
+    total?: number;
+    totalAtivos?: number;
+    totalInativos?: number;
 }
 
 export default function Clientes({
     segurados,
-    total,
-    totalInativos,
-
-    //PageProps são passadas como props para o componente Clientes, permitindo que ele acesse os dados de segurados e estatísticas diretamente e ja inicialize os estados de busca e filtro com base nos parâmetros da URL com sua devida tipagem
+    total = 0,
+    totalInativos = 0,
+    totalAtivos = 0,
 }: PageProps) {
     const [openModal, setOpenModal] = useState(false);
     const [openProfile, setOpenProfile] = useState(false);
     const [filtroAberto, setFiltroAberto] = useState(false);
-    const opcoesFiltro = ['Todos', 'Ativos', 'Inativos'];
+    const [exportarAberto, setExportarAberto] = useState(false);
     const [seguradoSelecionado, setSeguradoSelecionado] = useState<any>(null);
+
+    const opcoesFiltro = ['Todos', 'Ativos', 'Inativos'];
 
     // Lê os parâmetros atuais da URL para inicializar os estados corretamente
     const urlParams =
-    //define a tipagem de urlParams como URLSearchParams, que é uma interface nativa do JavaScript para manipular os parâmetros da URL. Isso permite que o código acesse e modifique os parâmetros de busca e filtro diretamente da URL, garantindo que a interface do usuário reflita corretamente o estado atual da aplicação.
-        typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
+        typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search)
+            : new URLSearchParams();
 
     const [seguradoPesquisado, setSeguradoPesquisado] = useState(
         urlParams.get('busca') || '',
@@ -66,7 +68,7 @@ export default function Clientes({
         urlParams.get('status') || 'Todos',
     );
 
-    // Ref para controlar o debounce da busca sem precisar do useEffect
+    // Ref para controlar o debounce da busca
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Função de busca acionada ao digitar (com debounce de 500ms)
@@ -88,13 +90,14 @@ export default function Clientes({
             }
             params.delete('page'); // Reseta para a página 1 ao realizar uma nova busca
 
+            // Dispara a busca no Back-end via Inertia
             router.get(
                 window.location.pathname,
                 Object.fromEntries(params.entries()),
                 {
-                    preserveState: true,
-                    preserveScroll: true,
-                    replace: true,
+                    preserveState: true, // Mantém os modais/inputs abertos
+                    preserveScroll: true, // Mantém a rolagem da tela
+                    replace: true, // Substitui no histórico do navegador
                 },
             );
         });
@@ -114,6 +117,7 @@ export default function Clientes({
         }
         params.delete('page'); // Reseta para a página 1 ao alterar o filtro
 
+        // Dispara o filtro no Back-end via Inertia (Sem debounce)
         router.get(
             window.location.pathname,
             Object.fromEntries(params.entries()),
@@ -130,84 +134,103 @@ export default function Clientes({
         setOpenProfile(true);
     };
 
+    // Tratamentos seguros para evitar NaN
+    const totalGeral = total ?? 0;
+    const totalInativosSegurados = totalInativos ?? 0;
+    const totalAtivosSegurados = totalAtivos ?? 0;
+
     return (
         <>
             <Head title="Clientes" />
 
-            <div className="flex flex-col gap-6 p-6">
+            <div className="flex flex-col gap-6 p-6 sm:p-8">
                 {/* 1. Header da Página */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">
+                        <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-[0.16em] text-emerald-600 uppercase">
+                            <span>Gestão</span>
+                            <ChevronRight className="h-3 w-3" />
+                            <span>Clientes</span>
+                        </div>
+                        <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
                             Clientes
                         </h1>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="mt-1 text-sm text-muted-foreground">
                             Gerencie os clientes e segurados cadastrados
                         </p>
                     </div>
-                    <Button onClick={() => setOpenModal(true)}>
-                        <Plus className="size-4" />
+                    <Button
+                        onClick={() => setOpenModal(true)}
+                        className="h-11 rounded-xl bg-emerald-500 px-5 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
+                    >
+                        <Plus className="mr-2 size-4" />
                         Novo Cliente
                     </Button>
                 </div>
 
-                {/* 2. Cards de Estatísticas */}
-                <div className="flex justify-center gap-4">
-                    <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-sm">
-                        <div className="flex flex-col gap-1">
-                            <h2 className="text-sm font-medium text-muted-foreground">
+                {/* 2. Cards de Estatísticas com Glow / Efeito de Luz */}
+                <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:border-emerald-500/30">
+                        <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl"></div>
+                        <div className="relative z-10 flex flex-col gap-1">
+                            <span className="text-xs font-medium text-muted-foreground">
                                 Total de Clientes
-                            </h2>
-                            <p className="text-3xl font-bold tracking-tight text-green-500">
-                                {total}
-                            </p>
+                            </span>
+                            <span className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                                {totalGeral}
+                            </span>
                         </div>
-                        <UserRound className="size-10 text-muted-foreground/50" />
+                        <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+                            <UserRound className="size-6" />
+                        </div>
                     </div>
-                    <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-sm">
-                        <div className="flex flex-col gap-1">
-                            <h2 className="text-sm font-medium text-muted-foreground">
+                    <div className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:border-emerald-500/30">
+                        <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl"></div>
+                        <div className="relative z-10 flex flex-col gap-1">
+                            <span className="text-xs font-medium text-muted-foreground">
                                 Clientes Ativos
-                            </h2>
-                            <p className="text-3xl font-bold tracking-tight text-green-500">
-                                {total - totalInativos}
-                            </p>
+                            </span>
+                            <span className="text-2xl font-bold tracking-tight text-emerald-500 sm:text-3xl">
+                                {totalAtivosSegurados}
+                            </span>
                         </div>
-                        <ScrollText className="size-10 text-muted-foreground/50" />
+                        <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+                            <ScrollText className="size-6" />
+                        </div>
                     </div>
-
-                    <div className="flex flex-1 items-start justify-between rounded-xl border border-sidebar-border/70 bg-card p-6 shadow-sm">
-                        <div className="flex flex-col gap-1">
-                            <h2 className="text-sm font-medium text-muted-foreground">
+                    <div className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:border-rose-500/30">
+                        <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-rose-500/10 blur-3xl"></div>
+                        <div className="relative z-10 flex flex-col gap-1">
+                            <span className="text-xs font-medium text-muted-foreground">
                                 Inativos
-                            </h2>
-                            <p className="text-3xl font-bold tracking-tight text-red-500">
-                                {totalInativos}
-                            </p>
+                            </span>
+                            <span className="text-2xl font-bold tracking-tight text-rose-500 sm:text-3xl">
+                                {totalInativosSegurados}
+                            </span>
                         </div>
-                        <ScrollText className="size-10 text-muted-foreground/50" />
+                        <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.2)]">
+                            <ScrollText className="size-6" />
+                        </div>
                     </div>
                 </div>
-
                 {/* 3. Seção da Tabela */}
-                <div className="overflow-hidden rounded-xl border border-sidebar-border bg-card shadow-sm">
+                <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
                     {/* Toolbar */}
-                    <div className="flex flex-col justify-between gap-4 border-b border-sidebar-border p-4 md:flex-row md:items-center">
+                    <div className="flex flex-col justify-between gap-4 border-b border-border/70 p-4 sm:p-5 lg:flex-row lg:items-center">
                         <div>
-                            <h3 className="text-lg font-semibold">
+                            <h3 className="text-sm font-bold">
                                 Lista de Clientes
                             </h3>
                             <p className="text-xs text-muted-foreground">
                                 {segurados?.total ?? 0} cliente(s) encontrado(s)
                             </p>
                         </div>
-
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2.5">
                             <div className="relative">
-                                <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                                <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/60" />
                                 <Input
                                     placeholder="Buscar por nome, CPF..."
-                                    className="h-9 w-64 rounded-md border border-sidebar-border bg-background pr-3 pl-9 text-sm focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                                    className="h-10 w-full rounded-xl border border-border/70 bg-background pr-3 pl-9 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none sm:w-64"
                                     value={formataInputBusca(
                                         seguradoPesquisado,
                                     )}
@@ -220,28 +243,32 @@ export default function Clientes({
                                 <button
                                     onClick={() => {
                                         setFiltroAberto(!filtroAberto);
+                                        setExportarAberto(false);
                                     }}
-                                    className="inline-flex h-9 min-w-[110px] items-center justify-center gap-2 rounded-md border border-sidebar-border bg-background px-3 text-sm font-medium transition-colors hover:bg-muted"
+                                    className="inline-flex h-10 min-w-[120px] items-center justify-between gap-2 rounded-xl border border-border/70 bg-background px-3 text-sm font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
                                 >
-                                    <Filter className="size-4 text-muted-foreground" />
-                                    {filtroSelecionado}
+                                    <span className="flex items-center gap-2">
+                                        <Filter className="size-4 text-muted-foreground/60" />
+                                        {filtroSelecionado}
+                                    </span>
                                     <ChevronDown
-                                        className={`size-4 text-muted-foreground transition-transform ${filtroAberto ? 'rotate-180' : ''}`}
+                                        className={`size-4 text-muted-foreground/60 transition-transform ${filtroAberto ? 'rotate-180' : ''}`}
                                     />
                                 </button>
 
                                 {filtroAberto && (
-                                    <div className="absolute right-0 z-50 mt-2 w-40 overflow-hidden rounded-lg border border-sidebar-border bg-background py-1 shadow-lg">
+                                    /* Altere de 'right-0' para 'left-0' ou adicione max-w e posicionamento seguro */
+                                    <div className="absolute left-0 z-50 mt-2 w-40 overflow-hidden rounded-xl border border-border/70 bg-popover py-1.5 shadow-xl">
                                         {opcoesFiltro.map((opcao) => (
                                             <button
                                                 key={opcao}
                                                 onClick={() =>
                                                     handleFiltroChange(opcao)
                                                 }
-                                                className={`flex w-full items-center justify-between px-3 py-2 text-sm transition-colors ${
+                                                className={`flex w-full cursor-pointer items-center justify-between px-3 py-2 text-sm transition-colors ${
                                                     filtroSelecionado === opcao
-                                                        ? 'bg-[#2D5A43] text-white'
-                                                        : 'text-foreground hover:bg-muted'
+                                                        ? 'bg-emerald-500 font-medium text-white'
+                                                        : 'text-popover-foreground hover:bg-muted'
                                                 }`}
                                             >
                                                 {opcao}
@@ -256,10 +283,10 @@ export default function Clientes({
                             </div>
                             <a
                                 href="/segurados/exportar"
-                                className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-sidebar-border bg-background px-3 text-sm font-medium transition-colors hover:bg-muted"
+                                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border/70 bg-background px-4 text-sm font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
                             >
-                                <Download className="size-4 text-muted-foreground" />
-                                Exportar CSV
+                                <Download className="size-4 text-muted-foreground/60" />
+                                Exportar
                             </a>
                         </div>
                     </div>
@@ -268,86 +295,90 @@ export default function Clientes({
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="border-b border-sidebar-border bg-muted/30 font-medium text-muted-foreground">
-                                    <th className="h-12 px-4 text-left">ID</th>
-                                    <th className="h-12 px-4 text-left">
+                                <tr className="border-b border-border/70 bg-muted/[0.18] font-medium text-muted-foreground">
+                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
+                                        ID
+                                    </th>
+                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
                                         Cliente
                                     </th>
-                                    <th className="h-12 px-4 text-left">
+                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
                                         CPF/CNPJ
                                     </th>
-                                    <th className="h-12 px-4 text-left">
-                                        Telefone
+                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
+                                        Telefone/Celular
                                     </th>
-                                    <th className="h-12 px-4 text-left">
+                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
                                         Localização
                                     </th>
-                                    <th className="h-12 px-4 text-left">
+                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
                                         Status
                                     </th>
-                                    <th className="h-12 px-4 text-left">
+                                    <th className="h-11 px-4 text-right text-xs font-bold tracking-wider uppercase">
                                         Ações
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {segurados === null ||
-                                segurados?.data?.length === 0 ? (
+                                {!segurados?.data ||
+                                segurados.data.length === 0 ? (
                                     <tr>
                                         <td
                                             colSpan={7}
-                                            className="h-12 px-4 text-center text-muted-foreground"
+                                            className="h-24 px-4 text-center text-muted-foreground"
                                         >
                                             Nenhum cliente encontrado.
                                         </td>
                                     </tr>
                                 ) : (
-                                    segurados.data.map((segurado: any) => (
+                                    segurados?.data?.map((segurado) => (
                                         <tr
                                             key={segurado.id}
-                                            className="border-b border-sidebar-border transition-colors hover:bg-muted/30"
+                                            className="border-b border-border/70 transition-colors hover:bg-muted/[0.12]"
                                         >
-                                            <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                                            <td className="px-4 py-3.5 font-mono text-xs text-muted-foreground">
                                                 #
                                                 {String(segurado.id).padStart(
                                                     4,
                                                     '0',
                                                 )}
                                             </td>
-                                            <td className="h-12 px-4">
+                                            <td className="px-4 py-3.5 font-medium text-foreground">
                                                 {segurado.nome_completo}
                                             </td>
-                                            <td className="h-12 px-4">
+                                            <td className="px-4 py-3.5 text-muted-foreground">
                                                 {segurado.cpf_cnpj
                                                     ? formataCpfCnpj(
                                                           segurado.cpf_cnpj,
                                                       )
                                                     : '-'}
                                             </td>
-                                            <td className="h-12 px-4">
-                                                {segurado.telefone_fixo}
+                                            <td className="px-4 py-3.5 text-muted-foreground">
+                                                {segurado.celular_whatsapp ||
+                                                    segurado.telefone ||
+                                                    '-'}
                                             </td>
-                                            <td className="h-12 px-4">
+                                            <td className="px-4 py-3.5 text-muted-foreground">
                                                 {segurado.cidade} -{' '}
                                                 {segurado.estado}
                                             </td>
-                                            <td className="h-12 px-4">
+                                            <td className="px-4 py-3.5">
                                                 <span
-                                                    className={`inline-flex rounded-md px-2.5 py-0.5 text-xs font-medium capitalize ${
+                                                    className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-semibold capitalize ${
                                                         segurado.status ===
                                                         'Ativo'
-                                                            ? 'bg-green-50 text-green-600'
-                                                            : 'bg-orange-50 text-orange-600'
+                                                            ? 'bg-emerald-500/10 text-emerald-500'
+                                                            : 'bg-rose-500/10 text-rose-500'
                                                     }`}
                                                 >
                                                     {segurado.status}
                                                 </span>
                                             </td>
-                                            <td className="h-12 px-4">
+                                            <td className="px-4 py-3.5 text-right">
                                                 <Button
-                                                    variant="outline"
+                                                    variant="ghost"
                                                     size="sm"
-                                                    className="rounded-lg"
+                                                    className="h-8 w-8 rounded-lg p-0 hover:bg-emerald-500/10 hover:text-emerald-500"
                                                     onClick={() =>
                                                         abrirPerfil(segurado)
                                                     }
@@ -363,18 +394,18 @@ export default function Clientes({
                     </div>
 
                     {/* 4. Paginação */}
-                    <div className="flex items-center justify-between border-t border-sidebar-border bg-muted/10 px-4 py-4">
-                        <div className="text-sm text-muted-foreground">
+                    <div className="flex flex-col gap-4 border-t border-border/70 bg-muted/[0.08] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                        <div className="text-xs text-muted-foreground">
                             Mostrando{' '}
-                            <span className="font-medium text-foreground">
+                            <span className="font-semibold text-foreground">
                                 {segurados?.from ?? 0}
                             </span>{' '}
                             até{' '}
-                            <span className="font-medium text-foreground">
+                            <span className="font-semibold text-foreground">
                                 {segurados?.to ?? 0}
                             </span>{' '}
                             de{' '}
-                            <span className="font-medium text-foreground">
+                            <span className="font-semibold text-foreground">
                                 {segurados?.total ?? 0}
                             </span>{' '}
                             resultados
@@ -386,17 +417,17 @@ export default function Clientes({
                                 <Link
                                     href={segurados.prev_page_url}
                                     preserveScroll
-                                    className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-sidebar-border bg-background px-3 text-xs font-medium transition-colors hover:bg-muted"
+                                    className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50"
                                 >
-                                    <ChevronLeft className="size-3" />
+                                    <ChevronLeft className="size-3.5" />
                                     Anterior
                                 </Link>
                             ) : (
                                 <button
                                     disabled
-                                    className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-sidebar-border bg-background px-3 text-xs font-medium transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40"
                                 >
-                                    <ChevronLeft className="size-3" />
+                                    <ChevronLeft className="size-3.5" />
                                     Anterior
                                 </button>
                             )}
@@ -406,18 +437,18 @@ export default function Clientes({
                                 <Link
                                     href={segurados.next_page_url}
                                     preserveScroll
-                                    className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-sidebar-border bg-background px-3 text-xs font-medium transition-colors hover:bg-muted"
+                                    className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50"
                                 >
                                     Próxima
-                                    <ChevronRight className="size-3" />
+                                    <ChevronRight className="size-3.5" />
                                 </Link>
                             ) : (
                                 <button
                                     disabled
-                                    className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-sidebar-border bg-background px-3 text-xs font-medium transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40"
                                 >
                                     Próxima
-                                    <ChevronRight className="size-3" />
+                                    <ChevronRight className="size-3.5" />
                                 </button>
                             )}
                         </div>
@@ -425,13 +456,12 @@ export default function Clientes({
                 </div>
             </div>
 
+            {/* Modal de criar cliente */}
             <CreateSeguradoModal open={openModal} setOpen={setOpenModal} />
+
+            {/* seguradoSelecionado diferente de null abre o modal de perfil para cada um */}
             {seguradoSelecionado && (
-                <SeguradoProfileModal
-                    open={openProfile}
-                    setOpen={setOpenProfile}
-                    segurado={seguradoSelecionado}
-                />
+                <SeguradoProfileModal open={openProfile} setOpen={setOpenProfile} segurado={seguradoSelecionado} />
             )}
         </>
     );

@@ -2,38 +2,21 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model; // Corrigido o ;; duplo
+use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Database\Factories\ApoliceFactory; // Importa a Factory correspondente
 
-class apolices extends Model
+class Apolice extends Model
 {
-    use HasFactory;
-
-    /**
-     * Define explicitamente qual Factory essa Model deve utilizar
-     */
-    protected static function newFactory()
-    {
-        return ApoliceFactory::new();
-    }
-
     protected $table = 'apolices';
 
-    // Inclui o status_vigencia automaticamente na serialização (Inertia/React)
     protected $appends = ['status_vigencia'];
 
-    // Garante que o Laravel trate os campos como objetos Carbon (datas)
     protected $casts = [
         'inicio_vigencia' => 'date',
         'fim_vigencia' => 'date',
     ];
 
-    /**
-     * Accessor para calcular o status da vigência em tempo real
-     */
     public function getStatusVigenciaAttribute(): string
     {
         if (!$this->fim_vigencia || !$this->inicio_vigencia) {
@@ -41,7 +24,6 @@ class apolices extends Model
         }
 
         $hoje = Carbon::today();
-
         $fimVigencia = Carbon::parse($this->fim_vigencia);
         $inicioVigencia = Carbon::parse($this->inicio_vigencia);
 
@@ -58,6 +40,17 @@ class apolices extends Model
         }
 
         return 'Pendente';
+    }
+
+    public function scopeAtivas($query)
+    {
+        return $query->where('inicio_vigencia', '<=', now())
+            ->where('fim_vigencia', '>=', now());
+    }
+
+    public function scopeVencidasOuParaRenovar($query)
+    {
+        return $query->where('fim_vigencia', '<', now());
     }
 
     protected $fillable = [
