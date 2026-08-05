@@ -18,7 +18,13 @@ import { formataCpfCnpj } from '@/utils/cpfMask';
 import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
 import { useForm } from '@inertiajs/react';
-import { ChevronRight, FileText, Shield, DollarSign, Calendar } from 'lucide-react';
+import {
+    ChevronRight,
+    FileText,
+    Shield,
+    DollarSign,
+    Calendar,
+} from 'lucide-react';
 
 function Section({ icon, title, description, children }: any) {
     return (
@@ -52,20 +58,21 @@ export default function CreateApoliceModal({
     const [seguradoSelecionado, setSeguradoSelecionado] = useState<any>(null);
 
     // Formulário do Inertia
-    const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
-        numero_apolice: '',
-        cliente_id: '',
-        seguradora_id: '',
-        ramo_id: '',
-        valor_premio_total: '',
-        valor_cobertura: '',
-        quantidade_parcelas: '',
-        forma_pagamento: '',
-        inicio_vigencia: '',
-        fim_vigencia: '',
-        status: '',
-        observacoes: '',
-    });
+    const { data, setData, post, processing, errors, reset, clearErrors } =
+        useForm({
+            numero_apolice: '',
+            cliente_id: '',
+            seguradora_id: '',
+            ramo_id: '',
+            valor_premio_total: '',
+            valor_cobertura: '',
+            quantidade_parcelas: '',
+            forma_pagamento: '',
+            inicio_vigencia: '',
+            fim_vigencia: '',
+            status: '',
+            observacoes: '',
+        });
 
     useEffect(() => {
         if (!open) {
@@ -176,7 +183,8 @@ export default function CreateApoliceModal({
                         </div>
                     </div>
                     <p className="relative mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
-                        Preencha os dados da apólice para cadastrá-la no sistema.
+                        Preencha os dados da apólice para cadastrá-la no
+                        sistema.
                     </p>
                 </DialogHeader>
 
@@ -201,10 +209,15 @@ export default function CreateApoliceModal({
                                         value={busca}
                                         onChange={handleBuscaChange}
                                         onFocus={() =>
-                                            setMostrarLista(busca.trim().length > 0)
+                                            setMostrarLista(
+                                                busca.trim().length > 0,
+                                            )
                                         }
                                         onBlur={() =>
-                                            setTimeout(() => setMostrarLista(false), 150)
+                                            setTimeout(
+                                                () => setMostrarLista(false),
+                                                150,
+                                            )
                                         }
                                         className="h-11 rounded-xl border-border/80 bg-background"
                                     />
@@ -214,31 +227,38 @@ export default function CreateApoliceModal({
                                         busca.trim().length > 0 &&
                                         resultados.length > 0 && (
                                             <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-border/80 bg-background shadow-lg">
-                                                {resultados.map((segurado: any) => (
-                                                    <div
-                                                        key={segurado.id}
-                                                        onMouseDown={() =>
-                                                            selecionarSegurado(segurado)
-                                                        }
-                                                        className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 hover:bg-muted/50"
-                                                    >
-                                                        <span className="text-xs font-medium text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-md">
-                                                            {segurado.tipo_pessoa === 'pf'
-                                                                ? 'CPF'
-                                                                : 'CNPJ'}
-                                                        </span>
-                                                        <span className="text-sm font-medium flex-1">
-                                                            {segurado.nome_completo}
-                                                        </span>
-                                                        <span className="text-xs text-muted-foreground">
-                                                            {segurado.cpf_cnpj
-                                                                ? formataCpfCnpj(
-                                                                    segurado.cpf_cnpj,
+                                                {resultados.map(
+                                                    (segurado: any) => (
+                                                        <div
+                                                            key={segurado.id}
+                                                            onMouseDown={() =>
+                                                                selecionarSegurado(
+                                                                    segurado,
                                                                 )
-                                                                : '-'}
-                                                        </span>
-                                                    </div>
-                                                ))}
+                                                            }
+                                                            className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 hover:bg-muted/50"
+                                                        >
+                                                            <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600">
+                                                                {segurado.tipo_pessoa ===
+                                                                'pf'
+                                                                    ? 'CPF'
+                                                                    : 'CNPJ'}
+                                                            </span>
+                                                            <span className="flex-1 text-sm font-medium">
+                                                                {
+                                                                    segurado.nome_completo
+                                                                }
+                                                            </span>
+                                                            <span className="text-xs text-muted-foreground">
+                                                                {segurado.cpf_cnpj
+                                                                    ? formataCpfCnpj(
+                                                                          segurado.cpf_cnpj,
+                                                                      )
+                                                                    : '-'}
+                                                            </span>
+                                                        </div>
+                                                    ),
+                                                )}
                                             </div>
                                         )}
 
@@ -267,7 +287,10 @@ export default function CreateApoliceModal({
                                         placeholder="Ex: 401391234567"
                                         value={data.numero_apolice}
                                         onChange={(e) =>
-                                            setData('numero_apolice', e.target.value)
+                                            setData(
+                                                'numero_apolice',
+                                                e.target.value,
+                                            )
                                         }
                                         className="h-11 rounded-xl border-border/80 bg-background"
                                     />
@@ -289,20 +312,28 @@ export default function CreateApoliceModal({
                                                     ? String(data.seguradora_id)
                                                     : ''
                                             }
-                                            onValueChange={handleSeguradoraChange}
+                                            onValueChange={
+                                                handleSeguradoraChange
+                                            }
                                         >
                                             <SelectTrigger className="h-11 rounded-xl border-border/80 bg-background">
                                                 <SelectValue placeholder="Selecione" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {seguradoras.map((seguradora: any) => (
-                                                    <SelectItem
-                                                        key={seguradora.id}
-                                                        value={String(seguradora.id)}
-                                                    >
-                                                        {seguradora.nome_fantasia}
-                                                    </SelectItem>
-                                                ))}
+                                                {seguradoras.map(
+                                                    (seguradora: any) => (
+                                                        <SelectItem
+                                                            key={seguradora.id}
+                                                            value={String(
+                                                                seguradora.id,
+                                                            )}
+                                                        >
+                                                            {
+                                                                seguradora.nome_fantasia
+                                                            }
+                                                        </SelectItem>
+                                                    ),
+                                                )}
                                             </SelectContent>
                                         </Select>
                                         {errors.seguradora_id && (
@@ -316,8 +347,14 @@ export default function CreateApoliceModal({
                                             Ramo*
                                         </label>
                                         <Select
-                                            value={data.ramo_id ? String(data.ramo_id) : ''}
-                                            onValueChange={(v) => setData('ramo_id', v)}
+                                            value={
+                                                data.ramo_id
+                                                    ? String(data.ramo_id)
+                                                    : ''
+                                            }
+                                            onValueChange={(v) =>
+                                                setData('ramo_id', v)
+                                            }
                                             disabled={!data.seguradora_id}
                                         >
                                             <SelectTrigger className="h-11 rounded-xl border-border/80 bg-background">
@@ -333,13 +370,19 @@ export default function CreateApoliceModal({
                                                 {ramos
                                                     .filter(
                                                         (ramo: any) =>
-                                                            String(ramo.seguradora_id) ===
-                                                            String(data.seguradora_id),
+                                                            String(
+                                                                ramo.seguradora_id,
+                                                            ) ===
+                                                            String(
+                                                                data.seguradora_id,
+                                                            ),
                                                     )
                                                     .map((ramo: any) => (
                                                         <SelectItem
                                                             key={ramo.id}
-                                                            value={String(ramo.id)}
+                                                            value={String(
+                                                                ramo.id,
+                                                            )}
                                                         >
                                                             {ramo.nome_ramo}
                                                         </SelectItem>
@@ -371,7 +414,10 @@ export default function CreateApoliceModal({
                                         type="date"
                                         value={data.inicio_vigencia}
                                         onChange={(e) =>
-                                            setData('inicio_vigencia', e.target.value)
+                                            setData(
+                                                'inicio_vigencia',
+                                                e.target.value,
+                                            )
                                         }
                                         className="h-11 rounded-xl border-border/80 bg-background"
                                     />
@@ -389,7 +435,10 @@ export default function CreateApoliceModal({
                                         type="date"
                                         value={data.fim_vigencia}
                                         onChange={(e) =>
-                                            setData('fim_vigencia', e.target.value)
+                                            setData(
+                                                'fim_vigencia',
+                                                e.target.value,
+                                            )
                                         }
                                         className="h-11 rounded-xl border-border/80 bg-background"
                                     />
@@ -441,7 +490,10 @@ export default function CreateApoliceModal({
                                             placeholder="R$ 0,00"
                                             value={data.valor_cobertura}
                                             onChange={(e) =>
-                                                setData('valor_cobertura', e.target.value)
+                                                setData(
+                                                    'valor_cobertura',
+                                                    e.target.value,
+                                                )
                                             }
                                             className="h-11 rounded-xl border-border/80 bg-background"
                                         />
@@ -496,7 +548,9 @@ export default function CreateApoliceModal({
                                                 <SelectItem value="cartao">
                                                     Cartão
                                                 </SelectItem>
-                                                <SelectItem value="pix">Pix</SelectItem>
+                                                <SelectItem value="pix">
+                                                    Pix
+                                                </SelectItem>
                                                 <SelectItem value="debito">
                                                     Débito Automático
                                                 </SelectItem>
@@ -524,7 +578,9 @@ export default function CreateApoliceModal({
                                 </label>
                                 <textarea
                                     value={data.observacoes}
-                                    onChange={(e) => setData('observacoes', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('observacoes', e.target.value)
+                                    }
                                     className="min-h-[90px] w-full resize-none rounded-xl border border-border/80 bg-background px-3 py-2 text-sm focus-visible:ring-1 focus-visible:ring-emerald-500 focus-visible:outline-none"
                                     placeholder="Observações adicionais..."
                                 />
