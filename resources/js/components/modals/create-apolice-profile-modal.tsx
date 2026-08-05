@@ -1,23 +1,67 @@
+import { useForm, router } from '@inertiajs/react';
+import {
+    AlertTriangle,
+    ChevronRight,
+    CreditCard,
+    FileText,
+    Pencil,
+    ScrollText,
+    Trash2,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useState, useEffect } from 'react';
-import { useForm, router } from '@inertiajs/react';
-import { toast } from 'sonner';
-import { Plus } from 'lucide-react';
 
 type Modo = 'visualizar' | 'editar' | 'excluir';
 
-export default function CreateApoliceProfileModal({ open, setOpen, apolice, ramos }: any) {
+function Section({ icon, title, description, children }: any) {
+    return (
+        <section className="rounded-2xl border border-border/70 bg-muted/[0.18] p-4 sm:p-5">
+            <div className="mb-5 flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+                    {icon}
+                </span>
+                <div>
+                    <h3 className="text-sm font-bold">{title}</h3>
+                    <p className="text-xs text-muted-foreground">
+                        {description}
+                    </p>
+                </div>
+            </div>
+            {children}
+        </section>
+    );
+}
 
+function InfoField({ label, value }: { label: string; value?: string }) {
+    return (
+        <div className="rounded-xl border border-border/70 bg-background px-3 py-2.5 shadow-sm">
+            <p className="mb-1 text-[10px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
+                {label}
+            </p>
+            <p className="text-sm font-semibold text-foreground">
+                {value || 'Não informado'}
+            </p>
+        </div>
+    );
+}
+
+export default function CreateApoliceProfileModal({
+    open,
+    setOpen,
+    apolice,
+    ramos,
+}: any) {
     const [modo, setModo] = useState<Modo>('visualizar');
 
-    const { data, setData, put, processing, setData: resetForm } = useForm({
+    const { data, setData, put, processing } = useForm({
         numero_apolice: '',
         cliente_id: '',
         seguradora_id: '',
@@ -35,7 +79,7 @@ export default function CreateApoliceProfileModal({ open, setOpen, apolice, ramo
     // Atualiza o formulário sempre que uma nova apólice for selecionada ou o modal abrir
     useEffect(() => {
         if (apolice) {
-            resetForm({
+            setData({
                 numero_apolice: apolice.numero_apolice ?? '',
                 cliente_id: apolice.cliente_id ?? '',
                 seguradora_id: apolice.seguradora_id ?? '',
@@ -86,195 +130,424 @@ export default function CreateApoliceProfileModal({ open, setOpen, apolice, ramo
 
     if (!apolice) return null;
 
+    const tituloBreadcrumb =
+        modo === 'editar'
+            ? 'Editar'
+            : modo === 'excluir'
+              ? 'Excluir'
+              : 'Detalhes';
+
     return (
         <Dialog open={open} onOpenChange={fechar}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                
-                {/* Header */}
-                <DialogHeader className="mb-2">
-                    <div className="flex items-center gap-3">
-                        <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                            <span className="text-emerald-500 font-bold text-lg">
-                                {apolice.nome_completo?.charAt(0).toUpperCase() || 'A'}
+            <DialogContent className="!flex max-h-[92vh] max-w-3xl flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 shadow-2xl">
+                <DialogHeader className="relative shrink-0 overflow-hidden border-b border-border/70 bg-gradient-to-br from-emerald-500/[0.12] via-background to-background px-6 py-6 pr-12 sm:px-8">
+                    <div className="absolute -top-12 -right-10 h-36 w-36 rounded-full bg-emerald-500/10 blur-2xl" />
+                    <div className="relative flex items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25">
+                            <span className="text-lg font-bold">
+                                {apolice.nome_completo
+                                    ?.charAt(0)
+                                    ?.toUpperCase() || 'A'}
                             </span>
                         </div>
                         <div>
-                            <DialogTitle className="text-xl font-bold">
-                                {modo === 'visualizar' && `Apólice #${apolice.numero_apolice}`}
-                                {modo === 'editar' && `Editar Apólice: #${apolice.numero_apolice}`}
-                                {modo === 'excluir' && `Excluir Apólice: #${apolice.numero_apolice}`}
+                            <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-[0.16em] text-emerald-600 uppercase">
+                                <span>Apólices</span>
+                                <ChevronRight className="h-3 w-3" />
+                                <span>{tituloBreadcrumb}</span>
+                            </div>
+                            <DialogTitle className="text-xl font-bold tracking-tight sm:text-2xl">
+                                {modo === 'visualizar' &&
+                                    `Apólice #${apolice.numero_apolice}`}
+                                {modo === 'editar' &&
+                                    `Editar apólice: #${apolice.numero_apolice}`}
+                                {modo === 'excluir' &&
+                                    `Excluir apólice: #${apolice.numero_apolice}`}
                             </DialogTitle>
-                            <p className="text-xs text-muted-foreground">Segurado: {apolice.nome_completo}</p>
+                            <p className="text-xs text-muted-foreground">
+                                Segurado: {apolice.nome_completo}
+                            </p>
+                        </div>
+                    </div>
+                    {apolice.status_vigencia && (
+                        <div className="relative mt-3 flex items-center gap-2">
                             {apolice.status_vigencia === 'Vigente' && (
-                            <span className="px-2 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800">
-                                Vigente
-                            </span>
-                        )}
-                        {apolice.status_vigencia === 'Para Renovar' && (
-                            <span className="px-3 py-1 text-xs font-bold rounded-full bg-red-950 text-red-400 border border-red-500 animate-[pulse_1.5s_infinite] shadow-[0_0_15px_rgba(239,68,68,0.7)] text-shadow-[0_0_8px_rgba(239,68,68,0.5)]">
-                                Para Renovar
-                            </span>
-                        )}
-                        </div>
-                    </div>
-                </DialogHeader>
-                {/* ── MODO VISUALIZAR ── */}
-                {modo === 'visualizar' && (
-                    <div className="space-y-4">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Informações Gerais</p>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="rounded-xl border border-muted-foreground/20 p-3">
-                                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Ramo / Seguradora</p>
-                                <p className="text-sm font-medium">{apolice.nome_ramo} / {apolice.nome_fantasia}</p>
-                            </div>
-                            <div className="rounded-xl border border-muted-foreground/20 p-3">
-                                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Número da Apólice</p>
-                                <p className="text-sm font-medium">{apolice.numero_apolice}</p>
-                            </div>
-                        </div>
-
-                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Valores e Parcelas</p>
-                        <div className="grid grid-cols-3 gap-3">
-                            <div className="rounded-xl border border-muted-foreground/20 p-3">
-                                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Prêmio Total</p>
-                                <p className="text-sm font-medium text-emerald-600 font-mono">R$ {apolice.valor_premio_total}</p>
-                            </div>
-                            <div className="rounded-xl border border-muted-foreground/20 p-3">
-                                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Cobertura</p>
-                                <p className="text-sm font-medium font-mono">R$ {apolice.valor_cobertura || 'N/I'}</p>
-                            </div>
-                            <div className="rounded-xl border border-muted-foreground/20 p-3">
-                                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Parcelas / Forma</p>
-                                <p className="text-sm font-medium">{apolice.quantidade_parcelas}x ({apolice.forma_pagamento || 'N/I'})</p>
-                            </div>
-                        </div>
-
-                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Vigência</p>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="rounded-xl border border-muted-foreground/20 p-3">
-                                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Início</p>
-                                <p className="text-sm font-medium">{formatarDataBR(apolice.inicio_vigencia)}</p>
-                            </div>
-                            <div className="rounded-xl border border-muted-foreground/20 p-3">
-                                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Fim</p>
-                                <p className="text-sm font-medium">{formatarDataBR(apolice.fim_vigencia)}</p>
-                            </div>
-                        </div>
-
-                        {apolice.observacoes && (
-                            <>
-                                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Observações</p>
-                                <div className="rounded-xl border border-muted-foreground/20 p-3">
-                                    <p className="text-sm whitespace-pre-line">{apolice.observacoes}</p>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                )}
-
-                {/* ── MODO EDITAR ── */}
-                {modo === 'editar' && (
-                    <div className="space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Número da Apólice</label>
-                                <Input value={data.numero_apolice} onChange={e => setData('numero_apolice', e.target.value)} className="h-11 rounded-xl" />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ramo</label>
-                                <select 
-                                    value={data.ramo_id} 
-                                    onChange={e => setData('ramo_id', e.target.value)} 
-                                    className="w-full h-11 rounded-xl border border-muted-foreground/20 bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500"
-                                >
-                                    <option value="">Selecione um ramo</option>
-                                    {ramos?.map((ramo: any) => (
-                                        <option key={ramo.id} value={ramo.id}>
-                                            {ramo.nome_ramo}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                            <div className="space-y-1">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Valor do Prêmio Total</label>
-                                <Input value={data.valor_premio_total} onChange={e => setData('valor_premio_total', e.target.value)} className="h-11 rounded-xl" type="number" />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Valor de Cobertura</label>
-                                <Input value={data.valor_cobertura} onChange={e => setData('valor_cobertura', e.target.value)} className="h-11 rounded-xl" type="number" />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Quantidade Parcelas</label>
-                                <Input value={data.quantidade_parcelas} onChange={e => setData('quantidade_parcelas', e.target.value)} className="h-11 rounded-xl" type="number" />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Forma de Pagamento</label>
-                                <Input value={data.forma_pagamento} onChange={e => setData('forma_pagamento', e.target.value)} className="h-11 rounded-xl" />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Início Vigência</label>
-                                <Input value={data.inicio_vigencia} onChange={e => setData('inicio_vigencia', e.target.value)} className="h-11 rounded-xl" type="date" />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Fim Vigência</label>
-                                <Input value={data.fim_vigencia} onChange={e => setData('fim_vigencia', e.target.value)} className="h-11 rounded-xl" type="date" />
-                            </div>
-                            <div className="space-y-1 col-span-2">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Observações</label>
-                                <textarea
-                                    value={data.observacoes}
-                                    onChange={e => setData('observacoes', e.target.value)}
-                                    className="w-full min-h-[80px] rounded-xl border border-muted-foreground/20 bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500 resize-none"
-                                />
-                            </div>
-                    </div>
-                )}
-
-                {/* ── MODO EXCLUIR ── */}
-                {modo === 'excluir' && (
-                    <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4 space-y-2">
-                        <p className="text-sm font-semibold text-red-500">Atenção — esta ação não pode ser desfeita.</p>
-                        <p className="text-sm text-muted-foreground">
-                            A apólice de número <span className="font-semibold text-foreground">{apolice.numero_apolice}</span> vinculada a <span className="font-semibold text-foreground">{apolice.nome_completo}</span> será permanentemente removida.
-                        </p>
-                    </div>
-                )}
-
-                {/* Footer Botões */}
-                <div className="flex justify-between mt-6">
-                    {modo === 'visualizar' && (
-                        <div className="flex gap-2">
-                            <Button variant="outline" onClick={() => setModo('editar')} className="rounded-xl">Editar</Button>
-                            <Button variant="outline" onClick={() => setModo('excluir')} className="rounded-xl text-red-500 hover:text-red-500 border-red-500/30 hover:bg-red-500/10">Excluir</Button>
+                                <span className="inline-block rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold tracking-wide text-emerald-600">
+                                    Vigente
+                                </span>
+                            )}
+                            {apolice.status_vigencia === 'Para Renovar' && (
+                                <span className="inline-block animate-pulse rounded-full border border-rose-500/30 bg-rose-500/10 px-2.5 py-0.5 text-xs font-semibold tracking-wide text-rose-500">
+                                    Para Renovar
+                                </span>
+                            )}
                         </div>
                     )}
+                </DialogHeader>
 
-                    <div className="flex gap-2 ml-auto">
-                        {modo === 'visualizar' && (
-                            <Button variant="outline" onClick={fechar} className="rounded-xl">Fechar</Button>
-                        )}
+                <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6 sm:px-8">
+                    {/* ── MODO VISUALIZAR ── */}
+                    {modo === 'visualizar' && (
+                        <>
+                            <Section
+                                icon={<ScrollText className="h-4 w-4" />}
+                                title="Informações gerais"
+                                description="Identificação da apólice"
+                            >
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    <InfoField
+                                        label="Ramo / Seguradora"
+                                        value={`${apolice.nome_ramo ?? ''} / ${apolice.nome_fantasia ?? ''}`}
+                                    />
+                                    <InfoField
+                                        label="Número da apólice"
+                                        value={apolice.numero_apolice}
+                                    />
+                                </div>
+                            </Section>
 
-                        {modo === 'editar' && (
-                            <>
-                                <Button variant="outline" onClick={() => setModo('visualizar')} className="rounded-xl">Cancelar</Button>
-                                <Button onClick={salvarEdicao} disabled={processing} className="rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white">
-                                    Salvar alterações
-                                </Button>
-                            </>
-                        )}
+                            <Section
+                                icon={<CreditCard className="h-4 w-4" />}
+                                title="Valores e parcelas"
+                                description="Condições financeiras"
+                            >
+                                <div className="grid gap-3 sm:grid-cols-3">
+                                    <InfoField
+                                        label="Prêmio total"
+                                        value={
+                                            apolice.valor_premio_total
+                                                ? `R$ ${apolice.valor_premio_total}`
+                                                : ''
+                                        }
+                                    />
+                                    <InfoField
+                                        label="Cobertura"
+                                        value={
+                                            apolice.valor_cobertura
+                                                ? `R$ ${apolice.valor_cobertura}`
+                                                : ''
+                                        }
+                                    />
+                                    <InfoField
+                                        label="Parcelas / Forma"
+                                        value={
+                                            apolice.quantidade_parcelas
+                                                ? `${apolice.quantidade_parcelas}x (${apolice.forma_pagamento || 'N/I'})`
+                                                : ''
+                                        }
+                                    />
+                                </div>
+                            </Section>
 
-                        {modo === 'excluir' && (
-                            <>
-                                <Button variant="outline" onClick={() => setModo('visualizar')} className="rounded-xl">Cancelar</Button>
-                                <Button onClick={confirmarExclusao} className="rounded-xl bg-red-500 hover:bg-red-600 text-white">
-                                    Confirmar exclusão
-                                </Button>
-                            </>
-                        )}
-                    </div>
+                            <Section
+                                icon={<CreditCard className="h-4 w-4" />}
+                                title="Vigência"
+                                description="Período de cobertura"
+                            >
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    <InfoField
+                                        label="Início"
+                                        value={formatarDataBR(
+                                            apolice.inicio_vigencia,
+                                        )}
+                                    />
+                                    <InfoField
+                                        label="Fim"
+                                        value={formatarDataBR(
+                                            apolice.fim_vigencia,
+                                        )}
+                                    />
+                                </div>
+                            </Section>
+
+                            {apolice.observacoes && (
+                                <Section
+                                    icon={<FileText className="h-4 w-4" />}
+                                    title="Observações"
+                                    description="Anotações sobre a apólice"
+                                >
+                                    <p className="text-sm leading-relaxed whitespace-pre-line text-foreground">
+                                        {apolice.observacoes}
+                                    </p>
+                                </Section>
+                            )}
+                        </>
+                    )}
+
+                    {/* ── MODO EDITAR ── */}
+                    {modo === 'editar' && (
+                        <>
+                            <Section
+                                icon={<ScrollText className="h-4 w-4" />}
+                                title="Informações gerais"
+                                description="Identificação da apólice"
+                            >
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <label className="text-sm leading-none font-medium">
+                                            Número da apólice
+                                        </label>
+                                        <Input
+                                            value={data.numero_apolice}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'numero_apolice',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm leading-none font-medium">
+                                            Ramo
+                                        </label>
+                                        <select
+                                            value={data.ramo_id}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'ramo_id',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                        >
+                                            <option value="">
+                                                Selecione um ramo
+                                            </option>
+                                            {ramos?.map((ramo: any) => (
+                                                <option
+                                                    key={ramo.id}
+                                                    value={ramo.id}
+                                                >
+                                                    {ramo.nome_ramo}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            </Section>
+
+                            <Section
+                                icon={<CreditCard className="h-4 w-4" />}
+                                title="Valores e pagamento"
+                                description="Condições financeiras"
+                            >
+                                <div className="space-y-4">
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        <div className="space-y-2">
+                                            <label className="text-sm leading-none font-medium">
+                                                Valor do prêmio total
+                                            </label>
+                                            <Input
+                                                value={
+                                                    data.valor_premio_total
+                                                }
+                                                onChange={(e) =>
+                                                    setData(
+                                                        'valor_premio_total',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                type="number"
+                                                className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm leading-none font-medium">
+                                                Valor de cobertura
+                                            </label>
+                                            <Input
+                                                value={data.valor_cobertura}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        'valor_cobertura',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                type="number"
+                                                className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        <div className="space-y-2">
+                                            <label className="text-sm leading-none font-medium">
+                                                Quantidade de parcelas
+                                            </label>
+                                            <Input
+                                                value={
+                                                    data.quantidade_parcelas
+                                                }
+                                                onChange={(e) =>
+                                                    setData(
+                                                        'quantidade_parcelas',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                type="number"
+                                                className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm leading-none font-medium">
+                                                Forma de pagamento
+                                            </label>
+                                            <Input
+                                                value={data.forma_pagamento}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        'forma_pagamento',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </Section>
+
+                            <Section
+                                icon={<CreditCard className="h-4 w-4" />}
+                                title="Vigência"
+                                description="Período de cobertura"
+                            >
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <label className="text-sm leading-none font-medium">
+                                            Início da vigência
+                                        </label>
+                                        <Input
+                                            value={data.inicio_vigencia}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'inicio_vigencia',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            type="date"
+                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm leading-none font-medium">
+                                            Fim da vigência
+                                        </label>
+                                        <Input
+                                            value={data.fim_vigencia}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'fim_vigencia',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            type="date"
+                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                        />
+                                    </div>
+                                </div>
+                            </Section>
+
+                            <Section
+                                icon={<FileText className="h-4 w-4" />}
+                                title="Observações"
+                                description="Anotações sobre a apólice"
+                            >
+                                <textarea
+                                    value={data.observacoes}
+                                    onChange={(e) =>
+                                        setData('observacoes', e.target.value)
+                                    }
+                                    className="min-h-24 w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                />
+                            </Section>
+                        </>
+                    )}
+
+                    {/* ── MODO EXCLUIR ── */}
+                    {modo === 'excluir' && (
+                        <Section
+                            icon={
+                                <AlertTriangle className="h-4 w-4 text-rose-500" />
+                            }
+                            title="Confirmar exclusão"
+                            description="Esta ação não pode ser desfeita"
+                        >
+                            <p className="text-sm leading-relaxed text-muted-foreground">
+                                A apólice de número{' '}
+                                <span className="font-semibold text-foreground">
+                                    {apolice.numero_apolice}
+                                </span>{' '}
+                                vinculada a{' '}
+                                <span className="font-semibold text-foreground">
+                                    {apolice.nome_completo}
+                                </span>{' '}
+                                será removida permanentemente.
+                            </p>
+                        </Section>
+                    )}
                 </div>
 
+                <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border/70 bg-background px-6 py-4 sm:px-8">
+                    {modo === 'visualizar' && (
+                        <>
+                            <Button
+                                variant="outline"
+                                className="rounded-xl"
+                                onClick={() => setModo('excluir')}
+                            >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Excluir
+                            </Button>
+                            <Button
+                                className="rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-600"
+                                onClick={() => setModo('editar')}
+                            >
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Editar
+                            </Button>
+                        </>
+                    )}
+
+                    {modo === 'editar' && (
+                        <>
+                            <Button
+                                variant="outline"
+                                className="rounded-xl"
+                                onClick={() => setModo('visualizar')}
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                className="rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-600"
+                                onClick={salvarEdicao}
+                                disabled={processing}
+                            >
+                                Salvar alterações
+                            </Button>
+                        </>
+                    )}
+
+                    {modo === 'excluir' && (
+                        <>
+                            <Button
+                                variant="outline"
+                                className="rounded-xl"
+                                onClick={() => setModo('visualizar')}
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                className="rounded-xl bg-rose-500 text-white shadow-lg shadow-rose-500/25 hover:bg-rose-600"
+                                onClick={confirmarExclusao}
+                            >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Confirmar exclusão
+                            </Button>
+                        </>
+                    )}
+                </div>
             </DialogContent>
         </Dialog>
     );

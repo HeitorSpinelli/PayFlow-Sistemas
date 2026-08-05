@@ -14,46 +14,21 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formataCpfCnpj } from '@/utils/cpfMask';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
 import { useForm } from '@inertiajs/react';
 
 export default function CreateApoliceModal({
     open,
     setOpen,
-    segurados,
-    ramos,
-    seguradoras,
+    segurados = [],
+    ramos = [],
+    seguradoras = [],
 }: any) {
     // Estados
     const [busca, setBusca] = useState('');
     const [mostrarLista, setMostrarLista] = useState(false);
-    const [apoliceSelecionada, setapoliceSelecionada] = useState(null);
-    const [seguradoSelecionado, setSeguradoSelecionado] = useState(null);
-
-    // Filtra os segurados com base na busca
-    const resultados = segurados.filter((segurado: any) => {
-        const termoBusca = busca.toLowerCase();
-        return (
-            segurado.nome_completo.toLowerCase().includes(termoBusca) ||
-            segurado.cpf_cnpj.includes(termoBusca)
-        );
-    });
-
-    // Atualiza o estado da busca
-    const handleBuscaChange = (e: any) => {
-        setBusca(e.target.value);
-        setMostrarLista(true);
-    };
-
-    // Seleciona um segurado da lista
-    const selecionarApolice = (segurado: any) => {
-        setapoliceSelecionada(segurado);
-        setSeguradoSelecionado(segurado);
-        setData('cliente_id', segurado.id); // Atualiza o cliente_id no formulário do Inertia
-        setMostrarLista(false);
-        setBusca(segurado.nome_completo); // Atualiza a busca
-    }
+    const [seguradoSelecionado, setSeguradoSelecionado] = useState<any>(null);
 
     // Formulário do Inertia
     const { data, setData, post, errors, reset, clearErrors } = useForm({
@@ -75,27 +50,63 @@ export default function CreateApoliceModal({
         if (!open) {
             reset();
             clearErrors();
+            setBusca('');
+            setSeguradoSelecionado(null);
+            setMostrarLista(false);
         }
     }, [open]);
+
+    // Filtra os segurados com base na busca (protegido contra cpf_cnpj nulo)
+    const resultados = segurados.filter((segurado: any) => {
+        const termoBusca = busca.toLowerCase();
+        return (
+            segurado.nome_completo?.toLowerCase().includes(termoBusca) ||
+            segurado.cpf_cnpj?.includes(termoBusca)
+        );
+    });
+
+    // Atualiza o estado da busca — se o texto não bater mais com o cliente
+    // selecionado, invalida a seleção para não salvar o cliente errado
+    const handleBuscaChange = (e: any) => {
+        const valor = e.target.value;
+        setBusca(valor);
+        setMostrarLista(true);
+
+        if (
+            seguradoSelecionado &&
+            valor !== seguradoSelecionado.nome_completo
+        ) {
+            setSeguradoSelecionado(null);
+            setData('cliente_id', '');
+        }
+    };
+
+    // Seleciona um segurado da lista
+    const selecionarSegurado = (segurado: any) => {
+        setSeguradoSelecionado(segurado);
+        setData('cliente_id', segurado.id);
+        setMostrarLista(false);
+        setBusca(segurado.nome_completo);
+    };
+
+    // Troca de seguradora invalida o ramo já selecionado (ele pertence à seguradora anterior)
+    const handleSeguradoraChange = (v: string) => {
+        setData((prev) => ({
+            ...prev,
+            seguradora_id: v,
+            ramo_id: '',
+        }));
+    };
 
     // Envia o formulário
     const salvarApolice = () => {
         post('/apolices', {
             onSuccess: () => {
-                toast.success('Segurado salvo com sucesso!', {
-                    position: 'top-right',
-                    style: {
-                        color: '#e0ebe4',
-                    },
-                });
+                toast.success('Apólice salva com sucesso!');
+                setOpen(false);
             },
             onError: () => {
-                toast.error('Falha ao salvar. Verifique os campos.', {
-                    position: 'top-right',
-                    style: {
-                        color: '#b61212',
-                    },
-                });
+                toast.error('Falha ao salvar. Verifique os campos.');
             },
         });
     };
@@ -134,42 +145,53 @@ export default function CreateApoliceModal({
                         </label>
                         <Input
                             type="text"
-                            placeholder="Buscar por CPF ou CNPJ..."
+                            placeholder="Buscar por nome, CPF ou CNPJ..."
                             value={busca}
                             onChange={handleBuscaChange}
-                            onFocus={() => setMostrarLista(true)}
-                            className="h-9 w-full rounded-md border border-sidebar-border bg-background px-3 text-sm"
+                            onFocus={() =>
+                                setMostrarLista(busca.trim().length > 0)
+                            }
+                            onBlur={() =>
+                                setTimeout(() => setMostrarLista(false), 150)
+                            }
+                            className="h-12 w-full rounded-xl border-muted-foreground/20"
                         />
 
-                        {/* Lista de resultados */}
-                        {mostrarLista && resultados.length > 0 && (
-                            <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-muted-foreground/20 bg-background shadow-lg">
-                                {resultados.map((segurado: any) => (
-                                    <div
-                                        key={segurado.id}
-                                        onClick={() =>
-                                            selecionarApolice(segurado)
-                                        }
-                                        className="flex cursor-pointer items-center justify-between px-4 py-3 hover:bg-muted"
-                                    >
-                                        <span className="text-sm text-muted-foreground">
-                                            {segurado.tipo_pessoa === 'F'
-                                                ? 'CPF'
-                                                : 'CNPJ'}
-                                        </span>
-                                        <span className="text-sm font-medium">
-                                            {segurado.nome_completo}
-                                        </span>
-                                        <span className="text-xs text-muted-foreground">
-                                            {formataCpfCnpj(segurado.cpf_cnpj)}
-                                        </span>
-                                        <span className="text-sm text-muted-foreground">
-                                            {segurado.status}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                        {/* Lista de resultados — só aparece com algo digitado */}
+                        {mostrarLista &&
+                            busca.trim().length > 0 &&
+                            resultados.length > 0 && (
+                                <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-muted-foreground/20 bg-background shadow-lg">
+                                    {resultados.map((segurado: any) => (
+                                        <div
+                                            key={segurado.id}
+                                            onMouseDown={() =>
+                                                selecionarSegurado(segurado)
+                                            }
+                                            className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 hover:bg-muted"
+                                        >
+                                            <span className="text-sm text-muted-foreground">
+                                                {segurado.tipo_pessoa === 'pf'
+                                                    ? 'CPF'
+                                                    : 'CNPJ'}
+                                            </span>
+                                            <span className="text-sm font-medium">
+                                                {segurado.nome_completo}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground">
+                                                {segurado.cpf_cnpj
+                                                    ? formataCpfCnpj(
+                                                          segurado.cpf_cnpj,
+                                                      )
+                                                    : '-'}
+                                            </span>
+                                            <span className="text-sm text-muted-foreground">
+                                                {segurado.status}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         {/* Nenhum resultado */}
                         {mostrarLista &&
                             busca.length > 0 &&
@@ -178,6 +200,11 @@ export default function CreateApoliceModal({
                                     Nenhum cliente encontrado
                                 </p>
                             )}
+                        {errors.cliente_id && (
+                            <span className="text-xs font-medium text-rose-500">
+                                {errors.cliente_id}
+                            </span>
+                        )}
                     </div>
                     {/* Número da apólice */}
                     <div className="space-y-2">
@@ -193,6 +220,11 @@ export default function CreateApoliceModal({
                             }
                             className="h-12 rounded-xl border-muted-foreground/20"
                         />
+                        {errors.numero_apolice && (
+                            <span className="text-xs font-medium text-rose-500">
+                                {errors.numero_apolice}
+                            </span>
+                        )}
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
@@ -205,9 +237,7 @@ export default function CreateApoliceModal({
                                         ? String(data.seguradora_id)
                                         : ''
                                 }
-                                onValueChange={(v) =>
-                                    setData('seguradora_id', v)
-                                }
+                                onValueChange={handleSeguradoraChange}
                             >
                                 <SelectTrigger className="h-12 rounded-xl border-muted-foreground/20">
                                     <SelectValue placeholder="Selecione" />
@@ -223,6 +253,11 @@ export default function CreateApoliceModal({
                                     ))}
                                 </SelectContent>
                             </Select>
+                            {errors.seguradora_id && (
+                                <span className="text-xs font-medium text-rose-500">
+                                    {errors.seguradora_id}
+                                </span>
+                            )}
                         </div>
                         <div className="space-y-2">
                             <label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
@@ -259,6 +294,11 @@ export default function CreateApoliceModal({
                                         ))}
                                 </SelectContent>
                             </Select>
+                            {errors.ramo_id && (
+                                <span className="text-xs font-medium text-rose-500">
+                                    {errors.ramo_id}
+                                </span>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -281,6 +321,11 @@ export default function CreateApoliceModal({
                                 }
                                 className="h-12 rounded-xl border-muted-foreground/20"
                             />
+                            {errors.inicio_vigencia && (
+                                <span className="text-xs font-medium text-rose-500">
+                                    {errors.inicio_vigencia}
+                                </span>
+                            )}
                         </div>
                         <div className="space-y-2">
                             <label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
@@ -294,6 +339,11 @@ export default function CreateApoliceModal({
                                 }
                                 className="h-12 rounded-xl border-muted-foreground/20"
                             />
+                            {errors.fim_vigencia && (
+                                <span className="text-xs font-medium text-rose-500">
+                                    {errors.fim_vigencia}
+                                </span>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -319,6 +369,11 @@ export default function CreateApoliceModal({
                                 }
                                 className="h-12 rounded-xl border-muted-foreground/20"
                             />
+                            {errors.valor_premio_total && (
+                                <span className="text-xs font-medium text-rose-500">
+                                    {errors.valor_premio_total}
+                                </span>
+                            )}
                         </div>
                         <div className="space-y-2">
                             <label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
@@ -333,6 +388,11 @@ export default function CreateApoliceModal({
                                 }
                                 className="h-12 rounded-xl border-muted-foreground/20"
                             />
+                            {errors.valor_cobertura && (
+                                <span className="text-xs font-medium text-rose-500">
+                                    {errors.valor_cobertura}
+                                </span>
+                            )}
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -352,12 +412,18 @@ export default function CreateApoliceModal({
                                 }
                                 className="h-12 rounded-xl border-muted-foreground/20"
                             />
+                            {errors.quantidade_parcelas && (
+                                <span className="text-xs font-medium text-rose-500">
+                                    {errors.quantidade_parcelas}
+                                </span>
+                            )}
                         </div>
                         <div className="space-y-2">
                             <label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                 Forma de Pagamento*
                             </label>
                             <Select
+                                value={data.forma_pagamento}
                                 onValueChange={(v) =>
                                     setData('forma_pagamento', v)
                                 }
@@ -378,7 +444,34 @@ export default function CreateApoliceModal({
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
+                            {errors.forma_pagamento && (
+                                <span className="text-xs font-medium text-rose-500">
+                                    {errors.forma_pagamento}
+                                </span>
+                            )}
                         </div>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                            Status*
+                        </label>
+                        <Select
+                            value={data.status}
+                            onValueChange={(v) => setData('status', v)}
+                        >
+                            <SelectTrigger className="h-12 rounded-xl border-muted-foreground/20">
+                                <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Ativa">Ativa</SelectItem>
+                                <SelectItem value="Inativa">Inativa</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        {errors.status && (
+                            <span className="text-xs font-medium text-rose-500">
+                                {errors.status}
+                            </span>
+                        )}
                     </div>
                 </div>
                 {/* Observação */}
