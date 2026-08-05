@@ -1,13 +1,15 @@
-import AppLogoIcon from '@/components/app-logo-icon';
-
 export default function AppLogo() {
     return (
         <>
-            <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-                <AppLogoIcon className="size-5" />
+            <div className="flex aspect-square size-15 items-center justify-center text-sidebar-primary-foreground overflow-hidden">
+                <img 
+                    src="/logo.png" 
+                    alt="Logo PayFlow" 
+                    className="size-full object-contain p-1" 
+                />
             </div>
-            <div className="ml-1 grid flex-1 text-left text-sm">
-                <span className="mb-0.5 truncate leading-tight font-semibold">
+            <div className="ml-1.5 grid flex-1 text-left">
+                <span className="truncate leading-tight font-bold text-base tracking-tight">
                     PayFlow-Sistemas
                 </span>
             </div>
