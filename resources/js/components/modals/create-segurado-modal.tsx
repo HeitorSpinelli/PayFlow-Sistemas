@@ -537,7 +537,6 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                     )}
                 </div>
 
-                {/* Correção realizada aqui removendo 'sm:classes' */}
                 <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-border/70 bg-background px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
                     <p className="text-xs text-muted-foreground">
                         Campos com{' '}
@@ -546,8 +545,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                     </p>
                     <div className="flex gap-3">
                         <Button
-                            type="button"
-                            variant="ghost"
+                            variant="outline"
                             onClick={() => setOpen(false)}
                             className="h-11 rounded-xl px-5"
                         >
