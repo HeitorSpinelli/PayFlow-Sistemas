@@ -4,8 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSeguradoraRequest;
-use App\Models\Seguradora;
-use App\Services\SeguradorasService;
+use App\Services\Cliente\SeguradorasService;
 use Illuminate\Http\Request;
 
 class SeguradoraController extends Controller
@@ -13,7 +12,8 @@ class SeguradoraController extends Controller
 
     protected SeguradorasService $seguradorasService;
 
-    public function __construct(SeguradorasService $seguradorasService){
+    public function __construct(SeguradorasService $seguradorasService)
+    {
         $this->seguradorasService = $seguradorasService;
     }
 
@@ -37,16 +37,17 @@ class SeguradoraController extends Controller
         }
     }
 
-    public function update(int $id, Request $request)
-    {
-        try {
-            $this->seguradorasService->updateSeguradora($id, $request);
-            return redirect()->back()->with('success', 'Seguradora atualizada com sucesso!');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao atualizar seguradora: ' . $e->getMessage());
-        }
+    public function update(Request $request, int $id)
+{
+    try {
+        // Passa apenas o array de dados validados
+        $this->seguradorasService->updateSeguradora($id, $request->all());
+        return redirect()->back()->with('success', 'Seguradora atualizada com sucesso!');
+    } catch (\Exception $e) {
+        return redirect()->back()->with('error', $e->getMessage());
     }
-    
+}
+
     public function destroy(int $id)
     {
         try {

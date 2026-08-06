@@ -9,7 +9,7 @@ import {
     Trash2,
     UserRound,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,6 +19,17 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '../ui/select';
+
+import { 
+    aplicarMascaraCEP
+} from '@/utils/Masks';
 
 // ─────────────────────────────────────────────────────────────
 // Define os 3 estados possíveis do modal
@@ -58,16 +69,23 @@ function InfoField({ label, value }: { label: string; value?: string }) {
     );
 }
 
+interface Estado {
+    id: number;
+    nome: string;
+    sigla: string;
+}
+
 export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
     // Controla em qual modo o modal está no momento
     // Sempre começa em 'visualizar' quando abre
     const [modo, setModo] = useState<Modo>('visualizar');
+    const [estados, setEstados] = useState<Estado[]>([]);
 
     // useForm do Inertia — gerencia os campos do formulário de edição
     // Cada campo começa com o valor atual do segurado
     // O ?. evita erro se segurado for null (ex: antes de carregar)
     // O ?? '' garante que nunca fica undefined — usa string vazia como padrão
-    const { data, setData, put, processing } = useForm({
+    const { data, setData, put, processing, errors } = useForm({
         nome_completo: segurado?.nome_completo ?? '',
         cpf_cnpj: segurado?.cpf_cnpj ?? '',
         tipo_pessoa: segurado?.tipo_pessoa ?? '',
@@ -87,6 +105,43 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
     const labelDocumento = isPF ? 'CPF' : 'CNPJ';
     const labelData = isPF ? 'Nascimento' : 'Fundação';
 
+    useEffect(() => {
+        fetch(
+            'https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome',
+        )
+            .then((resposta) => resposta.json())
+            .then(setEstados)
+            .catch(() => setEstados([]));
+    }, []);
+
+    const buscarCep = async (cep: string) => {
+        const cepLimpo = cep.replace(/\D/g, '');
+
+        if (cepLimpo.length === 8) {
+            try {
+                const response = await fetch(
+                    `https://viacep.com.br/ws/${cepLimpo}/json/`,
+                );
+                const resultado = await response.json();
+
+                if (!resultado.erro) {
+                    setData((prev) => ({
+                        ...prev,
+                        cep: cepLimpo,
+                        endereco: resultado.logradouro,
+                        bairro: resultado.bairro,
+                        cidade: resultado.localidade,
+                        estado: resultado.uf,
+                    }));
+                } else {
+                    console.log('CEP não encontrado.');
+                }
+            } catch (error) {
+                console.error('Erro ao buscar o CEP:', error);
+            }
+        }
+    };
+
     // Fecha o modal e reseta o modo para 'visualizar'
     // Assim na próxima vez que abrir, começa limpo
     const fechar = () => {
@@ -104,8 +159,7 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                 toast.success('Cliente atualizado com sucesso!');
                 fechar();
             },
-            onError: () =>
-                toast.error('Falha ao salvar. Verifique os campos.'),
+            onError: () => toast.error('Falha ao salvar. Verifique os campos.'),
         });
     };
 
@@ -380,33 +434,63 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-sm leading-none font-medium">
-                                                Estado
+                                                CEP *
                                             </label>
                                             <Input
-                                                className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
-                                                value={data.estado}
-                                                onChange={(e) =>
+                                                className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                                type="text"
+                                                placeholder="00000-000"
+                                                value={data.cep}
+                                                onChange={(e) => {
+                                                    const cepMascarado =
+                                                        aplicarMascaraCEP(
+                                                            e.target.value,
+                                                        );
                                                     setData(
-                                                        'estado',
-                                                        e.target.value,
-                                                    )
+                                                        'cep',
+                                                        cepMascarado,
+                                                    );
+                                                }}
+                                                onBlur={(e) =>
+                                                    buscarCep(e.target.value)
                                                 }
                                             />
+                                            {errors.cep && (
+                                                <span className="text-xs font-medium text-rose-500">
+                                                    {errors.cep}
+                                                </span>
+                                            )}
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-sm leading-none font-medium">
-                                                CEP
+                                                Estado *
                                             </label>
-                                            <Input
-                                                className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
-                                                value={data.cep}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        'cep',
-                                                        e.target.value,
-                                                    )
+                                            <Select
+                                                value={data.estado}
+                                                onValueChange={(valor) =>
+                                                    setData('estado', valor)
                                                 }
-                                            />
+                                            >
+                                                <SelectTrigger className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none">
+                                                    <SelectValue placeholder="Selecione o estado" />
+                                                </SelectTrigger>
+                                                <SelectContent className="rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-md">
+                                                    {estados.map((estado) => (
+                                                        <SelectItem
+                                                            key={estado.id}
+                                                            value={estado.sigla}
+                                                            className="cursor-pointer rounded-lg"
+                                                        >
+                                                            {estado.nome}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            {errors.estado && (
+                                                <span className="text-xs font-medium text-rose-500">
+                                                    {errors.estado}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -421,10 +505,7 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                     className="min-h-24 w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                     value={data.observacoes}
                                     onChange={(e) =>
-                                        setData(
-                                            'observacoes',
-                                            e.target.value,
-                                        )
+                                        setData('observacoes', e.target.value)
                                     }
                                 />
                             </Section>

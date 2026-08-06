@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Cliente;
 
 use App\Models\Seguradora;
 use App\Models\Ramo;
 use Illuminate\Http\Request;
 
-class SeguradorasService{
+class SeguradorasService
+{
 
     // SeguradorasService.php
 
@@ -40,18 +41,22 @@ class SeguradorasService{
         return Seguradora::count();
     }
 
-    //Atualiza a seguradora 
-    public function updateSeguradora(int $id, Request $request){
+    // Atualiza a seguradora 
+    public function updateSeguradora(int $id, array $data): void
+    {
         try {
             $seguradora = Seguradora::findOrFail($id);
-            $seguradora->update($request->all());
+
+            // Se houver lógica de ramos no update também, você pode tratá-la aqui igual no create.
+            $seguradora->update($data);
         } catch (\Exception $e) {
             throw new \Exception('Erro ao atualizar seguradora: ' . $e->getMessage());
         }
     }
 
     //Exclui a seguradora apenas se não tiver ramos associados
-    public function deleteSeguradora(int $id){
+    public function deleteSeguradora(int $id)
+    {
         try {
             $seguradora = Seguradora::findOrFail($id);
             $seguradora->delete();

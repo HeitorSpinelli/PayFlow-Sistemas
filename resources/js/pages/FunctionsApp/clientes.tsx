@@ -13,13 +13,15 @@ import {
     ChevronRight,
     UserRound,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+
+import { 
+    formataCpfCnpj
+} from '@/utils/Masks';
 
 import CreateSeguradoModal from '@/components/modals/create-segurado-modal';
-import { formataCpfCnpj } from '@/utils/cpfMask';
-import { Button } from '@/components/ui/button';
 import SeguradoProfileModal from '@/components/modals/create-profile-modal';
-import { Input } from '@/components/ui/input';
-import { formataInputBusca } from '@/utils/Searchformatter';
 
 // Interface para o objeto de paginação do Laravel
 interface PaginatedSegurados {
@@ -231,7 +233,7 @@ export default function Clientes({
                                 <Input
                                     placeholder="Buscar por nome, CPF..."
                                     className="h-10 w-full rounded-xl border border-border/70 bg-background pr-3 pl-9 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none sm:w-64"
-                                    value={formataInputBusca(
+                                    value={formataCpfCnpj(
                                         seguradoPesquisado,
                                     )}
                                     onChange={handleBuscaChange}

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\ApoliceService;
+use App\Services\Apolice\ApoliceService;
 use App\Http\Requests\StoreApoliceRequest;
 use App\Http\Requests\UpdateApoliceRequest;
 use App\Http\Controllers\Controller;

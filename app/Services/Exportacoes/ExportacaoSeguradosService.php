@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Exportacoes;
 
 use App\Models\Segurado;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-class ExportacaoService
+class ExportacaoSeguradosService
 {
     //StreamedResponse Cria um fluxo de dados para o navegador, permitindo que o arquivo seja baixado sem precisar armazená-lo no servidor
     public function exportarSeguradosCsv(): StreamedResponse

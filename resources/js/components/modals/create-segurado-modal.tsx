@@ -24,42 +24,15 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+
+import { 
+    aplicarMascaraCEP, 
+    formataCpfCnpj, 
+    formatarTelefone, 
+} from '@/utils/Masks'; // Ajuste o caminho conforme a pasta onde você salvou o arquivo
 import 'react-toastify/dist/ReactToastify.css';
-import { formataCpfCnpj } from '@/utils/cpfMask';
 
-const aplicarMascaraCelular = (valor: string) => {
-    const num = valor.replace(/\D/g, '').substring(0, 11);
 
-    if (num.length <= 2) {
-        return `(${num}`;
-    }
-
-    if (num.length <= 6) {
-        return `(${num.substring(0, 2)}) ${num.substring(2)}`;
-    }
-
-    return `(${num.substring(0, 2)}) ${num.substring(2, 7)}-${num.substring(7)}`;
-};
-
-const aplicarMascaraFixo = (valor: string) => {
-    const num = valor.replace(/\D/g, '').substring(0, 10);
-
-    if (num.length <= 2) {
-        return `(${num}`;
-    }
-
-    if (num.length <= 6) {
-        return `(${num.substring(0, 2)}) ${num.substring(2)}`;
-    }
-
-    return `(${num.substring(0, 2)}) ${num.substring(2, 6)}-${num.substring(6)}`;
-};
-
-const aplicarMascaraCEP = (valor: string) =>
-    valor
-        .replace(/\D/g, '')
-        .substring(0, 8)
-        .replace(/(\d{5})(\d)/, '$1-$2');
 
 function Section({ icon, title, description, children }: any) {
     return (
@@ -374,7 +347,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                         onChange={(e) =>
                                             setData(
                                                 'celular_whatsapp',
-                                                aplicarMascaraCelular(
+                                                formatarTelefone(
                                                     e.target.value,
                                                 ),
                                             )
@@ -399,7 +372,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                     onChange={(e) =>
                                         setData(
                                             'telefone_fixo',
-                                            aplicarMascaraFixo(e.target.value),
+                                            formatarTelefone(e.target.value),
                                         )
                                     }
                                 />

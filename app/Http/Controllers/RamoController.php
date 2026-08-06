@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Services\Cliente\RamoService;
 use App\Http\Requests\StoreRamoRequest;
 
 class ramosController extends Controller
@@ -18,7 +19,7 @@ class ramosController extends Controller
     public function storeRamo(StoreRamoRequest $request)
     {
         $data = $request->validated();
-        $this->ramoService->store($data);
+        $this->ramoService->create($data);
     }
 
     public function showRamo(int $id)

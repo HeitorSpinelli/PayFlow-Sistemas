@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Apolice;
 
 use App\Models\Seguradora;
 use App\Models\Segurado;

@@ -6,9 +6,8 @@ use App\Http\Requests\StoreSeguradoRequest;
 use App\Http\Requests\UpdateSeguradoRequest;
 use Illuminate\Http\Request;
 use App\Models\Segurado;
-use App\Services\SeguradoService;
-use App\Services\ExportacaoService;
-
+use App\Services\Cliente\SeguradoService;
+use App\Services\Exportacoes\ExportacaoSeguradosService;
 
 class SeguradoController extends Controller
 {
@@ -69,8 +68,8 @@ class SeguradoController extends Controller
         }
     }
 
-    public function exportar(ExportacaoService $exportacaoService)
-    {
+    public function exportar(ExportacaoSeguradosService $exportacaoService)
+    {   
         return $exportacaoService->exportarSeguradosCsv();
     }
 }
