@@ -62,9 +62,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 //Rotas de funções exclusivas para admins, utilizadno middlware para verificar se é admin pelo appserviceprovider
 Route::middleware('auth', 'can:is-admin')->group(function () {
-    Route::get('/seguradoras', function () {
-        return inertia('FunctionsApp/seguradoras');
-    })->name('seguradoras');
+
+    Route::get('/seguradoras', [SeguradoraController::class, 'index'])->name('seguradoras');
 
     Route::post('/seguradoras', [SeguradoraController::class, 'store']);
 

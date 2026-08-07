@@ -14,7 +14,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { formataCpfCnpj } from '@/utils/cpfMask';
 import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
 import { useForm } from '@inertiajs/react';
@@ -25,6 +24,10 @@ import {
     DollarSign,
     Calendar,
 } from 'lucide-react';
+
+import { 
+    formataCpfCnpj
+} from '@/utils/Masks';
 
 function Section({ icon, title, description, children }: any) {
     return (

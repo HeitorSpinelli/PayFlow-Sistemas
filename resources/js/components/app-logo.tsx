@@ -3,7 +3,7 @@ export default function AppLogo() {
         <>
             <div className="flex aspect-square size-15 items-center justify-center text-sidebar-primary-foreground overflow-hidden">
                 <img 
-                    src="/logo.png" 
+                    src="/logo.svg" 
                     alt="Logo PayFlow" 
                     className="size-full object-contain p-1" 
                 />
