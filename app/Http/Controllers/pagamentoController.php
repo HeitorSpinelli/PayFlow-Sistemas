@@ -3,11 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePagamentoRequest;
-use App\Http\Requests\UpdatePagamentoRequest;
 use App\Models\pagamento;
 use App\Models\segurado;
 use App\Models\Apolice;
-use App\Services\PagamentoService;
+use App\Services\Pagamento\PagamentoService;
 
 class pagamentoController extends Controller
 {
