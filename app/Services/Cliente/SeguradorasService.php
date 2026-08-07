@@ -4,13 +4,11 @@ namespace App\Services\Cliente;
 
 use App\Models\Seguradora;
 use App\Models\Ramo;
+use App\Models\Segurado;
 use Illuminate\Http\Request;
 
 class SeguradorasService
 {
-
-    // SeguradorasService.php
-
     public function createSeguradora(array $data): void
     {
         // 1. Separa os ramos do resto dos dados
@@ -72,5 +70,11 @@ class SeguradorasService
             $seguradora = Seguradora::findOrFail($id);
             $seguradora->ativo = !$seguradora->ativo;
         }
+    }
+
+    public function getAllSeguradoras()
+    {
+        // Traz as seguradoras e os ramos relacionados (relacionamento 'ramos')
+        return Seguradora::with('ramos')->get();
     }
 }
