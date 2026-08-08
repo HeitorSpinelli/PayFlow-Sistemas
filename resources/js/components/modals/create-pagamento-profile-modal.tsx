@@ -1,177 +1,253 @@
+import { router } from '@inertiajs/react';
+import {
+    AlertTriangle,
+    ChevronRight,
+    CreditCard,
+    FileText,
+    ScrollText,
+    Trash2,
+} from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { useState } from 'react';
-import { router } from '@inertiajs/react';
-import { toast } from 'sonner';
-
-// ─────────────────────────────────────────────────────────────
-// Por enquanto só temos 2 modos: visualizar e excluir.
-// 'editar' fica de fora até decidirmos com o cliente como vai
-// funcionar o preenchimento de parcela/data — ver create-pagamentos-modal.tsx
-// ─────────────────────────────────────────────────────────────
 type Modo = 'visualizar' | 'excluir';
 
-export default function PagamentoProfileModal({ open, setOpen, pagamento }: any) {
+function Section({ icon, title, description, children }: any) {
+    return (
+        <section className="rounded-2xl border border-border/70 bg-muted/[0.18] p-4 sm:p-5">
+            <div className="mb-5 flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+                    {icon}
+                </span>
+                <div>
+                    <h3 className="text-sm font-bold">{title}</h3>
+                    <p className="text-xs text-muted-foreground">
+                        {description}
+                    </p>
+                </div>
+            </div>
+            {children}
+        </section>
+    );
+}
 
-    // Controla em qual modo o modal está no momento
-    // Sempre começa em 'visualizar' quando abre
+function InfoField({ label, value }: { label: string; value?: string }) {
+    return (
+        <div className="rounded-xl border border-border/70 bg-background px-3 py-2.5 shadow-sm">
+            <p className="mb-1 text-[10px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
+                {label}
+            </p>
+            <p className="text-sm font-semibold text-foreground capitalize">
+                {value || 'Não informado'}
+            </p>
+        </div>
+    );
+}
+
+export default function PagamentoProfileModal({
+    open,
+    setOpen,
+    pagamento,
+}: any) {
     const [modo, setModo] = useState<Modo>('visualizar');
 
-    // Fecha o modal e reseta o modo para 'visualizar'
-    // Assim na próxima vez que abrir, começa limpo
     const fechar = () => {
         setModo('visualizar');
         setOpen(false);
     };
 
-    // Envia DELETE /pagamentos/{id} — remove o pagamento do banco
     const confirmarExclusao = () => {
         if (!pagamento) return; // ← proteção
         router.delete(`/pagamentos/${pagamento.id}`, {
             onSuccess: () => toast.success('Pagamento excluído com sucesso!'),
-            onError: () => toast.error('Erro ao excluir pagamento. Tente novamente.'),
-            onFinish: () => fechar(), // Fecha o modal mesmo se der erro, para evitar confusão
+            onError: () =>
+                toast.error('Erro ao excluir pagamento. Tente novamente.'),
+            onFinish: () => fechar(),
         });
     };
 
     if (!pagamento) return null;
 
-    // Define a cor do badge de status, igual ao padrão da tabela
-    const statusCor = pagamento.status === 'confirmado'
-        ? 'bg-green-500/10 text-green-500'
-        : 'bg-orange-500/10 text-orange-500';
+    const tituloBreadcrumb = modo === 'excluir' ? 'Excluir' : 'Detalhes';
 
     return (
         <Dialog open={open} onOpenChange={fechar}>
-            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-
-                {/* ── HEADER ──
-                    Sempre visível independente do modo
-                    O título muda conforme o modo atual */}
-                <DialogHeader className="mb-2">
-                    <div className="flex items-center gap-3">
-
-                        {/* Avatar com a primeira letra do nome do cliente */}
-                        <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                            <span className="text-emerald-500 font-bold text-lg">
-                                {pagamento.cliente?.charAt(0)?.toUpperCase() ?? '?'}
+            <DialogContent className="!flex max-h-[90vh] max-w-lg flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 shadow-2xl">
+                <DialogHeader className="relative shrink-0 overflow-hidden border-b border-border/70 bg-gradient-to-br from-emerald-500/[0.12] via-background to-background px-6 py-6 pr-12 sm:px-8">
+                    <div className="absolute -top-12 -right-10 h-36 w-36 rounded-full bg-emerald-500/10 blur-2xl" />
+                    <div className="relative flex items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25">
+                            <span className="text-lg font-bold">
+                                {pagamento.cliente?.charAt(0)?.toUpperCase() ??
+                                    '?'}
                             </span>
                         </div>
-
                         <div>
-                            <DialogTitle className="text-xl font-bold">
+                            <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-[0.16em] text-emerald-600 uppercase">
+                                <span>Pagamentos</span>
+                                <ChevronRight className="h-3 w-3" />
+                                <span>{tituloBreadcrumb}</span>
+                            </div>
+                            <DialogTitle className="text-xl font-bold tracking-tight sm:text-2xl">
                                 {modo === 'visualizar' && pagamento.cliente}
-                                {modo === 'excluir'    && 'Excluir Pagamento'}
+                                {modo === 'excluir' && 'Excluir pagamento'}
                             </DialogTitle>
-
-                            {/* Badge de status — verde se confirmado, laranja se pendente */}
-                            {modo === 'visualizar' && (
-                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusCor}`}>
-                                    {pagamento.status}
-                                </span>
-                            )}
                         </div>
                     </div>
-                </DialogHeader>
-
-                {/* ── MODO VISUALIZAR ──
-                    Exibe os dados do pagamento em cards organizados por seção */}
-                {modo === 'visualizar' && (
-                    <div className="space-y-4">
-
-                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Apólice</p>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="rounded-xl border border-muted-foreground/20 p-3">
-                                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Número</p>
-                                <p className="text-sm font-medium">{pagamento.apolice || 'Não informado'}</p>
-                            </div>
-                            <div className="rounded-xl border border-muted-foreground/20 p-3">
-                                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Parcela</p>
-                                <p className="text-sm font-medium">{pagamento.parcela ? `${pagamento.parcela}ª` : 'Não informado'}</p>
-                            </div>
-                        </div>
-
-                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pagamento</p>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="rounded-xl border border-muted-foreground/20 p-3">
-                                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Valor</p>
-                                <p className="text-sm font-medium">R$ {pagamento.valor}</p>
-                            </div>
-                            <div className="rounded-xl border border-muted-foreground/20 p-3">
-                                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Data do Pagamento</p>
-                                <p className="text-sm font-medium">{pagamento.data_pagamento || 'Não informado'}</p>
-                            </div>
-                            <div className="rounded-xl border border-muted-foreground/20 p-3 col-span-2">
-                                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Forma de Pagamento</p>
-                                <p className="text-sm font-medium capitalize">{pagamento.forma_pagamento || 'Não informado'}</p>
-                            </div>
-                        </div>
-
-                        {pagamento.observacoes && (
-                            <>
-                                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Observações</p>
-                                <div className="rounded-xl border border-muted-foreground/20 p-3">
-                                    <p className="text-sm">{pagamento.observacoes}</p>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                )}
-
-                {/* ── MODO EXCLUIR ──
-                    Exibe um aviso vermelho pedindo confirmação antes de deletar */}
-                {modo === 'excluir' && (
-                    <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4 space-y-2">
-                        <p className="text-sm font-semibold text-red-500">Atenção — esta ação não pode ser desfeita.</p>
-                        <p className="text-sm text-muted-foreground">
-                            O pagamento de <span className="font-semibold text-foreground">{pagamento.cliente}</span> referente
-                            à apólice <span className="font-semibold text-foreground">{pagamento.apolice}</span> ({pagamento.parcela}ª parcela)
-                            será removido permanentemente do sistema.
-                        </p>
-                    </div>
-                )}
-
-                {/* ── BOTÕES ──
-                    Os botões também mudam conforme o modo */}
-                <div className="flex justify-between mt-6">
-
-                    {/* Botão Excluir — só aparece no modo visualizar */}
-                    {/* TODO: adicionar botão "Editar" aqui quando definirmos com o cliente
-                        como vai funcionar o fluxo de parcela/data */}
                     {modo === 'visualizar' && (
-                        <div className="flex gap-2">
-                            <Button variant="outline" onClick={() => setModo('excluir')} className="rounded-xl text-red-500 hover:text-red-500 border-red-500/30 hover:bg-red-500/10">
-                                Excluir
-                            </Button>
+                        <div className="relative mt-3">
+                            <span
+                                className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold tracking-wide capitalize ${
+                                    pagamento.status === 'confirmado'
+                                        ? 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-600'
+                                        : 'border border-amber-500/20 bg-amber-500/10 text-amber-600'
+                                }`}
+                            >
+                                {pagamento.status}
+                            </span>
                         </div>
                     )}
+                </DialogHeader>
 
-                    <div className="flex gap-2 ml-auto">
+                <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6 sm:px-8">
+                    {modo === 'visualizar' && (
+                        <>
+                            <Section
+                                icon={<ScrollText className="h-4 w-4" />}
+                                title="Apólice"
+                                description="Referência da parcela paga"
+                            >
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    <InfoField
+                                        label="Número"
+                                        value={pagamento.apolice}
+                                    />
+                                    <InfoField
+                                        label="Parcela"
+                                        value={
+                                            pagamento.parcela
+                                                ? `${pagamento.parcela}ª`
+                                                : ''
+                                        }
+                                    />
+                                </div>
+                            </Section>
 
+                            <Section
+                                icon={<CreditCard className="h-4 w-4" />}
+                                title="Pagamento"
+                                description="Valor e forma de recebimento"
+                            >
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    <InfoField
+                                        label="Valor"
+                                        value={
+                                            pagamento.valor
+                                                ? `R$ ${pagamento.valor}`
+                                                : ''
+                                        }
+                                    />
+                                    <InfoField
+                                        label="Data do pagamento"
+                                        value={pagamento.data_pagamento}
+                                    />
+                                    <div className="sm:col-span-2">
+                                        <InfoField
+                                            label="Forma de pagamento"
+                                            value={pagamento.forma_pagamento}
+                                        />
+                                    </div>
+                                </div>
+                            </Section>
+
+                            {pagamento.observacoes && (
+                                <Section
+                                    icon={<FileText className="h-4 w-4" />}
+                                    title="Observações"
+                                    description="Anotações sobre o pagamento"
+                                >
+                                    <p className="text-sm leading-relaxed text-foreground">
+                                        {pagamento.observacoes}
+                                    </p>
+                                </Section>
+                            )}
+                        </>
+                    )}
+                    {modo === 'excluir' && (
+                        <Section
+                            icon={
+                                <AlertTriangle className="h-4 w-4 text-rose-500" />
+                            }
+                            title="Confirmar exclusão"
+                            description="Esta ação não pode ser desfeita"
+                        >
+                            <p className="text-sm leading-relaxed text-muted-foreground">
+                                O pagamento de{' '}
+                                <span className="font-semibold text-foreground">
+                                    {pagamento.cliente}
+                                </span>{' '}
+                                referente à apólice{' '}
+                                <span className="font-semibold text-foreground">
+                                    {pagamento.apolice}
+                                </span>{' '}
+                                ({pagamento.parcela}ª parcela) será removido
+                                permanentemente do sistema.
+                            </p>
+                        </Section>
+                    )}
+                </div>
+
+                <div className="flex shrink-0 items-center justify-between border-t border-border/70 bg-background px-6 py-4 sm:px-8">
+                    {modo === 'visualizar' ? (
+                        <Button
+                            variant="outline"
+                            className="rounded-xl border-rose-500/30 text-rose-500 hover:bg-rose-500/10 hover:text-rose-500"
+                            onClick={() => setModo('excluir')}
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Excluir
+                        </Button>
+                    ) : (
+                        <div />
+                    )}
+
+                    <div className="ml-auto flex gap-2">
                         {modo === 'visualizar' && (
-                            <Button variant="outline" onClick={fechar} className="rounded-xl">
+                            <Button
+                                variant="outline"
+                                className="rounded-xl"
+                                onClick={fechar}
+                            >
                                 Fechar
                             </Button>
                         )}
 
                         {modo === 'excluir' && (
                             <>
-                                <Button variant="outline" onClick={() => setModo('visualizar')} className="rounded-xl">
+                                <Button
+                                    variant="outline"
+                                    className="rounded-xl"
+                                    onClick={() => setModo('visualizar')}
+                                >
                                     Cancelar
                                 </Button>
-                                <Button onClick={confirmarExclusao} className="rounded-xl bg-red-500 hover:bg-red-600 text-white">
+                                <Button
+                                    onClick={confirmarExclusao}
+                                    className="rounded-xl bg-rose-500 text-white shadow-lg shadow-rose-500/25 hover:bg-rose-600"
+                                >
+                                    <Trash2 className="mr-2 h-4 w-4" />
                                     Confirmar exclusão
                                 </Button>
                             </>
                         )}
                     </div>
                 </div>
-
             </DialogContent>
         </Dialog>
     );

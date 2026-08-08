@@ -17,6 +17,15 @@ class SeguradoraController extends Controller
         $this->seguradorasService = $seguradorasService;
     }
 
+    public function index()
+    {
+        $seguradoras = $this->seguradorasService->getAllSeguradoras();
+
+        return inertia('FunctionsApp/seguradoras', [
+            'seguradoras' => $seguradoras
+        ]);
+    }
+
     public function store(StoreSeguradoraRequest $request)
     {
         try {
@@ -38,15 +47,15 @@ class SeguradoraController extends Controller
     }
 
     public function update(Request $request, int $id)
-{
-    try {
-        // Passa apenas o array de dados validados
-        $this->seguradorasService->updateSeguradora($id, $request->all());
-        return redirect()->back()->with('success', 'Seguradora atualizada com sucesso!');
-    } catch (\Exception $e) {
-        return redirect()->back()->with('error', $e->getMessage());
+    {
+        try {
+            // Passa apenas o array de dados validados
+            $this->seguradorasService->updateSeguradora($id, $request->all());
+            return redirect()->back()->with('success', 'Seguradora atualizada com sucesso!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
-}
 
     public function destroy(int $id)
     {
