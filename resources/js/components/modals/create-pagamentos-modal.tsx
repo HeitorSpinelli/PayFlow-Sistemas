@@ -27,6 +27,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { removeMask, formataCpfCnpj } from '@/utils/Masks';
+
 function Section({ icon, title, description, children }: any) {
     return (
         <section className="rounded-2xl border border-border/70 bg-muted/[0.18] p-4 sm:p-5">
@@ -100,22 +102,21 @@ export default function CreatePagamentoModal({
     const [sugestoesAbertas, setSugestoesAbertas] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
 
-    // Remove tudo que não for número (usado para comparar CPF/CNPJ)
-    const apenasNumeros = (str: string) => str.replace(/\D/g, '');
-
-    // Filtra segurados pelo nome OU cpf_cnpj conforme o texto digitado
+    // Filtra segurados pelo nome OU cpf_cnpj conforme o texto digitado (por prefixo)
     const sugestoes = (() => {
         if (!buscaSegurado.trim()) return [];
         const termo = buscaSegurado.toLowerCase();
-        const numerosTermo = apenasNumeros(buscaSegurado);
+        const numerosTermo = removeMask(buscaSegurado);
 
         return (segurados ?? [])
             .filter((s: any) => {
-                const nomeBate = s.nome_completo?.toLowerCase().includes(termo);
+                const nomeBate = s.nome_completo
+                    ?.toLowerCase()
+                    .startsWith(termo);
                 // só compara por número se o usuário realmente digitou algum número
                 const cpfBate =
                     numerosTermo.length > 0 &&
-                    apenasNumeros(s.cpf_cnpj ?? '').includes(numerosTermo);
+                    removeMask(s.cpf_cnpj ?? '').startsWith(numerosTermo);
                 return nomeBate || cpfBate;
             })
             .slice(0, 8); // limita a 8 sugestões pra não estourar a tela
@@ -245,7 +246,9 @@ export default function CreatePagamentoModal({
                                                         {s.nome_completo}
                                                     </span>
                                                     <span className="text-xs text-muted-foreground">
-                                                        {s.cpf_cnpj}
+                                                        {formataCpfCnpj(
+                                                            s.cpf_cnpj ?? '',
+                                                        )}
                                                     </span>
                                                 </button>
                                             ))}

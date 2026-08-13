@@ -1,5 +1,5 @@
-import { Head } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     Search,
     Download,
@@ -20,65 +20,127 @@ import { Input } from '@/components/ui/input';
 import CreatePagamentoModal from '@/components/modals/create-pagamentos-modal';
 import PagamentoProfileModal from '@/components/modals/create-pagamento-profile-modal';
 
+import { formatarDataBR, formatarMoeda } from '@/utils/Masks';
+
+// Interface para o objeto de paginação do Laravel (mesmo formato usado em Clientes)
+interface PaginatedPagamentos {
+    data: any[];
+    current_page: number;
+    last_page: number;
+    from: number;
+    to: number;
+    total: number;
+    prev_page_url: string | null;
+    next_page_url: string | null;
+    links: { url: string | null; label: string; active: boolean }[];
+}
+
+interface PageProps {
+    pagamentos?: PaginatedPagamentos;
+    totalRecebido?: number;
+    totalRegistrado?: number;
+    totalConfirmados?: number;
+    totalPendentes?: number;
+    segurados?: any[];
+    apolices?: any[];
+}
+
+// Mapa entre o rótulo exibido no filtro e o valor salvo no banco
+const STATUS_MAP: Record<string, string> = {
+    Confirmados: 'confirmado',
+    Pendentes: 'pendente',
+};
+
 export default function Pagamentos({
     pagamentos,
-    totalRecebido,
-    totalRegistrado,
-    totalConfirmados,
-    totalPendentes,
+    totalRecebido = 0,
+    totalRegistrado = 0,
+    totalConfirmados = 0,
+    totalPendentes = 0,
     segurados,
     apolices,
-}: any) {
+}: PageProps) {
+    const [openModal, setOpenModal] = useState(false);
+    const [openProfile, setOpenProfile] = useState(false);
     const [filtroAberto, setFiltroAberto] = useState(false);
-    const [filtroSelecionado, setFiltroSelecionado] = useState('Todos');
+    const [pagamentoSelecionado, setPagamentoSelecionado] = useState<any>(null);
+
     const opcoesFiltro = ['Todos', 'Confirmados', 'Pendentes'];
 
-    const [busca, setBusca] = useState('');
-    const [openModal, setOpenModal] = useState(false);
+    // Lê os parâmetros atuais da URL para inicializar os estados corretamente
+    const urlParams =
+        typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search)
+            : new URLSearchParams();
 
-    // Modal de detalhes/exclusão do pagamento (mesmo padrão do perfil de Cliente)
-    const [openProfile, setOpenProfile] = useState(false);
-    const [pagamentoSelecionado, setPagamentoSelecionado] = useState<any>(null);
+    const [busca, setBusca] = useState(urlParams.get('busca') || '');
+    const [filtroSelecionado, setFiltroSelecionado] = useState(
+        Object.keys(STATUS_MAP).find(
+            (k) => STATUS_MAP[k] === urlParams.get('status'),
+        ) || 'Todos',
+    );
+
+    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Busca com debounce, disparando a requisição pro back-end
+    const handleBuscaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const valor = e.target.value;
+        setBusca(valor);
+
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        searchTimeoutRef.current = setTimeout(() => {
+            const params = new URLSearchParams(window.location.search);
+
+            if (valor.trim() !== '') {
+                params.set('busca', valor);
+            } else {
+                params.delete('busca');
+            }
+            params.delete('page');
+
+            router.get(
+                window.location.pathname,
+                Object.fromEntries(params.entries()),
+                {
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
+                },
+            );
+        }, 500);
+    };
+
+    // Filtro de status disparado no back-end
+    const handleFiltroChange = (opcao: string) => {
+        setFiltroSelecionado(opcao);
+        setFiltroAberto(false);
+
+        const params = new URLSearchParams(window.location.search);
+
+        if (opcao !== 'Todos') {
+            params.set('status', STATUS_MAP[opcao]);
+        } else {
+            params.delete('status');
+        }
+        params.delete('page');
+
+        router.get(
+            window.location.pathname,
+            Object.fromEntries(params.entries()),
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            },
+        );
+    };
 
     const abrirPerfil = (pagamento: any) => {
         setPagamentoSelecionado(pagamento);
         setOpenProfile(true);
-    };
-
-    // Filtra a lista exibida com base no dropdown de status e no campo de busca
-    const pagamentosFiltrados = (pagamentos ?? []).filter((p: any) => {
-        const bateStatus =
-            filtroSelecionado === 'Todos' ||
-            (filtroSelecionado === 'Confirmados' &&
-                p.status === 'confirmado') ||
-            (filtroSelecionado === 'Pendentes' && p.status === 'pendente');
-
-        const termo = busca.toLowerCase();
-        const bateBusca =
-            termo === '' ||
-            p.cliente?.toLowerCase().includes(termo) ||
-            p.apolice?.toLowerCase().includes(termo);
-
-        return bateStatus && bateBusca;
-    });
-
-    const handleFiltroChange = (opcao: string) => {
-        setFiltroSelecionado(opcao);
-        setFiltroAberto(false);
-    };
-
-    // Formata número para o padrão monetário brasileiro
-    const formatarMoeda = (valor: number) =>
-        new Intl.NumberFormat('pt-BR', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        }).format(valor ?? 0);
-
-    // Formata a data ISO (vinda do banco) para dd/mm/aaaa
-    const formatarData = (data: string) => {
-        if (!data) return '—';
-        const [ano, mes, dia] = data.split('T')[0].split('-');
-        return `${dia}/${mes}/${ano}`;
     };
 
     return (
@@ -110,7 +172,7 @@ export default function Pagamentos({
                     </Button>
                 </div>
 
-                {/* 2. Cards de resumo financeiro com Glow / Efeito de Luz */}
+                {/* 2. Cards de resumo financeiro */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:border-emerald-500/30">
                         <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl"></div>
@@ -149,7 +211,7 @@ export default function Pagamentos({
                                 Confirmados
                             </span>
                             <span className="text-2xl font-bold tracking-tight text-emerald-500 sm:text-3xl">
-                                {totalConfirmados ?? 0}
+                                {totalConfirmados}
                             </span>
                         </div>
                         <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
@@ -163,9 +225,8 @@ export default function Pagamentos({
                             <span className="text-xs font-medium text-muted-foreground">
                                 Pendentes
                             </span>
-                            {/* Pendentes usa âmbar para indicar atenção, diferente dos outros cards */}
                             <span className="text-2xl font-bold tracking-tight text-amber-500 sm:text-3xl">
-                                {totalPendentes ?? 0}
+                                {totalPendentes}
                             </span>
                         </div>
                         <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.2)]">
@@ -183,7 +244,7 @@ export default function Pagamentos({
                                 Lista de Pagamentos
                             </h3>
                             <p className="text-xs text-muted-foreground">
-                                {pagamentosFiltrados.length} pagamento(s)
+                                {pagamentos?.total ?? 0} pagamento(s)
                                 encontrado(s)
                             </p>
                         </div>
@@ -193,7 +254,7 @@ export default function Pagamentos({
                                 <Input
                                     placeholder="Buscar por cliente, apólice..."
                                     value={busca}
-                                    onChange={(e) => setBusca(e.target.value)}
+                                    onChange={handleBuscaChange}
                                     className="h-10 w-full rounded-xl border border-border/70 bg-background pr-3 pl-9 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none sm:w-64"
                                 />
                             </div>
@@ -280,7 +341,8 @@ export default function Pagamentos({
                                 </tr>
                             </thead>
                             <tbody>
-                                {pagamentosFiltrados.length === 0 ? (
+                                {!pagamentos?.data ||
+                                pagamentos.data.length === 0 ? (
                                     <tr>
                                         <td
                                             colSpan={8}
@@ -290,7 +352,7 @@ export default function Pagamentos({
                                         </td>
                                     </tr>
                                 ) : (
-                                    pagamentosFiltrados.map((p: any) => (
+                                    pagamentos.data.map((p: any) => (
                                         <tr
                                             key={p.id}
                                             className="border-b border-border/70 transition-colors hover:bg-muted/[0.12]"
@@ -308,7 +370,9 @@ export default function Pagamentos({
                                                 R$ {formatarMoeda(p.valor)}
                                             </td>
                                             <td className="px-4 py-3.5 text-muted-foreground">
-                                                {formatarData(p.data_pagamento)}
+                                                {formatarDataBR(
+                                                    p.data_pagamento,
+                                                )}
                                             </td>
                                             <td className="px-4 py-3.5 text-muted-foreground capitalize">
                                                 {p.forma_pagamento}
@@ -342,36 +406,69 @@ export default function Pagamentos({
                                 )}
                             </tbody>
                         </table>
+                    </div>
 
-                        {/* 4. Paginação */}
-                        <div className="flex items-center justify-between border-t border-border/70 bg-muted/[0.18] px-4 py-4 sm:px-5">
-                            <div className="text-sm text-muted-foreground">
-                                Mostrando{' '}
-                                <span className="font-medium text-foreground">
-                                    {pagamentosFiltrados.length}
-                                </span>{' '}
-                                de{' '}
-                                <span className="font-medium text-foreground">
-                                    {pagamentos?.length ?? 0}
-                                </span>{' '}
-                                resultados
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50">
-                                    <ChevronLeft className="size-3" />
+                    {/* 4. Paginação (mesmo padrão de Clientes) */}
+                    <div className="flex flex-col gap-4 border-t border-border/70 bg-muted/[0.08] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                        <div className="text-xs text-muted-foreground">
+                            Mostrando{' '}
+                            <span className="font-semibold text-foreground">
+                                {pagamentos?.from ?? 0}
+                            </span>{' '}
+                            até{' '}
+                            <span className="font-semibold text-foreground">
+                                {pagamentos?.to ?? 0}
+                            </span>{' '}
+                            de{' '}
+                            <span className="font-semibold text-foreground">
+                                {pagamentos?.total ?? 0}
+                            </span>{' '}
+                            resultados
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            {pagamentos?.prev_page_url ? (
+                                <Link
+                                    href={pagamentos.prev_page_url}
+                                    preserveScroll
+                                    className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50"
+                                >
+                                    <ChevronLeft className="size-3.5" />
+                                    Anterior
+                                </Link>
+                            ) : (
+                                <button
+                                    disabled
+                                    className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                    <ChevronLeft className="size-3.5" />
                                     Anterior
                                 </button>
-                                <button className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50">
+                            )}
+
+                            {pagamentos?.next_page_url ? (
+                                <Link
+                                    href={pagamentos.next_page_url}
+                                    preserveScroll
+                                    className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50"
+                                >
                                     Próxima
-                                    <ChevronRight className="size-3" />
+                                    <ChevronRight className="size-3.5" />
+                                </Link>
+                            ) : (
+                                <button
+                                    disabled
+                                    className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                    Próxima
+                                    <ChevronRight className="size-3.5" />
                                 </button>
-                            </div>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Modal de criação */}
             <CreatePagamentoModal
                 open={openModal}
                 setOpen={setOpenModal}
@@ -379,7 +476,6 @@ export default function Pagamentos({
                 apolices={apolices}
             />
 
-            {/* Modal de detalhes/exclusão — só renderiza quando há um pagamento selecionado */}
             {pagamentoSelecionado && (
                 <PagamentoProfileModal
                     open={openProfile}

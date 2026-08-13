@@ -102,6 +102,11 @@ export const formatarTelefone = (valor: string): string => {
     }
     return `(${num.substring(0, 2)}) ${num.substring(2, 7)}-${num.substring(7)}`;
 };
+export const formatarMoeda = (valor: number) =>
+    new Intl.NumberFormat('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(valor ?? 0);
 
 {
     /*  USAR ESSES IMPORTS NOS MODAIS OU QUALQUER PAGINA QUE REQUERIR FORMATAÇÃO (CASO ADICIONE NOVA FUNÇÃO ADICIONE A MESMA AQUI)
