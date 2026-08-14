@@ -41,22 +41,18 @@ class pagamentoController extends Controller
                     'data_pagamento' => $pagamento->data_pagamento,
                     'forma_pagamento' => $pagamento->forma_pagamento,
                     'status' => $pagamento->status,
+                    'observacoes' => $pagamento->observacoes,
                 ];
             });
 
-        $totalRecebido = Pagamento::where('status', 'confirmado')->sum('valor');
-        $totalRegistrado = Pagamento::sum('valor');
-        $totalConfirmados = Pagamento::where('status', 'confirmado')->count();
-        $totalPendentes = Pagamento::where('status', 'pendente')->count();
-
         return inertia('FunctionsApp/pagamentos', [
             'pagamentos' => $pagamentos,
-            'totalRecebido' => $totalRecebido,
-            'totalRegistrado' => $totalRegistrado,
-            'totalConfirmados' => $totalConfirmados,
-            'totalPendentes' => $totalPendentes,
+            'totalRecebido' => Pagamento::sum('valor'),
+            'totalConfirmados' => Pagamento::count(),
             'segurados' => Segurado::select('id', 'nome_completo', 'cpf_cnpj')->get(),
-            'apolices' => Apolice::select('id', 'numero_apolice', 'cliente_id')->get(),
+            'apolices' => Apolice::select('id', 'numero_apolice', 'cliente_id', 'valor_premio_total', 'quantidade_parcelas')
+                ->with(['pagamentos:id,apolice_id,parcela'])
+                ->get(),
         ]);
     }
 

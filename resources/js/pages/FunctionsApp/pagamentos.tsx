@@ -11,8 +11,6 @@ import {
     ChevronRight,
     CircleCheck,
     DollarSign,
-    Receipt,
-    Calendar,
     MoreHorizontal,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,7 +18,10 @@ import { Input } from '@/components/ui/input';
 import CreatePagamentoModal from '@/components/modals/create-pagamentos-modal';
 import PagamentoProfileModal from '@/components/modals/create-pagamento-profile-modal';
 
-import { formatarDataBR, formatarMoeda } from '@/utils/Masks';
+import {
+    formatarDataBR,
+    formatarMoeda,
+} from '@/utils/Masks';
 
 // Interface para o objeto de paginação do Laravel (mesmo formato usado em Clientes)
 interface PaginatedPagamentos {
@@ -38,25 +39,15 @@ interface PaginatedPagamentos {
 interface PageProps {
     pagamentos?: PaginatedPagamentos;
     totalRecebido?: number;
-    totalRegistrado?: number;
     totalConfirmados?: number;
-    totalPendentes?: number;
     segurados?: any[];
     apolices?: any[];
 }
 
-// Mapa entre o rótulo exibido no filtro e o valor salvo no banco
-const STATUS_MAP: Record<string, string> = {
-    Confirmados: 'confirmado',
-    Pendentes: 'pendente',
-};
-
 export default function Pagamentos({
     pagamentos,
     totalRecebido = 0,
-    totalRegistrado = 0,
     totalConfirmados = 0,
-    totalPendentes = 0,
     segurados,
     apolices,
 }: PageProps) {
@@ -65,7 +56,7 @@ export default function Pagamentos({
     const [filtroAberto, setFiltroAberto] = useState(false);
     const [pagamentoSelecionado, setPagamentoSelecionado] = useState<any>(null);
 
-    const opcoesFiltro = ['Todos', 'Confirmados', 'Pendentes'];
+    const opcoesFiltro = ['Todos'];
 
     // Lê os parâmetros atuais da URL para inicializar os estados corretamente
     const urlParams =
@@ -74,11 +65,7 @@ export default function Pagamentos({
             : new URLSearchParams();
 
     const [busca, setBusca] = useState(urlParams.get('busca') || '');
-    const [filtroSelecionado, setFiltroSelecionado] = useState(
-        Object.keys(STATUS_MAP).find(
-            (k) => STATUS_MAP[k] === urlParams.get('status'),
-        ) || 'Todos',
-    );
+    const [filtroSelecionado, setFiltroSelecionado] = useState('Todos');
 
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -113,29 +100,9 @@ export default function Pagamentos({
         }, 500);
     };
 
-    // Filtro de status disparado no back-end
     const handleFiltroChange = (opcao: string) => {
         setFiltroSelecionado(opcao);
         setFiltroAberto(false);
-
-        const params = new URLSearchParams(window.location.search);
-
-        if (opcao !== 'Todos') {
-            params.set('status', STATUS_MAP[opcao]);
-        } else {
-            params.delete('status');
-        }
-        params.delete('page');
-
-        router.get(
-            window.location.pathname,
-            Object.fromEntries(params.entries()),
-            {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-            },
-        );
     };
 
     const abrirPerfil = (pagamento: any) => {
@@ -173,7 +140,7 @@ export default function Pagamentos({
                 </div>
 
                 {/* 2. Cards de resumo financeiro */}
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-4 sm:grid-cols-3">
                     <div className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:border-emerald-500/30">
                         <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl"></div>
                         <div className="relative z-10 flex flex-col gap-1">
@@ -193,22 +160,7 @@ export default function Pagamentos({
                         <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl"></div>
                         <div className="relative z-10 flex flex-col gap-1">
                             <span className="text-xs font-medium text-muted-foreground">
-                                Total Registrado
-                            </span>
-                            <span className="text-2xl font-bold tracking-tight text-emerald-500 sm:text-3xl">
-                                R$ {formatarMoeda(totalRegistrado)}
-                            </span>
-                        </div>
-                        <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
-                            <Receipt className="size-6" />
-                        </div>
-                    </div>
-
-                    <div className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:border-emerald-500/30">
-                        <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl"></div>
-                        <div className="relative z-10 flex flex-col gap-1">
-                            <span className="text-xs font-medium text-muted-foreground">
-                                Confirmados
+                                Pagamentos Confirmados
                             </span>
                             <span className="text-2xl font-bold tracking-tight text-emerald-500 sm:text-3xl">
                                 {totalConfirmados}
@@ -219,18 +171,18 @@ export default function Pagamentos({
                         </div>
                     </div>
 
-                    <div className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:border-amber-500/30">
-                        <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-amber-500/10 blur-3xl"></div>
+                    <div className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:border-emerald-500/30">
+                        <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl"></div>
                         <div className="relative z-10 flex flex-col gap-1">
                             <span className="text-xs font-medium text-muted-foreground">
-                                Pendentes
+                                Total de Registros
                             </span>
-                            <span className="text-2xl font-bold tracking-tight text-amber-500 sm:text-3xl">
-                                {totalPendentes}
+                            <span className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                                {pagamentos?.total ?? 0}
                             </span>
                         </div>
-                        <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.2)]">
-                            <Calendar className="size-6" />
+                        <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+                            <DollarSign className="size-6" />
                         </div>
                     </div>
                 </div>
@@ -244,8 +196,7 @@ export default function Pagamentos({
                                 Lista de Pagamentos
                             </h3>
                             <p className="text-xs text-muted-foreground">
-                                {pagamentos?.total ?? 0} pagamento(s)
-                                encontrado(s)
+                                {pagamentos?.total ?? 0} pagamento(s) encontrado(s)
                             </p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2.5">
@@ -262,9 +213,7 @@ export default function Pagamentos({
                             {/* Dropdown de filtro por status */}
                             <div className="relative">
                                 <button
-                                    onClick={() =>
-                                        setFiltroAberto(!filtroAberto)
-                                    }
+                                    onClick={() => setFiltroAberto(!filtroAberto)}
                                     className="inline-flex h-10 min-w-[120px] items-center justify-between gap-2 rounded-xl border border-border/70 bg-background px-3 text-sm font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
                                 >
                                     <span className="flex items-center gap-2">
@@ -281,9 +230,7 @@ export default function Pagamentos({
                                         {opcoesFiltro.map((opcao) => (
                                             <button
                                                 key={opcao}
-                                                onClick={() =>
-                                                    handleFiltroChange(opcao)
-                                                }
+                                                onClick={() => handleFiltroChange(opcao)}
                                                 className={`flex w-full cursor-pointer items-center justify-between px-3 py-2 text-sm transition-colors ${
                                                     filtroSelecionado === opcao
                                                         ? 'bg-emerald-500 font-medium text-white'
@@ -291,8 +238,7 @@ export default function Pagamentos({
                                                 }`}
                                             >
                                                 {opcao}
-                                                {filtroSelecionado ===
-                                                    opcao && (
+                                                {filtroSelecionado === opcao && (
                                                     <Check className="size-4" />
                                                 )}
                                             </button>
@@ -314,40 +260,20 @@ export default function Pagamentos({
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-border/70 bg-muted/[0.18] font-medium text-muted-foreground">
-                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
-                                        ID
-                                    </th>
-                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
-                                        Cliente
-                                    </th>
-                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
-                                        Apólice / Parcela
-                                    </th>
-                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
-                                        Valor
-                                    </th>
-                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
-                                        Data Pagamento
-                                    </th>
-                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
-                                        Forma
-                                    </th>
-                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
-                                        Status
-                                    </th>
-                                    <th className="h-11 px-4 text-right text-xs font-bold tracking-wider uppercase">
-                                        Ações
-                                    </th>
+                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">ID</th>
+                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">Cliente</th>
+                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">Apólice / Parcela</th>
+                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">Valor</th>
+                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">Data Pagamento</th>
+                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">Forma</th>
+                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">Status</th>
+                                    <th className="h-11 px-4 text-right text-xs font-bold tracking-wider uppercase">Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {!pagamentos?.data ||
-                                pagamentos.data.length === 0 ? (
+                                {!pagamentos?.data || pagamentos.data.length === 0 ? (
                                     <tr>
-                                        <td
-                                            colSpan={8}
-                                            className="h-24 px-4 text-center text-muted-foreground"
-                                        >
+                                        <td colSpan={8} className="h-24 px-4 text-center text-muted-foreground">
                                             Nenhum pagamento encontrado.
                                         </td>
                                     </tr>
@@ -370,22 +296,13 @@ export default function Pagamentos({
                                                 R$ {formatarMoeda(p.valor)}
                                             </td>
                                             <td className="px-4 py-3.5 text-muted-foreground">
-                                                {formatarDataBR(
-                                                    p.data_pagamento,
-                                                )}
+                                                {formatarDataBR(p.data_pagamento)}
                                             </td>
                                             <td className="px-4 py-3.5 text-muted-foreground capitalize">
                                                 {p.forma_pagamento}
                                             </td>
                                             <td className="px-4 py-3.5">
-                                                <span
-                                                    className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-semibold capitalize ${
-                                                        p.status ===
-                                                        'confirmado'
-                                                            ? 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-600'
-                                                            : 'border border-amber-500/20 bg-amber-500/10 text-amber-600'
-                                                    }`}
-                                                >
+                                                <span className="inline-flex rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-600 capitalize">
                                                     {p.status}
                                                 </span>
                                             </td>
@@ -393,9 +310,7 @@ export default function Pagamentos({
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={() =>
-                                                        abrirPerfil(p)
-                                                    }
+                                                    onClick={() => abrirPerfil(p)}
                                                     className="h-8 w-8 rounded-lg p-0 hover:bg-emerald-500/10 hover:text-emerald-500"
                                                 >
                                                     <MoreHorizontal className="size-4" />
