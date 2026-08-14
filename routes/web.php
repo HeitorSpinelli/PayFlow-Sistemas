@@ -66,6 +66,8 @@ Route::middleware('auth', 'can:is-admin')->group(function () {
     Route::get('/seguradoras', [SeguradoraController::class, 'index'])->name('seguradoras');
 
     Route::post('/seguradoras', [SeguradoraController::class, 'store']);
+    Route::delete('/clientes/{id}', [SeguradoController::class, 'destroy'])->name('clientes.destroy');
+    Route::put('/clientes/{id}', [SeguradoController::class, 'update'])->name('clientes.update');
 
     Route::get('/notificacoes', function () {
         return inertia('FunctionsApp/notificacoes');

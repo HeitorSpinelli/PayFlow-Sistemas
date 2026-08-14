@@ -3,6 +3,7 @@ import { Head } from '@inertiajs/react';
 import { Building2, ChevronRight, FileText, Mail, Plus } from 'lucide-react';
 import CreateSeguradoraRamoModal from '@/components/modals/create-cadastro-seg_ramo';
 import { Button } from '@/components/ui/button';
+import CreateProfileSeguradoraModal from '@/components/modals/create-profileSeguradora-modal';
 
 interface Ramo {
     id: number;
@@ -24,7 +25,24 @@ interface Props {
 }
 
 export default function Seguradoras({ seguradoras = [] }: Props) {
-    const [openModal, setOpenModal] = useState(false);
+    // Estados independentes para cada modal
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    
+    // Armazena a seguradora selecionada para exibir no perfil/edição
+    const [selectedSeguradora, setSelectedSeguradora] = useState<Seguradora | null>(null);
+
+    const abrirDetalhes = (seguradora: Seguradora) => {
+        setSelectedSeguradora(seguradora);
+        setIsProfileModalOpen(true);
+    };
+
+    const fecharDetalhes = (open: boolean) => {
+        setIsProfileModalOpen(open);
+        if (!open) {
+            setSelectedSeguradora(null);
+        }
+    };
 
     return (
         <>
@@ -47,7 +65,7 @@ export default function Seguradoras({ seguradoras = [] }: Props) {
                         </p>
                     </div>
                     <Button
-                        onClick={() => setOpenModal(true)}
+                        onClick={() => setIsCreateModalOpen(true)}
                         className="h-11 rounded-xl bg-emerald-500 px-5 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
                     >
                         <Plus className="mr-2 size-4" />
@@ -112,6 +130,16 @@ export default function Seguradoras({ seguradoras = [] }: Props) {
                                         )}
                                     </div>
                                 </div>
+                                <div className="mt-4 flex items-center justify-end gap-2">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => abrirDetalhes(seguradora)}
+                                        size="sm"
+                                        className="h-8 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 font-semibold text-emerald-600 shadow-sm shadow-emerald-500/20 transition-all hover:bg-emerald-500/20 hover:text-emerald-700 active:scale-[0.98]"
+                                    >
+                                        Detalhes
+                                    </Button>
+                                </div>
                             </div>
                         ))
                     ) : (
@@ -124,10 +152,20 @@ export default function Seguradoras({ seguradoras = [] }: Props) {
                 </div>
             </div>
 
+            {/* Modal de Criação / Ramos */}
             <CreateSeguradoraRamoModal
-                open={openModal}
-                setOpen={setOpenModal}
+                open={isCreateModalOpen}
+                setOpen={setIsCreateModalOpen}
             />
+
+            {/* Modal de Perfil / Edição / Exclusão */}
+            {selectedSeguradora && (
+                <CreateProfileSeguradoraModal
+                    open={isProfileModalOpen}
+                    setOpen={fecharDetalhes}
+                    seguradora={selectedSeguradora}
+                />
+            )}
         </>
     );
 }

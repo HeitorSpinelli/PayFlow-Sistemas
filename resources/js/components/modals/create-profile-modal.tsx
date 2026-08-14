@@ -27,9 +27,7 @@ import {
     SelectValue,
 } from '../ui/select';
 
-import { 
-    aplicarMascaraCEP
-} from '@/utils/Masks';
+import { aplicarMascaraCEP } from '@/utils/Masks';
 
 // ─────────────────────────────────────────────────────────────
 // Define os 3 estados possíveis do modal
@@ -177,8 +175,8 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
         modo === 'editar'
             ? 'Editar'
             : modo === 'excluir'
-              ? 'Excluir'
-              : 'Detalhes';
+            ? 'Excluir'
+            : 'Detalhes';
 
     return (
         <Dialog open={open} onOpenChange={fechar}>
