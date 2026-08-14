@@ -80,7 +80,7 @@ class ApolicesController extends Controller
             'seguradoras' => $seguradoras,
             'ramos' => $ramos,
             'apolices' => $apolices,
-            'filters' => $request->only(['busca', 'status']), // Mantém os filtros ativos na tela
+            'filters' => $request->only(['search', 'status']),
         ]);
     }
 }

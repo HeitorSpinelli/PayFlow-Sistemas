@@ -20,6 +20,19 @@ import CreateApoliceModal from '@/components/modals/create-apolice-modal';
 import CreateApoliceProfileModal from '@/components/modals/create-apolice-profile-modal';
 import seguradoProfile from '@/components/modals/create-profile-modal';
 
+import { formataInputBusca, removeMask } from '@/utils/Masks';
+
+interface PaginatedApolices {
+    data: any[];
+    current_page: number;
+    last_page: number;
+    from: number;
+    to: number;
+    total: number;
+    prev_page_url: string | null;
+    next_page_url: string | null;
+    links: { url: string | null; label: string; active: boolean }[];
+}
 interface PageProps {
     segurados?: any[];
     seguradoras?: any[];
@@ -29,6 +42,8 @@ interface PageProps {
     totalAtivas?: number;
     totalInativas?: number;
 }
+
+type StatusVigencia = 'Vigente' | 'Para Renovar' | 'A Iniciar' | string;
 
 export default function Apolices({
     segurados,
@@ -43,8 +58,20 @@ export default function Apolices({
     const [openApoliceProfile, setOpenApoliceProfile] = useState(false); // modal de perfil da apólice
     const [apoliceSelecionada, setApoliceSelecionada] = useState<any>(null); // apólice selecionada para o perfil
     const [filtroAberto, setFiltroAberto] = useState(false);
+    const opcoesFiltro = ['Todas', 'Vigente', 'A Iniciar', 'Para Renovar'];
 
-    const opcoesFiltro = ['Todos', 'Ativa', 'Inativa'];
+    const getStatusBadgeStyle = (status: string) => {
+        switch (status) {
+            case 'Vigente':
+                return 'bg-emerald-500/10 text-emerald-500';
+            case 'Para Renovar':
+                return 'bg-red-500/10 text-red-500';
+            case 'A Iniciar':
+                return 'bg-blue-500/10 text-blue-500';
+            default:
+                return 'bg-rose-500/10 text-rose-500';
+        }
+    };
 
     const abrirPerfil = (apolice: any) => {
         setApoliceSelecionada(apolice);
@@ -73,8 +100,8 @@ export default function Apolices({
 
     // Função de busca acionada ao digitar com debounce (dispara a busca no Back-end via Inertia)
     const handleBuscaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const valor = e.target.value;
-        setBusca(valor);
+        const valorDigitado = e.target.value;
+        setBusca(formataInputBusca(valorDigitado));
 
         if (searchTimeoutRef.current) {
             clearTimeout(searchTimeoutRef.current);
@@ -83,23 +110,29 @@ export default function Apolices({
         searchTimeoutRef.current = setTimeout(() => {
             const params = new URLSearchParams(window.location.search);
 
-            if (valor.trim() !== '') {
-                params.set('busca', valor);
+            // Se for número (provável CPF/CNPJ), envia limpo, senão envia o texto
+            const temLetras = /[a-zA-Z]/.test(valorDigitado);
+            const valorParaEnviar = temLetras
+                ? valorDigitado
+                : removeMask(valorDigitado);
+
+            if (valorDigitado.trim() !== '') {
+                params.set('busca', valorParaEnviar);
             } else {
                 params.delete('busca');
             }
-            params.delete('page'); // Reseta para a página 1 ao realizar uma nova busca
+            params.delete('page');
 
             router.get(
                 window.location.pathname,
                 Object.fromEntries(params.entries()),
                 {
-                    preserveState: true, // Mantém os modais/inputs abertos
-                    preserveScroll: true, // Mantém a rolagem da tela
-                    replace: true, // Substitui no histórico do navegador
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
                 },
             );
-        }, 500); // 500ms de delay
+        }, 500);
     };
 
     // Função acionada ao selecionar um filtro de status
@@ -128,7 +161,7 @@ export default function Apolices({
     };
 
     // Usamos diretamente o array de apólices que vem filtrado do backend
-    const apolicesFiltradas = apolices;
+    const apolicesFiltradas = apolices.data || [];
 
     return (
         <>
@@ -214,7 +247,8 @@ export default function Apolices({
                                 Lista de Apólices
                             </h3>
                             <p className="text-xs text-muted-foreground">
-                                {apolicesFiltradas.length} apólice(s) encontrada(s)
+                                {apolicesFiltradas.length} apólice(s)
+                                encontrada(s)
                             </p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2.5">
@@ -305,6 +339,9 @@ export default function Apolices({
                                     <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
                                         Vigência
                                     </th>
+                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
+                                        Status
+                                    </th>
                                     <th className="h-11 px-4 text-right text-xs font-bold tracking-wider uppercase">
                                         Ações
                                     </th>
@@ -357,6 +394,15 @@ export default function Apolices({
                                                 {formatarDataBR(
                                                     apolice.fim_vigencia,
                                                 )}
+                                            </td>
+                                            <td className="px-4 py-3.5">
+                                                <span
+                                                    className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-semibold capitalize ${getStatusBadgeStyle(
+                                                        apolice.status_vigencia,
+                                                    )}`}
+                                                >
+                                                    {apolice.status_vigencia}
+                                                </span>
                                             </td>
                                             <td className="px-4 py-3.5 text-right">
                                                 <Button

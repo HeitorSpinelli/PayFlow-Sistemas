@@ -42,12 +42,39 @@ class Apolice extends Model
         return 'Pendente';
     }
 
+    public function scopeFilter($query, array $filters)
+    {
+        $query->when($filters['busca'] ?? null, function ($q, $busca) {
+            $buscaLimpa = preg_replace('/\D/', '', $busca);
+            $q->where(function ($query) use ($busca, $buscaLimpa) {
+                // Busca por número da apólice na tabela apolices
+                $query->where('numero_apolice', 'iLike', "%{$busca}%")
+                    // Busca por nome ou documento na tabela segurados (cliente)
+                    ->orWhereHas('cliente', function ($sub) use ($busca, $buscaLimpa) {
+                        $sub->where('nome_completo', 'iLike', "%{$busca}%")
+                            ->orWhere('cpf_cnpj', 'iLike', "%{$busca}%");
+                        if (!empty($buscaLimpa)) {
+                            $sub->orWhereRaw("REGEXP_REPLACE(cpf_cnpj, '[^0-9]', '', 'g') iLike ?", ["%{$buscaLimpa}%"]);
+                        }
+                    });
+            });
+        });
+        $query->when($filters['status'] ?? null, function ($q, $status) {
+            if ($status === 'Vigente') {
+                $q->where('inicio_vigencia', '<=', now())
+                    ->where('fim_vigencia', '>=', now());
+            } elseif ($status === 'A Iniciar') {
+                $q->where('inicio_vigencia', '>', now());
+            } elseif ($status === 'Para Renovar') {
+                $q->where('fim_vigencia', '<', now());
+            }
+        });
+    }
     public function scopeAtivas($query)
     {
         return $query->where('inicio_vigencia', '<=', now())
             ->where('fim_vigencia', '>=', now());
     }
-
     public function scopeVencidasOuParaRenovar($query)
     {
         return $query->where('fim_vigencia', '<', now());

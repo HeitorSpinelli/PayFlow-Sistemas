@@ -16,9 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-import { 
-    formataCpfCnpj
-} from '@/utils/Masks';
+import { formataCpfCnpj, removeMask, formataInputBusca } from '@/utils/Masks';
 
 import CreateSeguradoModal from '@/components/modals/create-segurado-modal';
 import SeguradoProfileModal from '@/components/modals/create-profile-modal';
@@ -35,7 +33,6 @@ interface PaginatedSegurados {
     next_page_url: string | null;
     links: { url: string | null; label: string; active: boolean }[];
 }
-
 interface PageProps {
     segurados?: PaginatedSegurados;
     total?: number;
@@ -75,8 +72,11 @@ export default function Clientes({
 
     // Função de busca acionada ao digitar (com debounce de 500ms)
     const handleBuscaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const valor = e.target.value;
-        setSeguradoPesquisado(valor);
+        const valorDigitado = e.target.value;
+
+        // Aplica a formatação visual automática (mantém letras ou formata CPF/CNPJ)
+        const valorFormatado = formataInputBusca(valorDigitado);
+        setSeguradoPesquisado(valorFormatado);
 
         if (searchTimeoutRef.current) {
             clearTimeout(searchTimeoutRef.current);
@@ -85,24 +85,30 @@ export default function Clientes({
         searchTimeoutRef.current = setTimeout(() => {
             const params = new URLSearchParams(window.location.search);
 
-            if (valor.trim() !== '') {
-                params.set('busca', valor);
+            if (valorDigitado.trim() !== '') {
+                // Se o usuário digitou números (CPF/CNPJ), enviamos limpo sem pontuação.
+                // Se digitou letras (nome), enviamos normal.
+                const temLetras = /[a-zA-Z]/.test(valorDigitado);
+                const valorParaEnviar = temLetras
+                    ? valorDigitado
+                    : removeMask(valorDigitado);
+
+                params.set('busca', valorParaEnviar);
             } else {
                 params.delete('busca');
             }
-            params.delete('page'); // Reseta para a página 1 ao realizar uma nova busca
+            params.delete('page');
 
-            // Dispara a busca no Back-end via Inertia
             router.get(
                 window.location.pathname,
                 Object.fromEntries(params.entries()),
                 {
-                    preserveState: true, // Mantém os modais/inputs abertos
-                    preserveScroll: true, // Mantém a rolagem da tela
-                    replace: true, // Substitui no histórico do navegador
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
                 },
             );
-        });
+        }, 500);
     };
 
     // Função acionada ao selecionar um filtro de status
@@ -233,13 +239,10 @@ export default function Clientes({
                                 <Input
                                     placeholder="Buscar por nome, CPF..."
                                     className="h-10 w-full rounded-xl border border-border/70 bg-background pr-3 pl-9 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none sm:w-64"
-                                    value={formataCpfCnpj(
-                                        seguradoPesquisado,
-                                    )}
+                                    value={seguradoPesquisado}
                                     onChange={handleBuscaChange}
                                 />
                             </div>
-
                             {/* Dropdown de filtro por status */}
                             <div className="relative">
                                 <button
@@ -267,16 +270,17 @@ export default function Clientes({
                                                 onClick={() =>
                                                     handleFiltroChange(opcao)
                                                 }
-                                                className={`flex w-full cursor-pointer items-center justify-between px-3 py-2 text-sm transition-colors ${filtroSelecionado === opcao
+                                                className={`flex w-full cursor-pointer items-center justify-between px-3 py-2 text-sm transition-colors ${
+                                                    filtroSelecionado === opcao
                                                         ? 'bg-emerald-500 font-medium text-white'
                                                         : 'text-popover-foreground hover:bg-muted'
-                                                    }`}
+                                                }`}
                                             >
                                                 {opcao}
                                                 {filtroSelecionado ===
                                                     opcao && (
-                                                        <Check className="size-4" />
-                                                    )}
+                                                    <Check className="size-4" />
+                                                )}
                                             </button>
                                         ))}
                                     </div>
@@ -322,7 +326,7 @@ export default function Clientes({
                             </thead>
                             <tbody>
                                 {!segurados?.data ||
-                                    segurados.data.length === 0 ? (
+                                segurados.data.length === 0 ? (
                                     <tr>
                                         <td
                                             colSpan={7}
@@ -350,8 +354,8 @@ export default function Clientes({
                                             <td className="px-4 py-3.5 text-muted-foreground">
                                                 {segurado.cpf_cnpj
                                                     ? formataCpfCnpj(
-                                                        segurado.cpf_cnpj,
-                                                    )
+                                                            segurado.cpf_cnpj,
+                                                        )
                                                     : '-'}
                                             </td>
                                             <td className="px-4 py-3.5 text-muted-foreground">
@@ -365,11 +369,12 @@ export default function Clientes({
                                             </td>
                                             <td className="px-4 py-3.5">
                                                 <span
-                                                    className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-semibold capitalize ${segurado.status ===
-                                                            'Ativo'
+                                                    className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-semibold capitalize ${
+                                                        segurado.status ===
+                                                        'Ativo'
                                                             ? 'bg-emerald-500/10 text-emerald-500'
                                                             : 'bg-rose-500/10 text-rose-500'
-                                                        }`}
+                                                    }`}
                                                 >
                                                     {segurado.status}
                                                 </span>
@@ -461,7 +466,11 @@ export default function Clientes({
 
             {/* seguradoSelecionado diferente de null abre o modal de perfil para cada um */}
             {seguradoSelecionado && (
-                <SeguradoProfileModal open={openProfile} setOpen={setOpenProfile} segurado={seguradoSelecionado} />
+                <SeguradoProfileModal
+                    open={openProfile}
+                    setOpen={setOpenProfile}
+                    segurado={seguradoSelecionado}
+                />
             )}
         </>
     );

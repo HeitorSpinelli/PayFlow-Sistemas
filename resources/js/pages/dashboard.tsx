@@ -79,16 +79,17 @@ export default function Dashboard() {
     const { auth } = usePage().props as unknown as { auth: { user: { name: string } } };
 
     const primeiroNome = auth?.user?.name?.split(' ')[0] ?? 'por aqui';
-    const maxReceita = useMemo(
-        () => Math.max(...RECEITA_MENSAL.map((d) => d.valor)),
-        [],
-    );
-
     const dataHoje = new Date().toLocaleDateString('pt-BR', {
         weekday: 'long',
         day: '2-digit',
         month: 'long',
     });
+    
+    const maxReceita = useMemo(
+        () => Math.max(...RECEITA_MENSAL.map((d) => d.valor)),
+        [],
+    );
+
 
     return (
         <>

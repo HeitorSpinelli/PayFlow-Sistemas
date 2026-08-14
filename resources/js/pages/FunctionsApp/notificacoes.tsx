@@ -55,46 +55,161 @@ interface Automacao {
 /* ------------------------------------------------------------------ */
 
 const CLIENTES_MOCK: Cliente[] = [
-    { id: 1, nome: 'João Pereira', email: 'joao.pereira@email.com', telefone: '(19) 99887-1122', devedor: false },
-    { id: 2, nome: 'Maria Souza', email: 'maria.souza@email.com', telefone: '(19) 98123-4455', devedor: true },
-    { id: 3, nome: 'Carlos Lima', email: 'carlos.lima@email.com', telefone: '(19) 99001-3344', devedor: false },
-    { id: 4, nome: 'Fernanda Alves', email: 'fernanda.alves@email.com', telefone: '(19) 98776-5544', devedor: true },
-    { id: 5, nome: 'Roberto Dias', email: 'roberto.dias@email.com', telefone: '(19) 99223-8899', devedor: true },
-    { id: 6, nome: 'Patrícia Melo', email: 'patricia.melo@email.com', telefone: '(19) 98456-1122', devedor: false },
-    { id: 7, nome: 'Eduardo Nunes', email: 'eduardo.nunes@email.com', telefone: '(19) 99887-4433', devedor: false },
-    { id: 8, nome: 'Juliana Castro', email: 'juliana.castro@email.com', telefone: '(19) 98234-9911', devedor: true },
+    {
+        id: 1,
+        nome: 'João Pereira',
+        email: 'joao.pereira@email.com',
+        telefone: '(19) 99887-1122',
+        devedor: false,
+    },
+    {
+        id: 2,
+        nome: 'Maria Souza',
+        email: 'maria.souza@email.com',
+        telefone: '(19) 98123-4455',
+        devedor: true,
+    },
+    {
+        id: 3,
+        nome: 'Carlos Lima',
+        email: 'carlos.lima@email.com',
+        telefone: '(19) 99001-3344',
+        devedor: false,
+    },
+    {
+        id: 4,
+        nome: 'Fernanda Alves',
+        email: 'fernanda.alves@email.com',
+        telefone: '(19) 98776-5544',
+        devedor: true,
+    },
+    {
+        id: 5,
+        nome: 'Roberto Dias',
+        email: 'roberto.dias@email.com',
+        telefone: '(19) 99223-8899',
+        devedor: true,
+    },
+    {
+        id: 6,
+        nome: 'Patrícia Melo',
+        email: 'patricia.melo@email.com',
+        telefone: '(19) 98456-1122',
+        devedor: false,
+    },
+    {
+        id: 7,
+        nome: 'Eduardo Nunes',
+        email: 'eduardo.nunes@email.com',
+        telefone: '(19) 99887-4433',
+        devedor: false,
+    },
+    {
+        id: 8,
+        nome: 'Juliana Castro',
+        email: 'juliana.castro@email.com',
+        telefone: '(19) 98234-9911',
+        devedor: true,
+    },
 ];
 
 const HISTORICO_MOCK: NotificacaoHistorico[] = [
-    { id: 1, tipo: 'Lembrete de vencimento', destinatario: 'João Pereira', canal: 'whatsapp', mensagem: 'Sua parcela vence em 3 dias.', dataEnvio: '12/08/2026 09:12', status: 'enviado' },
-    { id: 2, tipo: 'Cobrança em atraso', destinatario: 'Maria Souza', canal: 'email', mensagem: 'Identificamos um pagamento em atraso.', dataEnvio: '12/08/2026 08:47', status: 'falha' },
-    { id: 3, tipo: 'Renovação de apólice', destinatario: 'Carlos Lima', canal: 'email', mensagem: 'Sua apólice vence em 15 dias.', dataEnvio: '11/08/2026 17:30', status: 'enviado' },
-    { id: 4, tipo: 'Cobrança em atraso', destinatario: 'Fernanda Alves', canal: 'whatsapp', mensagem: 'Identificamos um pagamento em atraso.', dataEnvio: '11/08/2026 16:05', status: 'pendente' },
-    { id: 5, tipo: 'Lembrete de vencimento', destinatario: 'Roberto Dias', canal: 'whatsapp', mensagem: 'Sua parcela vence em 3 dias.', dataEnvio: '11/08/2026 14:22', status: 'pendente' },
-    { id: 6, tipo: 'Mensagem personalizada', destinatario: 'Patrícia Melo', canal: 'email', mensagem: 'Novidades sobre o seu plano.', dataEnvio: '10/08/2026 11:10', status: 'enviado' },
-    { id: 7, tipo: 'Cobrança em atraso', destinatario: 'Juliana Castro', canal: 'whatsapp', mensagem: 'Identificamos um pagamento em atraso.', dataEnvio: '10/08/2026 09:58', status: 'falha' },
-    { id: 8, tipo: 'Lembrete de vencimento', destinatario: 'Eduardo Nunes', canal: 'email', mensagem: 'Sua parcela vence em 3 dias.', dataEnvio: '09/08/2026 10:40', status: 'enviado' },
+    {
+        id: 1,
+        tipo: 'Lembrete de vencimento',
+        destinatario: 'João Pereira',
+        canal: 'whatsapp',
+        mensagem: 'Sua parcela vence em 3 dias.',
+        dataEnvio: '12/08/2026 09:12',
+        status: 'enviado',
+    },
+    {
+        id: 2,
+        tipo: 'Cobrança em atraso',
+        destinatario: 'Maria Souza',
+        canal: 'email',
+        mensagem: 'Identificamos um pagamento em atraso.',
+        dataEnvio: '12/08/2026 08:47',
+        status: 'falha',
+    },
+    {
+        id: 3,
+        tipo: 'Renovação de apólice',
+        destinatario: 'Carlos Lima',
+        canal: 'email',
+        mensagem: 'Sua apólice vence em 15 dias.',
+        dataEnvio: '11/08/2026 17:30',
+        status: 'enviado',
+    },
+    {
+        id: 4,
+        tipo: 'Cobrança em atraso',
+        destinatario: 'Fernanda Alves',
+        canal: 'whatsapp',
+        mensagem: 'Identificamos um pagamento em atraso.',
+        dataEnvio: '11/08/2026 16:05',
+        status: 'pendente',
+    },
+    {
+        id: 5,
+        tipo: 'Lembrete de vencimento',
+        destinatario: 'Roberto Dias',
+        canal: 'whatsapp',
+        mensagem: 'Sua parcela vence em 3 dias.',
+        dataEnvio: '11/08/2026 14:22',
+        status: 'pendente',
+    },
+    {
+        id: 6,
+        tipo: 'Mensagem personalizada',
+        destinatario: 'Patrícia Melo',
+        canal: 'email',
+        mensagem: 'Novidades sobre o seu plano.',
+        dataEnvio: '10/08/2026 11:10',
+        status: 'enviado',
+    },
+    {
+        id: 7,
+        tipo: 'Cobrança em atraso',
+        destinatario: 'Juliana Castro',
+        canal: 'whatsapp',
+        mensagem: 'Identificamos um pagamento em atraso.',
+        dataEnvio: '10/08/2026 09:58',
+        status: 'falha',
+    },
+    {
+        id: 8,
+        tipo: 'Lembrete de vencimento',
+        destinatario: 'Eduardo Nunes',
+        canal: 'email',
+        mensagem: 'Sua parcela vence em 3 dias.',
+        dataEnvio: '09/08/2026 10:40',
+        status: 'enviado',
+    },
 ];
 
 const AUTOMACOES_MOCK: Automacao[] = [
     {
         id: 1,
         titulo: 'Lembrete de vencimento',
-        descricao: 'Avisa o cliente automaticamente 3 dias antes do vencimento da parcela.',
+        descricao:
+            'Avisa o cliente automaticamente 3 dias antes do vencimento da parcela.',
         canais: ['email', 'whatsapp'],
         ativo: true,
     },
     {
         id: 2,
         titulo: 'Cobrança em atraso',
-        descricao: 'Dispara uma cobrança assim que um pagamento passa a estar em atraso.',
+        descricao:
+            'Dispara uma cobrança assim que um pagamento passa a estar em atraso.',
         canais: ['whatsapp'],
         ativo: true,
     },
     {
         id: 3,
         titulo: 'Renovação de apólice',
-        descricao: 'Lembra o cliente quando a apólice está próxima da data de renovação.',
+        descricao:
+            'Lembra o cliente quando a apólice está próxima da data de renovação.',
         canais: ['email'],
         ativo: false,
     },
@@ -104,10 +219,22 @@ const AUTOMACOES_MOCK: Automacao[] = [
 /* Configuração visual de status e canal                              */
 /* ------------------------------------------------------------------ */
 
-const STATUS_CONFIG: Record<StatusNotificacao, { label: string; badge: string }> = {
-    enviado: { label: 'Enviado', badge: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600' },
-    pendente: { label: 'Pendente', badge: 'border-amber-500/20 bg-amber-500/10 text-amber-600' },
-    falha: { label: 'Falha', badge: 'border-red-500/20 bg-red-500/10 text-red-600' },
+const STATUS_CONFIG: Record<
+    StatusNotificacao,
+    { label: string; badge: string }
+> = {
+    enviado: {
+        label: 'Enviado',
+        badge: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600',
+    },
+    pendente: {
+        label: 'Pendente',
+        badge: 'border-amber-500/20 bg-amber-500/10 text-amber-600',
+    },
+    falha: {
+        label: 'Falha',
+        badge: 'border-red-500/20 bg-red-500/10 text-red-600',
+    },
 };
 
 const CANAL_CONFIG: Record<Canal, { label: string; icon: typeof Mail }> = {
@@ -160,9 +287,11 @@ export default function Notificacoes() {
     const historicoFiltrado = useMemo(() => {
         return HISTORICO_MOCK.filter((item) => {
             const passaCanal =
-                filtroCanal === 'Todos' || CANAL_CONFIG[item.canal].label === filtroCanal;
+                filtroCanal === 'Todos' ||
+                CANAL_CONFIG[item.canal].label === filtroCanal;
             const passaStatus =
-                filtroStatus === 'Todos' || STATUS_CONFIG[item.status].label === filtroStatus;
+                filtroStatus === 'Todos' ||
+                STATUS_CONFIG[item.status].label === filtroStatus;
             return passaCanal && passaStatus;
         });
     }, [filtroCanal, filtroStatus]);
@@ -194,7 +323,9 @@ export default function Notificacoes() {
 
     const selecionarTodosVisiveis = () => {
         const idsVisiveis = clientesFiltrados.map((c) => c.id);
-        const todosJaSelecionados = idsVisiveis.every((id) => selecionados.includes(id));
+        const todosJaSelecionados = idsVisiveis.every((id) =>
+            selecionados.includes(id),
+        );
         setSelecionados((prev) =>
             todosJaSelecionados
                 ? prev.filter((id) => !idsVisiveis.includes(id))
@@ -229,7 +360,8 @@ export default function Notificacoes() {
                             Notificações
                         </h1>
                         <p className="mt-1 text-sm text-muted-foreground">
-                            Gerencie lembretes automáticos e envio de notificações
+                            Gerencie lembretes automáticos e envio de
+                            notificações
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -319,7 +451,10 @@ export default function Notificacoes() {
                             <div className="absolute inset-0 bg-gradient-to-b from-sky-400/25 via-sky-400/5 to-transparent" />
                             <div className="absolute h-32 w-32 rounded-full bg-gradient-to-br from-sky-300 to-sky-600 opacity-40 blur-3xl" />
                             <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-sky-300 to-sky-600 shadow-2xl shadow-sky-500/40 transition-transform duration-300 group-hover:scale-105">
-                                <Mail className="size-9 text-white" strokeWidth={1.75} />
+                                <Mail
+                                    className="size-9 text-white"
+                                    strokeWidth={1.75}
+                                />
                             </div>
                         </div>
 
@@ -329,7 +464,8 @@ export default function Notificacoes() {
                                     E-mail
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                    Envie cobranças e lembretes para um ou mais clientes
+                                    Envie cobranças e lembretes para um ou mais
+                                    clientes
                                 </p>
                             </div>
                             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-500/10 text-sky-600 transition-transform group-hover:translate-x-0.5">
@@ -346,7 +482,10 @@ export default function Notificacoes() {
                             <div className="absolute inset-0 bg-gradient-to-b from-emerald-400/25 via-emerald-400/5 to-transparent" />
                             <div className="absolute h-32 w-32 rounded-full bg-gradient-to-br from-emerald-300 to-emerald-600 opacity-40 blur-3xl" />
                             <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-emerald-300 to-emerald-600 shadow-2xl shadow-emerald-500/40 transition-transform duration-300 group-hover:scale-105">
-                                <MessageCircle className="size-9 text-white" strokeWidth={1.75} />
+                                <MessageCircle
+                                    className="size-9 text-white"
+                                    strokeWidth={1.75}
+                                />
                             </div>
                         </div>
 
@@ -356,7 +495,8 @@ export default function Notificacoes() {
                                     WhatsApp
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                    Envie cobranças e lembretes para um ou mais clientes
+                                    Envie cobranças e lembretes para um ou mais
+                                    clientes
                                 </p>
                             </div>
                             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 transition-transform group-hover:translate-x-0.5">
@@ -398,14 +538,17 @@ export default function Notificacoes() {
                                     Histórico de Notificações
                                 </h2>
                                 <p className="text-xs text-muted-foreground">
-                                    {historicoFiltrado.length} notificação(ões) encontrada(s)
+                                    {historicoFiltrado.length} notificação(ões)
+                                    encontrada(s)
                                 </p>
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className="relative">
                                     <select
                                         value={filtroCanal}
-                                        onChange={(e) => setFiltroCanal(e.target.value)}
+                                        onChange={(e) =>
+                                            setFiltroCanal(e.target.value)
+                                        }
                                         className="h-10 appearance-none rounded-xl border border-border/70 bg-background pr-8 pl-3 text-sm font-semibold text-foreground focus:ring-2 focus:ring-emerald-500/30 focus:outline-none"
                                     >
                                         <option>Todos</option>
@@ -417,7 +560,9 @@ export default function Notificacoes() {
                                 <div className="relative">
                                     <select
                                         value={filtroStatus}
-                                        onChange={(e) => setFiltroStatus(e.target.value)}
+                                        onChange={(e) =>
+                                            setFiltroStatus(e.target.value)
+                                        }
                                         className="h-10 appearance-none rounded-xl border border-border/70 bg-background pr-8 pl-3 text-sm font-semibold text-foreground focus:ring-2 focus:ring-emerald-500/30 focus:outline-none"
                                     >
                                         <option>Todos</option>
@@ -435,16 +580,21 @@ export default function Notificacoes() {
                                 <thead>
                                     <tr className="border-b border-border/70 text-[10px] font-bold tracking-[0.1em] text-muted-foreground uppercase">
                                         <th className="px-5 py-3">Tipo</th>
-                                        <th className="px-5 py-3">Destinatário</th>
+                                        <th className="px-5 py-3">
+                                            Destinatário
+                                        </th>
                                         <th className="px-5 py-3">Canal</th>
                                         <th className="px-5 py-3">Mensagem</th>
-                                        <th className="px-5 py-3">Data Envio</th>
+                                        <th className="px-5 py-3">
+                                            Data Envio
+                                        </th>
                                         <th className="px-5 py-3">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {historicoFiltrado.map((item) => {
-                                        const CanalIcon = CANAL_CONFIG[item.canal].icon;
+                                        const CanalIcon =
+                                            CANAL_CONFIG[item.canal].icon;
                                         return (
                                             <tr
                                                 key={item.id}
@@ -459,7 +609,11 @@ export default function Notificacoes() {
                                                 <td className="px-5 py-3.5">
                                                     <span className="inline-flex items-center gap-1.5 text-muted-foreground">
                                                         <CanalIcon className="size-3.5" />
-                                                        {CANAL_CONFIG[item.canal].label}
+                                                        {
+                                                            CANAL_CONFIG[
+                                                                item.canal
+                                                            ].label
+                                                        }
                                                     </span>
                                                 </td>
                                                 <td className="max-w-[220px] truncate px-5 py-3.5 text-muted-foreground">
@@ -472,7 +626,11 @@ export default function Notificacoes() {
                                                     <span
                                                         className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${STATUS_CONFIG[item.status].badge}`}
                                                     >
-                                                        {STATUS_CONFIG[item.status].label}
+                                                        {
+                                                            STATUS_CONFIG[
+                                                                item.status
+                                                            ].label
+                                                        }
                                                     </span>
                                                 </td>
                                             </tr>
@@ -485,7 +643,8 @@ export default function Notificacoes() {
                                                 colSpan={6}
                                                 className="px-5 py-10 text-center text-sm text-muted-foreground"
                                             >
-                                                Nenhuma notificação encontrada para esse filtro.
+                                                Nenhuma notificação encontrada
+                                                para esse filtro.
                                             </td>
                                         </tr>
                                     )}
@@ -519,14 +678,18 @@ export default function Notificacoes() {
                                         </p>
                                         <div className="mt-2 flex items-center gap-1.5">
                                             {automacao.canais.map((canal) => {
-                                                const CanalIcon = CANAL_CONFIG[canal].icon;
+                                                const CanalIcon =
+                                                    CANAL_CONFIG[canal].icon;
                                                 return (
                                                     <span
                                                         key={canal}
                                                         className="flex items-center gap-1 rounded-full border border-border/70 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground"
                                                     >
                                                         <CanalIcon className="size-3" />
-                                                        {CANAL_CONFIG[canal].label}
+                                                        {
+                                                            CANAL_CONFIG[canal]
+                                                                .label
+                                                        }
                                                     </span>
                                                 );
                                             })}
@@ -536,11 +699,15 @@ export default function Notificacoes() {
 
                                 <div className="flex items-center gap-3 pl-13 sm:pl-0">
                                     <span className="text-xs font-semibold text-muted-foreground">
-                                        {automacao.ativo ? 'Ativado' : 'Desativado'}
+                                        {automacao.ativo
+                                            ? 'Ativado'
+                                            : 'Desativado'}
                                     </span>
                                     <Toggle
                                         ativo={automacao.ativo}
-                                        onChange={() => alternarAutomacao(automacao.id)}
+                                        onChange={() =>
+                                            alternarAutomacao(automacao.id)
+                                        }
                                     />
                                 </div>
                             </div>
@@ -581,7 +748,9 @@ export default function Notificacoes() {
                                     </p>
                                     <h3 className="text-base font-bold text-foreground">
                                         Enviar por{' '}
-                                        {modalCanal === 'email' ? 'E-mail' : 'WhatsApp'}
+                                        {modalCanal === 'email'
+                                            ? 'E-mail'
+                                            : 'WhatsApp'}
                                     </h3>
                                 </div>
                             </div>
@@ -602,7 +771,7 @@ export default function Notificacoes() {
                                     value={busca}
                                     onChange={(e) => setBusca(e.target.value)}
                                     placeholder="Buscar cliente pelo nome ou e-mail"
-                                    className="h-11 w-full rounded-xl border border-border/70 bg-background pl-10 pr-3 text-sm focus:ring-2 focus:ring-emerald-500/30 focus:outline-none"
+                                    className="h-11 w-full rounded-xl border border-border/70 bg-background pr-3 pl-10 text-sm focus:ring-2 focus:ring-emerald-500/30 focus:outline-none"
                                 />
                             </div>
 
@@ -613,18 +782,23 @@ export default function Notificacoes() {
                                     className="flex w-full items-center justify-between border-b border-border/70 px-3.5 py-2.5 text-xs font-bold text-emerald-600 hover:bg-emerald-500/5"
                                 >
                                     <span>
-                                        {selecionados.length} cliente(s) selecionado(s)
+                                        {selecionados.length} cliente(s)
+                                        selecionado(s)
                                     </span>
                                     <span>Selecionar todos</span>
                                 </button>
 
                                 <div className="flex max-h-56 flex-col overflow-y-auto">
                                     {clientesFiltrados.map((cliente) => {
-                                        const marcado = selecionados.includes(cliente.id);
+                                        const marcado = selecionados.includes(
+                                            cliente.id,
+                                        );
                                         return (
                                             <button
                                                 key={cliente.id}
-                                                onClick={() => alternarCliente(cliente.id)}
+                                                onClick={() =>
+                                                    alternarCliente(cliente.id)
+                                                }
                                                 className="flex items-center gap-3 border-b border-border/40 px-3.5 py-2.5 text-left last:border-0 hover:bg-muted/40"
                                             >
                                                 <span
@@ -675,7 +849,9 @@ export default function Notificacoes() {
                                 </label>
                                 <textarea
                                     value={mensagem}
-                                    onChange={(e) => setMensagem(e.target.value)}
+                                    onChange={(e) =>
+                                        setMensagem(e.target.value)
+                                    }
                                     rows={4}
                                     placeholder={
                                         modalCanal === 'email'
@@ -698,7 +874,10 @@ export default function Notificacoes() {
                             </Button>
                             <Button
                                 onClick={enviarNotificacao}
-                                disabled={selecionados.length === 0 || mensagem.trim() === ''}
+                                disabled={
+                                    selecionados.length === 0 ||
+                                    mensagem.trim() === ''
+                                }
                                 className="h-10 rounded-xl bg-emerald-500 px-6 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 <Send className="mr-2 size-4" />

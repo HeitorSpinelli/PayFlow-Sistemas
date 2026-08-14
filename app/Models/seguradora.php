@@ -22,5 +22,4 @@ class Seguradora extends Model
 
         return $this->hasMany(Ramo::class, 'seguradora_id');
     }
-
 }

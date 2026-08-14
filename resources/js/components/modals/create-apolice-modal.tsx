@@ -25,9 +25,7 @@ import {
     Calendar,
 } from 'lucide-react';
 
-import { 
-    formataCpfCnpj
-} from '@/utils/Masks';
+import { formataCpfCnpj } from '@/utils/Masks';
 
 function Section({ icon, title, description, children }: any) {
     return (
@@ -61,21 +59,20 @@ export default function CreateApoliceModal({
     const [seguradoSelecionado, setSeguradoSelecionado] = useState<any>(null);
 
     // Formulário do Inertia
-    const { data, setData, post, processing, errors, reset, clearErrors } =
-        useForm({
-            numero_apolice: '',
-            cliente_id: '',
-            seguradora_id: '',
-            ramo_id: '',
-            valor_premio_total: '',
-            valor_cobertura: '',
-            quantidade_parcelas: '',
-            forma_pagamento: '',
-            inicio_vigencia: '',
-            fim_vigencia: '',
-            status: '',
-            observacoes: '',
-        });
+    const { data, errors, setData, post, reset, clearErrors, processing } = useForm({
+    numero_apolice: '',
+    cliente_id: '',
+    seguradora_id: '',
+    ramo_id: '',
+    valor_premio_total: '',
+    valor_cobertura: '',
+    quantidade_parcelas: 1,
+    forma_pagamento: '',
+    inicio_vigencia: '',
+    fim_vigencia: '',
+    status: 'Ativa',
+    observacoes: '',
+});
 
     useEffect(() => {
         if (!open) {
@@ -255,8 +252,8 @@ export default function CreateApoliceModal({
                                                             <span className="text-xs text-muted-foreground">
                                                                 {segurado.cpf_cnpj
                                                                     ? formataCpfCnpj(
-                                                                          segurado.cpf_cnpj,
-                                                                      )
+                                                                            segurado.cpf_cnpj,
+                                                                        )
                                                                     : '-'}
                                                             </span>
                                                         </div>
@@ -264,16 +261,7 @@ export default function CreateApoliceModal({
                                                 )}
                                             </div>
                                         )}
-
-                                    {mostrarLista &&
-                                        busca.length > 0 &&
-                                        resultados.length === 0 && (
-                                            <p className="text-xs text-rose-500">
-                                                Nenhum cliente encontrado
-                                            </p>
-                                        )}
-
-                                    {errors.cliente_id && (
+                                        {errors.cliente_id && (
                                         <span className="text-xs font-medium text-rose-500">
                                             {errors.cliente_id}
                                         </span>

@@ -1,15 +1,16 @@
 import { Link } from '@inertiajs/react';
 import { usePage } from '@inertiajs/react';
 import { 
-    LayoutGrid, 
+    Grid, 
     Users, 
-    FileText, 
-    Receipt, 
-    CreditCard, 
-    Calendar, 
-    UploadCloud, 
-    MessageSquare, 
-    Building
+    FileCheck,  
+    Wallet, 
+    FileSpreadsheet,
+    CalendarDays,
+    Import, 
+    Bell,
+    Settings,
+    Shield
 } from 'lucide-react'; 
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -32,7 +33,7 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard', //titulo do item
         href: dashboard(), //rota do item
-        icon: LayoutGrid, // Ícone 1 (Quadradinhos)
+        icon: Grid, // Ícone 1 (Quadradinhos)
     },
     {
         title: 'Clientes', //titulo do item
@@ -42,45 +43,45 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Apólices',
         href: '/apolices',
-        icon: FileText, // Ícone 3 (Documento)
+        icon: FileCheck, // Ícone 3 (Documento)
     },
     {
         title: 'Pagamentos',
         href: '/pagamentos',
-        icon: CreditCard, // Ícone 5 (Cartão)
+        icon: Wallet, // Ícone 5 (Cartão)
     },
     {
         title: 'Cobranças',
         href: '/cobrancas',
-        icon: Receipt, // Ícone 4 (Cifrão/Recibo)
+        icon: FileSpreadsheet, // Ícone 4 (Cifrão/Recibo)
     },
     {
         title: 'Agenda',
         href: '/agenda',
-        icon: Calendar, // Ícone 6 (Calendário)
+        icon: CalendarDays, // Ícone 6 (Calendário)
     },
     {
         title: 'Importar',
         href: '/importar',
-        icon: UploadCloud, // Ícone 7 (Upload)
+        icon: Import, // Ícone 7 (Upload)
     },
     {
         title: 'Notificações',
         href: '/notificacoes',
         adminOnly: true, // Somente visível para admins
-        icon: MessageSquare, // Ícone 8 (Balão de chat)
+        icon: Bell, // Ícone 8 (Balão de chat)
     },
     {
         title: 'Seguradoras e Ramos',
         href: '/seguradoras',
         adminOnly: true, // Somente visível para admins
-        icon: Building, // Ícone 9 (Prédio)
+        icon: Shield, // Ícone 9 (Prédio)
     },
     {
         title: 'Administração',
         href: '/administracao',
         adminOnly: true, // Somente visível para admins
-        icon: Users, // Reutilizando o ícone de Pessoas para Administração
+        icon: Settings, // Reutilizando o ícone de Pessoas para Administração
     }
 ];
 const footerNavItems: NavItem[] = [

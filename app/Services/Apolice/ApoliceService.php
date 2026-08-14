@@ -82,11 +82,24 @@ class ApoliceService
                 });
             }
 
+            // No ApoliceService.php
             if (!empty($filters['status']) && $filters['status'] !== 'Todos') {
-                $query->where('apolices.status', $filters['status']);
+                $status = $filters['status'];
+
+                if ($status === 'Vigente') {
+                    $query->where('apolices.inicio_vigencia', '<=', now())
+                        ->where('apolices.fim_vigencia', '>=', now());
+                } elseif ($status === 'A Iniciar') {
+                    $query->where('apolices.inicio_vigencia', '>', now());
+                } elseif ($status === 'Para Renovar') {
+                    $query->where('apolices.fim_vigencia', '<', now());
+                }
             }
 
-            return $query->get();
+            // Troque o get() por paginate() com withQueryString()
+            return $query->paginate(10)->withQueryString();
+
+            return $query->paginate(10)->withQueryString();
         } catch (\Exception $e) {
             throw new \Exception('Erro ao buscar apólices: ' . $e->getMessage());
         }
