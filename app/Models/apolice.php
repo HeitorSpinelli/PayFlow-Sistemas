@@ -99,4 +99,14 @@ class Apolice extends Model
     {
         return $this->belongsTo(Segurado::class, 'cliente_id');
     }
+
+    public function seguradora()
+    {
+        return $this->belongsTo(Seguradora::class, 'seguradora_id');
+    }
+
+    public function ramo()
+    {
+        return $this->belongsTo(Ramo::class, 'ramo_id');
+    }
 }

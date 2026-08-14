@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\Apolice\ApoliceService;
 use App\Http\Requests\StoreApoliceRequest;
 use App\Http\Requests\UpdateApoliceRequest;
+use App\Services\Exportacoes\ExportacaoApoliceService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -82,5 +83,10 @@ class ApolicesController extends Controller
             'apolices' => $apolices,
             'filters' => $request->only(['search', 'status']),
         ]);
+    }
+
+    public function exportar(ExportacaoApoliceService $exportacaoService)
+    {   
+        return $exportacaoService->exportarApolicesCsv();
     }
 }
