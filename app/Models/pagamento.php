@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Apolice;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class Pagamento extends Model
 {
@@ -23,7 +24,7 @@ class Pagamento extends Model
         return $this->belongsTo(Apolice::class, 'apolice_id');
     }
 
-    public function scopeFilter($query, array $filters)
+    public function scopeFilter(Builder $query, array $filters)
     {
         $query->when($filters['busca'] ?? null, function ($q, $busca) {
             $q->whereHas('apolice.cliente', function ($sub) use ($busca) {
@@ -32,10 +33,6 @@ class Pagamento extends Model
             })->orWhereHas('apolice', function ($sub) use ($busca) {
                 $sub->where('numero_apolice', 'ilike', "%{$busca}%");
             });
-        });
-
-        $query->when($filters['status'] ?? null, function ($q, $status) {
-            $q->where('status', $status);
         });
 
         $query->when($filters['forma_pagamento'] ?? null, function ($q, $forma) {

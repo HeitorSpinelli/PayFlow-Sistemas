@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Apolice extends Model
 {
@@ -98,5 +99,10 @@ class Apolice extends Model
     public function cliente(): BelongsTo
     {
         return $this->belongsTo(Segurado::class, 'cliente_id');
+    }
+
+    public function pagamentos(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Pagamento::class, 'apolice_id');
     }
 }

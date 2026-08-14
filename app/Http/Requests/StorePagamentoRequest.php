@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StorePagamentoRequest extends FormRequest
 {
@@ -20,7 +21,13 @@ class StorePagamentoRequest extends FormRequest
         return [
             'segurado_id'      => 'required|integer|exists:segurados,id',
             'apolice_id'       => 'required|integer|exists:apolices,id',
-            'parcela'          => 'required|integer|min:1',
+            'parcela'          => [
+                'required',
+                'integer',
+                'min:1',
+                Rule::unique('pagamentos', 'parcela')
+                    ->where('apolice_id', $this->apolice_id),
+            ],
             'valor'            => 'required|numeric|min:0.01',
             'data_pagamento'   => 'required|date',
             'forma_pagamento'  => 'required|string|in:boleto,pix,cartão,débito',
@@ -37,6 +44,7 @@ class StorePagamentoRequest extends FormRequest
             'apolice_id.required' => 'O campo apólice é obrigatório.',
             'apolice_id.exists' => 'A apólice selecionada não existe.',
             'parcela.required' => 'O campo parcela é obrigatório.',
+            'parcela.unique' => 'Essa parcela já foi registrada para esta apólice.',
             'valor.required' => 'O campo valor é obrigatório.',
             'data_pagamento.required' => 'O campo data de pagamento é obrigatório.',
             'data_pagamento.date' => 'O campo data de pagamento deve ser uma data válida.',
