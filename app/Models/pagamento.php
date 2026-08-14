@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Apolice;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class pagamento extends Model
+class Pagamento extends Model
 {
     protected $fillable = [
         'apolice_id',
@@ -18,11 +18,28 @@ class pagamento extends Model
         'observacoes',
     ];
 
-    //esse daqui e parecido com o que eu fiz em apolice mas
-    //aqui ele conecta o pagamento com a apolice assim permitindo
-    //que eu use o pagamento->apolice para acessar os dados da apolice sem precisar fazer o maldito query manual
-    public function Apolice(): BelongsTo
+    public function apolice(): BelongsTo
     {
         return $this->belongsTo(Apolice::class, 'apolice_id');
+    }
+
+    public function scopeFilter($query, array $filters)
+    {
+        $query->when($filters['busca'] ?? null, function ($q, $busca) {
+            $q->whereHas('apolice.cliente', function ($sub) use ($busca) {
+                $sub->where('nome_completo', 'ilike', "%{$busca}%")
+                    ->orWhere('cpf_cnpj', 'ilike', "%{$busca}%");
+            })->orWhereHas('apolice', function ($sub) use ($busca) {
+                $sub->where('numero_apolice', 'ilike', "%{$busca}%");
+            });
+        });
+
+        $query->when($filters['status'] ?? null, function ($q, $status) {
+            $q->where('status', $status);
+        });
+
+        $query->when($filters['forma_pagamento'] ?? null, function ($q, $forma) {
+            $q->where('forma_pagamento', $forma);
+        });
     }
 }
