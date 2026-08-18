@@ -62,6 +62,7 @@ export default function SeguradoraProfileModal({ open, setOpen, seguradora }: an
         razao_social: seguradora?.razao_social ?? '',
         cnpj: seguradora?.cnpj ?? '',
         email_suporte: seguradora?.email_suporte ?? '',
+        nome_ramo: seguradora?.nome_ramo ?? '',
     });
 
     const fechar = () => {
@@ -124,7 +125,7 @@ export default function SeguradoraProfileModal({ open, setOpen, seguradora }: an
                     </div>
                 </DialogHeader>
 
-                <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6 sm:px-8">
+                <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6 sm:px-8 break-all">
                     {modo === 'visualizar' && (
                         <>
                             <Section
@@ -164,7 +165,7 @@ export default function SeguradoraProfileModal({ open, setOpen, seguradora }: an
                                                 key={index}
                                                 className="inline-flex items-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600"
                                             >
-                                                {ramo.nome || ramo}
+                                                {ramo.nome_ramo || ramo}
                                             </span>
                                         ))
                                     ) : (

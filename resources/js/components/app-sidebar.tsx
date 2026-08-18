@@ -79,7 +79,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Administração',
-        href: '/administracao',
+        href: '/administracao/usuarios',
         adminOnly: true, // Somente visível para admins
         icon: Settings, // Reutilizando o ícone de Pessoas para Administração
     }

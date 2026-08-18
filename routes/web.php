@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\SeguradoController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\ApolicesController;
 use App\Http\Controllers\SeguradoraController;
 use App\Http\Controllers\pagamentoController;
@@ -73,9 +74,7 @@ Route::middleware('auth', 'can:is-admin')->group(function () {
         return inertia('FunctionsApp/notificacoes');
     })->name('notificacoes');
 
-    Route::get('/administracao', function () {
-        return inertia('FunctionsApp/administracao');
-    })->name('administracao');
+    Route::get('/administracao/usuarios', [UserController::class, 'index'])->name('users');
 });
 
 require __DIR__ . '/settings.php';
