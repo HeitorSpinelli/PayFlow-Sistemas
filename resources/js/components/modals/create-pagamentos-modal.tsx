@@ -92,7 +92,7 @@ export default function CreatePagamentoModal({
         valor: '',
         data_pagamento: '',
         forma_pagamento: '',
-        status: '',
+        status: 'confirmado', // pagamento já nasce confirmado ao ser registrado
         observacoes: '',
     });
 
@@ -127,6 +127,7 @@ export default function CreatePagamentoModal({
         // limpa apólice/parcela já escolhidas, já que pertenciam ao segurado anterior
         setData('apolice_id', '');
         setData('parcela', '');
+        setData('valor', '');
         setBuscaSegurado(segurado.nome_completo);
         setSugestoesAbertas(false);
     };
@@ -150,6 +151,55 @@ export default function CreatePagamentoModal({
         (a: any) => String(a.cliente_id) === data.segurado_id,
     );
 
+    // Apólice atualmente selecionada (usada para parcelas, valor e bloqueio)
+    const apoliceSelecionada = apolicesDoSegurado.find(
+        (a: any) => String(a.id) === data.apolice_id,
+    );
+
+    // Quantidade de parcelas da apólice atualmente selecionada (fallback 12)
+    const totalParcelasApolice = apoliceSelecionada?.quantidade_parcelas ?? 12;
+
+    // Parcelas já registradas para a apólice atualmente selecionada
+    const parcelasJaRegistradas = (apoliceSelecionada?.pagamentos ?? []).map(
+        (p: any) => Number(p.parcela),
+    );
+
+    // Ao escolher a apólice, calcula automaticamente a próxima parcela em aberto e o valor dela
+    useEffect(() => {
+        if (!data.apolice_id) return;
+
+        const apolice = apolicesDoSegurado.find(
+            (a: any) => String(a.id) === data.apolice_id,
+        );
+        if (!apolice) return;
+
+        const totalParcelas = apolice.quantidade_parcelas ?? 1;
+        const valorTotal = Number(apolice.valor_premio_total ?? 0);
+
+        // Parcelas que já têm pagamento lançado para essa apólice
+        const parcelasPagas = (apolice.pagamentos ?? []).map((p: any) =>
+            Number(p.parcela),
+        );
+
+        // Primeira parcela (de 1 até o total) que ainda não foi lançada
+        let proximaParcela = 1;
+        for (let n = 1; n <= totalParcelas; n++) {
+            if (!parcelasPagas.includes(n)) {
+                proximaParcela = n;
+                break;
+            }
+        }
+
+        const valorParcela = totalParcelas > 0 ? valorTotal / totalParcelas : 0;
+
+        setData((prev) => ({
+            ...prev,
+            parcela: String(proximaParcela),
+            valor: valorParcela.toFixed(2),
+        }));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [data.apolice_id]);
+
     const handleSubmit = () => {
         post('/pagamentos', {
             onSuccess: () => {
@@ -157,6 +207,11 @@ export default function CreatePagamentoModal({
                 toast.success('Pagamento registrado com sucesso!');
                 setBuscaSegurado('');
                 setOpen(false);
+            },
+            onError: () => {
+                toast.error(
+                    'Falha ao registrar. Verifique os campos destacados.',
+                );
             },
         });
     };
@@ -223,6 +278,7 @@ export default function CreatePagamentoModal({
                                             setData('segurado_id', '');
                                             setData('apolice_id', '');
                                             setData('parcela', '');
+                                            setData('valor', '');
                                         }
                                     }}
                                     onFocus={() => setSugestoesAbertas(true)}
@@ -339,6 +395,7 @@ export default function CreatePagamentoModal({
                                 <Select
                                     value={data.parcela}
                                     onValueChange={(v) => setData('parcela', v)}
+                                    disabled={!data.apolice_id}
                                 >
                                     <SelectTrigger
                                         className={selectTriggerClass}
@@ -346,18 +403,27 @@ export default function CreatePagamentoModal({
                                         <SelectValue placeholder="Selecione" />
                                     </SelectTrigger>
                                     <SelectContent className="rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-md">
-                                        {[
-                                            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-                                            12,
-                                        ].map((n) => (
-                                            <SelectItem
-                                                key={n}
-                                                value={String(n)}
-                                                className="cursor-pointer rounded-lg"
-                                            >
-                                                {n}ª Parcela
-                                            </SelectItem>
-                                        ))}
+                                        {Array.from(
+                                            { length: totalParcelasApolice },
+                                            (_, i) => i + 1,
+                                        ).map((n) => {
+                                            const jaRegistrada =
+                                                parcelasJaRegistradas.includes(
+                                                    n,
+                                                );
+                                            return (
+                                                <SelectItem
+                                                    key={n}
+                                                    value={String(n)}
+                                                    disabled={jaRegistrada}
+                                                    className="cursor-pointer rounded-lg data-[disabled]:cursor-not-allowed data-[disabled]:opacity-40"
+                                                >
+                                                    {n}ª Parcela
+                                                    {jaRegistrada &&
+                                                        ' — já paga'}
+                                                </SelectItem>
+                                            );
+                                        })}
                                     </SelectContent>
                                 </Select>
                                 {(errors as any).parcela && (
@@ -365,7 +431,12 @@ export default function CreatePagamentoModal({
                                         {(errors as any).parcela}
                                     </span>
                                 )}
-                                {/* Preenchimento automático de Parcela e Data ainda será definido com o cliente */}
+                                {data.apolice_id && (
+                                    <p className="text-xs text-muted-foreground">
+                                        Parcela e valor preenchidos
+                                        automaticamente — ajuste se necessário.
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </Section>

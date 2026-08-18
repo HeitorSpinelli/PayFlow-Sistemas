@@ -59,20 +59,21 @@ export default function CreateApoliceModal({
     const [seguradoSelecionado, setSeguradoSelecionado] = useState<any>(null);
 
     // Formulário do Inertia
-    const { data, errors, setData, post, reset, clearErrors, processing } = useForm({
-    numero_apolice: '',
-    cliente_id: '',
-    seguradora_id: '',
-    ramo_id: '',
-    valor_premio_total: '',
-    valor_cobertura: '',
-    quantidade_parcelas: 1,
-    forma_pagamento: '',
-    inicio_vigencia: '',
-    fim_vigencia: '',
-    status: 'Ativa',
-    observacoes: '',
-});
+    const { data, errors, setData, post, reset, clearErrors, processing } =
+        useForm({
+            numero_apolice: '',
+            cliente_id: '',
+            seguradora_id: '',
+            ramo_id: '',
+            valor_premio_total: '',
+            valor_cobertura: '',
+            quantidade_parcelas: 1,
+            forma_pagamento: '',
+            inicio_vigencia: '',
+            fim_vigencia: '',
+            status: 'Ativa',
+            observacoes: '',
+        });
 
     useEffect(() => {
         if (!open) {
@@ -261,7 +262,7 @@ export default function CreateApoliceModal({
                                                 )}
                                             </div>
                                         )}
-                                        {errors.cliente_id && (
+                                    {errors.cliente_id && (
                                         <span className="text-xs font-medium text-rose-500">
                                             {errors.cliente_id}
                                         </span>
@@ -504,6 +505,8 @@ export default function CreateApoliceModal({
                                         <Input
                                             type="number"
                                             placeholder="12"
+                                            max="12"
+                                            min="1"
                                             value={data.quantidade_parcelas}
                                             onChange={(e) =>
                                                 setData(

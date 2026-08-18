@@ -8,63 +8,60 @@ use App\Http\Controllers\ApolicesController;
 use App\Http\Controllers\SeguradoraController;
 use App\Http\Controllers\pagamentoController;
 
+// Rota Inicial
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 
+// Rotas Protegidas por Autenticação
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    Route::get('/dashboard', function () {
-        return inertia('dashboard');
-    })->name('dashboard');
+    // Dashboard
+    Route::get('/dashboard', fn () => inertia('dashboard'))->name('dashboard');
 
-    //Rota para consulta no banco dos segurados cadastrados no sistema
-    Route::get('/clientes', [SeguradoController::class, 'show'])->name('clientes');
+    // Módulo: Clientes (Segurados)
+    Route::prefix('clientes')->group(function () {
+        Route::get('/', [SeguradoController::class, 'show'])->name('clientes');
+        Route::post('/', [SeguradoController::class, 'store']);
+        Route::put('/{id}', [SeguradoController::class, 'update'])->name('clientes.update');
+        Route::delete('/{id}', [SeguradoController::class, 'destroy'])->name('clientes.destroy');
+        Route::get('/exportar', [SeguradoController::class, 'exportar']);
+    });
 
-    //Rota para salvar clientes via post chamando a classe SeguradoController e a função store
-    Route::post('/clientes', [SeguradoController::class, 'store']);
-    Route::delete('/clientes/{id}', [SeguradoController::class, 'destroy'])->name('clientes.destroy');
-    Route::put('/clientes/{id}', [SeguradoController::class, 'update'])->name('clientes.update');
+    // Módulo: Apólices
+    Route::prefix('apolices')->group(function () {
+        Route::get('/', [ApolicesController::class, 'index'])->name('apolices');
+        Route::post('/', [ApolicesController::class, 'store']);
+        Route::put('/{id}', [ApolicesController::class, 'update'])->name('apolices.update');
+        Route::delete('/{id}', [ApolicesController::class, 'destroy'])->name('apolices.destroy');
+        Route::patch('/{id}/alterar-ramo', [ApolicesController::class, 'atualizarRamo']);
+        Route::get('/exportar', [ApolicesController::class, 'exportar']);
+    });
 
-    // Rota para exportar os dados
-    Route::get('/segurados/exportar', [SeguradoController::class, 'exportar']);
+    // Módulo: Pagamentos
+    Route::prefix('pagamentos')->group(function () {
+        Route::get('/', [pagamentoController::class, 'show'])->name('pagamentos');
+        Route::post('/', [pagamentoController::class, 'store']);
+        Route::put('/{id}', [pagamentoController::class, 'update'])->name('pagamentos.update');
+        Route::delete('/{id}', [pagamentoController::class, 'destroy'])->name('pagamentos.destroy');
+    });
 
-    //Rota para exibir a página de apolices, chamando a classe ApolicesController e a função index
-    Route::get('/apolices', [ApolicesController::class, 'index'])->name('apolices');
-
-    Route::delete('/apolices/{id}', [ApolicesController::class, 'destroy'])->name('apolices.destroy');
-    Route::put('/apolices/{id}', [ApolicesController::class, 'update'])->name('apolices.update');
-
-    //Rotas Patch são usadas para atualizar parcialmente um recurso existente, nesse caso a rota é usada para alterar o ramo de uma apólice específica, chamando a 
-    //função atualizarRamo da classe ApolicesController
-    Route::patch('/apolices/{id}/alterar-ramo', [ApolicesController::class, 'atualizarRamo']);
-
-    //Rota para salvar apolices via post, chamando a classe ApolicesController e a função store
-    Route::post('/apolices', [ApolicesController::class, 'store']);
-
-    Route::get('/cobrancas', function () {
-        return inertia('FunctionsApp/cobrancas');
-    })->name('cobrancas');
-
-    //Rota para exibir a página de pagamentos, chamando a classe pagamentoController e a função show
-    Route::get('/pagamentos', [pagamentoController::class, 'show'])->name('pagamentos');
-    Route::post('/pagamentos', [pagamentoController::class, 'store']);
-    Route::delete('/pagamentos/{id}', [pagamentoController::class, 'destroy'])->name('pagamentos.destroy');
-    Route::put('/pagamentos/{id}', [pagamentoController::class, 'update'])->name('pagamentos.update');
-
-    Route::get('/agenda', function () {
-        return inertia('FunctionsApp/agenda');
-    })->name('agenda');
-
-    Route::get('/importar', function () {
-        return inertia('FunctionsApp/importar');
-    })->name('importar');
+    // Páginas Estáticas / Inertia Gerais
+    Route::get('/cobrancas', fn () => inertia('FunctionsApp/cobrancas'))->name('cobrancas');
+    Route::get('/agenda', fn () => inertia('FunctionsApp/agenda'))->name('agenda');
+    Route::get('/importar', fn () => inertia('FunctionsApp/importar'))->name('importar');
 });
 
-//Rotas de funções exclusivas para admins, utilizadno middlware para verificar se é admin pelo appserviceprovider
-Route::middleware('auth', 'can:is-admin')->group(function () {
+// Rotas Exclusivas para Administradores
+Route::middleware(['auth', 'can:is-admin'])->group(function () {
 
-    Route::get('/seguradoras', [SeguradoraController::class, 'index'])->name('seguradoras');
+    // Módulo: Seguradoras
+    Route::prefix('seguradoras')->group(function () {
+        Route::get('/', [SeguradoraController::class, 'index'])->name('seguradoras');
+        Route::post('/', [SeguradoraController::class, 'store']);
+        Route::put('/{id}', [SeguradoraController::class, 'update'])->name('seguradoras.update');
+        Route::delete('/{id}', [SeguradoraController::class, 'destroy'])->name('seguradoras.destroy');
+    });
 
     Route::post('/seguradoras', [SeguradoraController::class, 'store']);
     Route::delete('/clientes/{id}', [SeguradoController::class, 'destroy'])->name('clientes.destroy');

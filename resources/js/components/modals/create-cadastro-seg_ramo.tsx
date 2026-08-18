@@ -9,7 +9,16 @@ import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import { useForm } from '@inertiajs/react';
 import { toast } from 'sonner';
-import { X, Plus, Building2, ChevronRight, FileText, Phone, Mail, Hash } from 'lucide-react';
+import {
+    X,
+    Plus,
+    Building2,
+    ChevronRight,
+    FileText,
+    Phone,
+    Mail,
+    Hash,
+} from 'lucide-react';
 
 function Section({ icon, title, description, children }: any) {
     return (
@@ -34,7 +43,7 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
     const [ramos, setRamos] = useState<string[]>([]);
     const [novoRamo, setNovoRamo] = useState('');
 
-    const { data, setData, post, processing } = useForm({
+    const { data, setData, post, processing, errors } = useForm({
         nome_fantasia: '',
         razao_social: '',
         cnpj: '',
@@ -78,11 +87,21 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
     const salvar = () => {
         post('/seguradoras', {
             onSuccess: () => {
-                toast.success('Seguradora cadastrada com sucesso!');
-                fechar();
+                toast.success('Segurado salvo com sucesso!', {
+                    position: 'top-right',
+                    style: {
+                        color: '#e0ebe4',
+                    },
+                });
+                setOpen(false);
             },
             onError: () => {
-                toast.error('Erro ao cadastrar. Verifique os dados.');
+                toast.error('Falha ao salvar. Verifique os campos.', {
+                    position: 'top-right',
+                    style: {
+                        color: '#b61212',
+                    },
+                });
             },
         });
         const limparFormulario = {
@@ -99,7 +118,6 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
     return (
         <Dialog open={open} onOpenChange={fechar}>
             <DialogContent className="!flex max-h-[92vh] max-w-3xl flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 shadow-2xl">
-                
                 {/* Header */}
                 <DialogHeader className="relative shrink-0 overflow-hidden border-b border-border/70 bg-gradient-to-br from-emerald-500/[0.12] via-background to-background px-6 py-6 pr-12 sm:px-8">
                     <div className="absolute -top-12 -right-10 h-36 w-36 rounded-full bg-emerald-500/10 blur-2xl" />
@@ -119,14 +137,14 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
                         </div>
                     </div>
                     <p className="relative mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
-                        Preencha os dados da seguradora e adicione seus ramos. Campos obrigatórios estão marcados com{' '}
+                        Preencha os dados da seguradora e adicione seus ramos.
+                        Campos obrigatórios estão marcados com{' '}
                         <span className="font-bold text-emerald-600">*</span>.
                     </p>
                 </DialogHeader>
 
                 {/* Body com Scroll */}
                 <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6 sm:px-8">
-                    
                     {/* Seção: Dados da Seguradora */}
                     <Section
                         icon={<Building2 className="h-4 w-4" />}
@@ -140,10 +158,17 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
                                 </label>
                                 <Input
                                     value={data.nome_fantasia}
-                                    onChange={e => setData('nome_fantasia', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('nome_fantasia', e.target.value)
+                                    }
                                     placeholder="Ex: Porto Seguro"
                                     className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                 />
+                                {errors.nome_fantasia && (
+                                    <span className="text-xs font-medium text-rose-500">
+                                        {errors.nome_fantasia}
+                                    </span>
+                                )}
                             </div>
 
                             <div className="space-y-2">
@@ -152,10 +177,17 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
                                 </label>
                                 <Input
                                     value={data.razao_social}
-                                    onChange={e => setData('razao_social', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('razao_social', e.target.value)
+                                    }
                                     placeholder="Ex: Porto Seguro S.A."
                                     className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                 />
+                                {errors.razao_social && (
+                                        <span className="text-xs font-medium text-rose-500">
+                                            {errors.razao_social}
+                                        </span>
+                                    )}
                             </div>
 
                             <div className="grid gap-4 sm:grid-cols-2">
@@ -165,10 +197,17 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
                                     </label>
                                     <Input
                                         value={data.cnpj}
-                                        onChange={e => setData('cnpj', e.target.value)}
+                                        onChange={(e) =>
+                                            setData('cnpj', e.target.value)
+                                        }
                                         placeholder="00.000.000/0000-00"
                                         className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                     />
+                                    {errors.cnpj && (
+                                        <span className="text-xs font-medium text-rose-500">
+                                            {errors.cnpj}
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm leading-none font-medium">
@@ -176,10 +215,20 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
                                     </label>
                                     <Input
                                         value={data.contato_nome}
-                                        onChange={e => setData('contato_nome', e.target.value)}
+                                        onChange={(e) =>
+                                            setData(
+                                                'contato_nome',
+                                                e.target.value,
+                                            )
+                                        }
                                         placeholder="Nome do contato"
                                         className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                     />
+                                    {errors.contato_nome && (
+                                        <span className="text-xs font-medium text-rose-500">
+                                            {errors.contato_nome}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
 
@@ -189,10 +238,17 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
                                 </label>
                                 <Input
                                     value={data.email_suporte}
-                                    onChange={e => setData('email_suporte', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('email_suporte', e.target.value)
+                                    }
                                     placeholder="suporte@seguradora.com"
                                     className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                 />
+                                {errors.email_suporte && (
+                                        <span className="text-xs font-medium text-rose-500">
+                                            {errors.email_suporte}
+                                        </span>
+                                    )}
                             </div>
                         </div>
                     </Section>
@@ -207,7 +263,9 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
                             <div className="flex gap-2">
                                 <Input
                                     value={novoRamo}
-                                    onChange={e => setNovoRamo(e.target.value)}
+                                    onChange={(e) =>
+                                        setNovoRamo(e.target.value)
+                                    }
                                     onKeyDown={handleKeyDown}
                                     placeholder="Ex: Automóvel, Vida, Residencial..."
                                     className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
@@ -216,10 +274,15 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
                                     type="button"
                                     variant="outline"
                                     onClick={adicionarRamo}
-                                    className="h-10 rounded-xl border-border/70 px-4 hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-600 transition-all"
+                                    className="h-10 rounded-xl border-border/70 px-4 transition-all hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-600"
                                 >
                                     <Plus className="h-4 w-4" />
                                 </Button>
+                                {errors.ramos && (
+                                        <span className="text-xs font-medium text-rose-500">
+                                            {errors.ramos}
+                                        </span>
+                                    )}
                             </div>
 
                             {ramos.length > 0 && (
@@ -227,24 +290,30 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
                                     {ramos.map((ramo, index) => (
                                         <div
                                             key={index}
-                                            className="flex items-center justify-between px-3.5 py-2 rounded-xl border border-border/70 bg-background shadow-sm"
+                                            className="flex items-center justify-between rounded-xl border border-border/70 bg-background px-3.5 py-2 shadow-sm"
                                         >
-                                            <span className="text-sm font-medium">{ramo}</span>
+                                            <span className="text-sm font-medium">
+                                                {ramo}
+                                            </span>
                                             <button
                                                 type="button"
-                                                onClick={() => removerRamo(index)}
-                                                className="text-muted-foreground hover:text-rose-500 transition-colors"
+                                                onClick={() =>
+                                                    removerRamo(index)
+                                                }
+                                                className="text-muted-foreground transition-colors hover:text-rose-500"
                                             >
                                                 <X className="h-4 w-4" />
                                             </button>
                                         </div>
                                     ))}
                                 </div>
+                                
                             )}
 
                             {ramos.length === 0 && (
                                 <p className="text-xs text-muted-foreground">
-                                    Nenhum ramo adicionado. Digite e pressione Enter ou clique em +.
+                                    Nenhum ramo adicionado. Digite e pressione
+                                    Enter ou clique em +.
                                 </p>
                             )}
                         </div>
@@ -253,10 +322,10 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
 
                 {/* Footer / Botões */}
                 <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border/70 bg-muted/20 px-6 py-4 sm:px-8">
-                    <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={fechar} 
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={fechar}
                         className="h-10 rounded-xl border-border/70 hover:bg-muted/50"
                     >
                         Cancelar
@@ -265,12 +334,11 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
                         type="button"
                         onClick={salvar}
                         disabled={processing}
-                        className="h-10 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-xl shadow-lg shadow-emerald-500/20 px-5"
+                        className="h-10 rounded-xl bg-emerald-500 px-5 font-medium text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-600"
                     >
                         Cadastrar Seguradora
                     </Button>
                 </div>
-
             </DialogContent>
         </Dialog>
     );

@@ -54,10 +54,14 @@ function InfoField({ label, value }: { label: string; value?: string }) {
     );
 }
 
-export default function SeguradoraProfileModal({ open, setOpen, seguradora }: any) {
+export default function SeguradoraProfileModal({
+    open,
+    setOpen,
+    seguradora,
+}: any) {
     const [modo, setModo] = useState<Modo>('visualizar');
 
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, put, processing } = useForm({
         nome_fantasia: seguradora?.nome_fantasia ?? '',
         razao_social: seguradora?.razao_social ?? '',
         cnpj: seguradora?.cnpj ?? '',
@@ -95,8 +99,8 @@ export default function SeguradoraProfileModal({ open, setOpen, seguradora }: an
         modo === 'editar'
             ? 'Editar'
             : modo === 'excluir'
-            ? 'Excluir'
-            : 'Detalhes';
+                ? 'Excluir'
+                : 'Detalhes';
 
     return (
         <Dialog open={open} onOpenChange={fechar}>
@@ -125,7 +129,7 @@ export default function SeguradoraProfileModal({ open, setOpen, seguradora }: an
                     </div>
                 </DialogHeader>
 
-                <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6 sm:px-8 break-all">
+                <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6 break-all sm:px-8">
                     {modo === 'visualizar' && (
                         <>
                             <Section
@@ -159,15 +163,18 @@ export default function SeguradoraProfileModal({ open, setOpen, seguradora }: an
                                 description="Segmentos de atuação cadastrados"
                             >
                                 <div className="flex flex-wrap gap-2">
-                                    {seguradora?.ramos && seguradora.ramos.length > 0 ? (
-                                        seguradora.ramos.map((ramo: any, index: number) => (
-                                            <span
-                                                key={index}
-                                                className="inline-flex items-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600"
-                                            >
-                                                {ramo.nome_ramo || ramo}
-                                            </span>
-                                        ))
+                                    {seguradora?.ramos &&
+                                    seguradora.ramos.length > 0 ? (
+                                        seguradora.ramos.map(
+                                            (ramo: any, index: number) => (
+                                                <span
+                                                    key={index}
+                                                    className="inline-flex items-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600"
+                                                >
+                                                    {ramo.nome_ramo || ramo}
+                                                </span>
+                                            ),
+                                        )
                                     ) : (
                                         <p className="text-xs text-muted-foreground italic">
                                             Nenhum ramo cadastrado
@@ -194,7 +201,10 @@ export default function SeguradoraProfileModal({ open, setOpen, seguradora }: an
                                             className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                             value={data.nome_fantasia}
                                             onChange={(e) =>
-                                                setData('nome_fantasia', e.target.value)
+                                                setData(
+                                                    'nome_fantasia',
+                                                    e.target.value,
+                                                )
                                             }
                                         />
                                     </div>
@@ -206,7 +216,10 @@ export default function SeguradoraProfileModal({ open, setOpen, seguradora }: an
                                             className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                             value={data.razao_social}
                                             onChange={(e) =>
-                                                setData('razao_social', e.target.value)
+                                                setData(
+                                                    'razao_social',
+                                                    e.target.value,
+                                                )
                                             }
                                         />
                                     </div>
@@ -234,7 +247,10 @@ export default function SeguradoraProfileModal({ open, setOpen, seguradora }: an
                                             type="email"
                                             value={data.email_suporte}
                                             onChange={(e) =>
-                                                setData('email_suporte', e.target.value)
+                                                setData(
+                                                    'email_suporte',
+                                                    e.target.value,
+                                                )
                                             }
                                         />
                                     </div>
@@ -256,7 +272,8 @@ export default function SeguradoraProfileModal({ open, setOpen, seguradora }: an
                                 <span className="font-semibold text-foreground">
                                     {seguradora?.nome_fantasia}
                                 </span>
-                                ? Todos os dados e vínculos associados serão removidos permanentemente.
+                                ? Todos os dados e vínculos associados serão
+                                removidos permanentemente.
                             </p>
                         </Section>
                     )}
