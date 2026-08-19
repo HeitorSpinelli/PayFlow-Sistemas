@@ -15,6 +15,7 @@
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.14",
+        "resend/resend-php": "^1.9",
         "tightenco/ziggy": "*"
     },
     "require-dev": {
@@ -32,9 +33,12 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
-            "Database\\Factories\\": "database/factories/",
-            "Database\\Seeders\\": "database/seeders/"
-        }
+            "Database\\Seeders\\": "database/seeders/",
+            "Database\\Factories\\": "database/factories/"
+        },
+        "exclude-from-classmap": [
+            "vendor/laravel/pint/"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

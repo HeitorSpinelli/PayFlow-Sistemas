@@ -4,9 +4,11 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\SeguradoController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\NotificacoesController;
 use App\Http\Controllers\ApolicesController;
 use App\Http\Controllers\SeguradoraController;
 use App\Http\Controllers\pagamentoController;
+use Illuminate\Support\Facades\Mail;
 
 // Rota Inicial
 Route::inertia('/', 'welcome', [
@@ -17,7 +19,7 @@ Route::inertia('/', 'welcome', [
 Route::middleware(['auth', 'verified'])->group(function () {
 
     // Dashboard
-    Route::get('/dashboard', fn () => inertia('dashboard'))->name('dashboard');
+    Route::get('/dashboard', fn() => inertia('dashboard'))->name('dashboard');
 
     // Módulo: Clientes (Segurados)
     Route::prefix('clientes')->group(function () {
@@ -47,9 +49,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Páginas Estáticas / Inertia Gerais
-    Route::get('/cobrancas', fn () => inertia('FunctionsApp/cobrancas'))->name('cobrancas');
-    Route::get('/agenda', fn () => inertia('FunctionsApp/agenda'))->name('agenda');
-    Route::get('/importar', fn () => inertia('FunctionsApp/importar'))->name('importar');
+    Route::get('/cobrancas', fn() => inertia('FunctionsApp/cobrancas'))->name('cobrancas');
+    Route::get('/agenda', fn() => inertia('FunctionsApp/agenda'))->name('agenda');
+    Route::get('/importar', fn() => inertia('FunctionsApp/importar'))->name('importar');
 });
 
 // Rotas Exclusivas para Administradores
@@ -67,9 +69,12 @@ Route::middleware(['auth', 'can:is-admin'])->group(function () {
     Route::delete('/clientes/{id}', [SeguradoController::class, 'destroy'])->name('clientes.destroy');
     Route::put('/clientes/{id}', [SeguradoController::class, 'update'])->name('clientes.update');
 
-    Route::get('/notificacoes', function () {
-        return inertia('FunctionsApp/notificacoes');
-    })->name('notificacoes');
+    Route::prefix('/notificacoes')->group(function () {
+        Route::get('/', function () {
+            return inertia('FunctionsApp/notificacoes');
+        })->name('notificacoes');
+        Route::post('/', [NotificacoesController::class, 'store']);
+    });
 
     Route::get('/administracao/usuarios', [UserController::class, 'index'])->name('users');
 });

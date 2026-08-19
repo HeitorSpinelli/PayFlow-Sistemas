@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Cliente\RamoService;
 use App\Http\Requests\StoreRamoRequest;
 
-class ramosController extends Controller
+class RamosController extends Controller
 {
     private $ramoService;
 
