@@ -16,6 +16,8 @@ import {
     XCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import NotificacaoModal from '@/components/modals/create-notificacao-modal';
+import { Segurado } from '@/types/notificacoes';
 
 /* ------------------------------------------------------------------ */
 /* Tipos                                                              */
@@ -50,66 +52,40 @@ interface Automacao {
     ativo: boolean;
 }
 
+interface NotificacaoModalProps {
+    canal: Canal | null;
+    onClose: () => void;
+    segurados: Segurado[];
+}
+
 /* ------------------------------------------------------------------ */
 /* Dados de exemplo (trocar pelos dados reais vindos do Inertia)      */
 /* ------------------------------------------------------------------ */
 
-const CLIENTES_MOCK: Cliente[] = [
-    {
-        id: 1,
-        nome: 'João Pereira',
-        email: 'joao.pereira@email.com',
-        telefone: '(19) 99887-1122',
-        devedor: false,
-    },
+const CLIENTES_MOCK: Segurado[] = [
     {
         id: 2,
-        nome: 'Maria Souza',
-        email: 'maria.souza@email.com',
-        telefone: '(19) 98123-4455',
-        devedor: true,
+        nome_completo: 'Heitor Spineli',
+        email: 'heitorspineli85@gmail.com',
+        celular_whatsapp: '(19)99722-1083',
+        cpf_cnpj: '456.882.558.03',
+        devedor: false,
     },
     {
         id: 3,
-        nome: 'Carlos Lima',
-        email: 'carlos.lima@email.com',
-        telefone: '(19) 99001-3344',
-        devedor: false,
+        nome_completo: 'Maria Souza',
+        email: 'maria.souza@email.com',
+        celular_whatsapp: '(19) 98123-4455',
+        cpf_cnpj: '222.222.222-22',
+        devedor: true,
     },
     {
         id: 4,
-        nome: 'Fernanda Alves',
-        email: 'fernanda.alves@email.com',
-        telefone: '(19) 98776-5544',
-        devedor: true,
-    },
-    {
-        id: 5,
-        nome: 'Roberto Dias',
-        email: 'roberto.dias@email.com',
-        telefone: '(19) 99223-8899',
-        devedor: true,
-    },
-    {
-        id: 6,
-        nome: 'Patrícia Melo',
-        email: 'patricia.melo@email.com',
-        telefone: '(19) 98456-1122',
+        nome_completo: 'Carlos Lima',
+        email: 'carlos.lima@email.com',
+        celular_whatsapp: '(19) 99001-3344',
+        cpf_cnpj: '333.333.333-33',
         devedor: false,
-    },
-    {
-        id: 7,
-        nome: 'Eduardo Nunes',
-        email: 'eduardo.nunes@email.com',
-        telefone: '(19) 99887-4433',
-        devedor: false,
-    },
-    {
-        id: 8,
-        nome: 'Juliana Castro',
-        email: 'juliana.castro@email.com',
-        telefone: '(19) 98234-9911',
-        devedor: true,
     },
 ];
 
@@ -139,51 +115,6 @@ const HISTORICO_MOCK: NotificacaoHistorico[] = [
         canal: 'email',
         mensagem: 'Sua apólice vence em 15 dias.',
         dataEnvio: '11/08/2026 17:30',
-        status: 'enviado',
-    },
-    {
-        id: 4,
-        tipo: 'Cobrança em atraso',
-        destinatario: 'Fernanda Alves',
-        canal: 'whatsapp',
-        mensagem: 'Identificamos um pagamento em atraso.',
-        dataEnvio: '11/08/2026 16:05',
-        status: 'pendente',
-    },
-    {
-        id: 5,
-        tipo: 'Lembrete de vencimento',
-        destinatario: 'Roberto Dias',
-        canal: 'whatsapp',
-        mensagem: 'Sua parcela vence em 3 dias.',
-        dataEnvio: '11/08/2026 14:22',
-        status: 'pendente',
-    },
-    {
-        id: 6,
-        tipo: 'Mensagem personalizada',
-        destinatario: 'Patrícia Melo',
-        canal: 'email',
-        mensagem: 'Novidades sobre o seu plano.',
-        dataEnvio: '10/08/2026 11:10',
-        status: 'enviado',
-    },
-    {
-        id: 7,
-        tipo: 'Cobrança em atraso',
-        destinatario: 'Juliana Castro',
-        canal: 'whatsapp',
-        mensagem: 'Identificamos um pagamento em atraso.',
-        dataEnvio: '10/08/2026 09:58',
-        status: 'falha',
-    },
-    {
-        id: 8,
-        tipo: 'Lembrete de vencimento',
-        destinatario: 'Eduardo Nunes',
-        canal: 'email',
-        mensagem: 'Sua parcela vence em 3 dias.',
-        dataEnvio: '09/08/2026 10:40',
         status: 'enviado',
     },
 ];
@@ -296,16 +227,6 @@ export default function Notificacoes() {
         });
     }, [filtroCanal, filtroStatus]);
 
-    const clientesFiltrados = useMemo(() => {
-        const termo = busca.trim().toLowerCase();
-        if (!termo) return CLIENTES_MOCK;
-        return CLIENTES_MOCK.filter(
-            (c) =>
-                c.nome.toLowerCase().includes(termo) ||
-                c.email.toLowerCase().includes(termo),
-        );
-    }, [busca]);
-
     const abrirModal = (canal: Canal) => {
         setModalCanal(canal);
         setSelecionados([]);
@@ -315,34 +236,10 @@ export default function Notificacoes() {
 
     const fecharModal = () => setModalCanal(null);
 
-    const alternarCliente = (id: number) => {
-        setSelecionados((prev) =>
-            prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id],
-        );
-    };
-
-    const selecionarTodosVisiveis = () => {
-        const idsVisiveis = clientesFiltrados.map((c) => c.id);
-        const todosJaSelecionados = idsVisiveis.every((id) =>
-            selecionados.includes(id),
-        );
-        setSelecionados((prev) =>
-            todosJaSelecionados
-                ? prev.filter((id) => !idsVisiveis.includes(id))
-                : Array.from(new Set([...prev, ...idsVisiveis])),
-        );
-    };
-
     const alternarAutomacao = (id: number) => {
         setAutomacoes((prev) =>
             prev.map((a) => (a.id === id ? { ...a, ativo: !a.ativo } : a)),
         );
-    };
-
-    const enviarNotificacao = () => {
-        // TODO: integrar com o backend (Inertia router.post) para disparar
-        // a notificação por e-mail/WhatsApp para os clientes selecionados.
-        fecharModal();
     };
 
     return (
@@ -715,178 +612,11 @@ export default function Notificacoes() {
                     </div>
                 )}
             </div>
-
-            {/* Modal: enviar notificação por canal */}
-            {modalCanal && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-                    onClick={fecharModal}
-                >
-                    <div
-                        onClick={(e) => e.stopPropagation()}
-                        className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xl"
-                    >
-                        {/* Header do modal */}
-                        <div className="flex items-center justify-between border-b border-border/70 px-5 py-4">
-                            <div className="flex items-center gap-3">
-                                <span
-                                    className={`flex h-10 w-10 items-center justify-center rounded-xl text-white ${
-                                        modalCanal === 'email'
-                                            ? 'bg-gradient-to-br from-sky-400 to-sky-600'
-                                            : 'bg-gradient-to-br from-emerald-400 to-emerald-600'
-                                    }`}
-                                >
-                                    {modalCanal === 'email' ? (
-                                        <Mail className="size-5" />
-                                    ) : (
-                                        <MessageCircle className="size-5" />
-                                    )}
-                                </span>
-                                <div>
-                                    <p className="text-[10px] font-bold tracking-[0.14em] text-emerald-600 uppercase">
-                                        Nova notificação
-                                    </p>
-                                    <h3 className="text-base font-bold text-foreground">
-                                        Enviar por{' '}
-                                        {modalCanal === 'email'
-                                            ? 'E-mail'
-                                            : 'WhatsApp'}
-                                    </h3>
-                                </div>
-                            </div>
-                            <button
-                                onClick={fecharModal}
-                                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                                aria-label="Fechar"
-                            >
-                                <X className="size-4" />
-                            </button>
-                        </div>
-
-                        <div className="flex flex-col gap-4 overflow-y-auto px-5 py-4">
-                            {/* Busca de clientes */}
-                            <div className="relative">
-                                <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                                <input
-                                    value={busca}
-                                    onChange={(e) => setBusca(e.target.value)}
-                                    placeholder="Buscar cliente pelo nome ou e-mail"
-                                    className="h-11 w-full rounded-xl border border-border/70 bg-background pr-3 pl-10 text-sm focus:ring-2 focus:ring-emerald-500/30 focus:outline-none"
-                                />
-                            </div>
-
-                            {/* Lista de clientes */}
-                            <div className="rounded-xl border border-border/70">
-                                <button
-                                    onClick={selecionarTodosVisiveis}
-                                    className="flex w-full items-center justify-between border-b border-border/70 px-3.5 py-2.5 text-xs font-bold text-emerald-600 hover:bg-emerald-500/5"
-                                >
-                                    <span>
-                                        {selecionados.length} cliente(s)
-                                        selecionado(s)
-                                    </span>
-                                    <span>Selecionar todos</span>
-                                </button>
-
-                                <div className="flex max-h-56 flex-col overflow-y-auto">
-                                    {clientesFiltrados.map((cliente) => {
-                                        const marcado = selecionados.includes(
-                                            cliente.id,
-                                        );
-                                        return (
-                                            <button
-                                                key={cliente.id}
-                                                onClick={() =>
-                                                    alternarCliente(cliente.id)
-                                                }
-                                                className="flex items-center gap-3 border-b border-border/40 px-3.5 py-2.5 text-left last:border-0 hover:bg-muted/40"
-                                            >
-                                                <span
-                                                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
-                                                        marcado
-                                                            ? 'border-emerald-500 bg-emerald-500 text-white'
-                                                            : 'border-border/70'
-                                                    }`}
-                                                >
-                                                    {marcado && (
-                                                        <Check
-                                                            className="size-3.5"
-                                                            strokeWidth={3}
-                                                        />
-                                                    )}
-                                                </span>
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="truncate text-sm font-semibold text-foreground">
-                                                        {cliente.nome}
-                                                    </p>
-                                                    <p className="truncate text-xs text-muted-foreground">
-                                                        {modalCanal === 'email'
-                                                            ? cliente.email
-                                                            : cliente.telefone}
-                                                    </p>
-                                                </div>
-                                                {cliente.devedor && (
-                                                    <span className="shrink-0 rounded-full border border-red-500/20 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-600">
-                                                        Devedor
-                                                    </span>
-                                                )}
-                                            </button>
-                                        );
-                                    })}
-
-                                    {clientesFiltrados.length === 0 && (
-                                        <p className="px-3.5 py-6 text-center text-xs text-muted-foreground">
-                                            Nenhum cliente encontrado.
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Mensagem */}
-                            <div className="grid gap-2">
-                                <label className="text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase">
-                                    Mensagem
-                                </label>
-                                <textarea
-                                    value={mensagem}
-                                    onChange={(e) =>
-                                        setMensagem(e.target.value)
-                                    }
-                                    rows={4}
-                                    placeholder={
-                                        modalCanal === 'email'
-                                            ? 'Digite a mensagem que será enviada por e-mail...'
-                                            : 'Digite a mensagem que será enviada pelo WhatsApp...'
-                                    }
-                                    className="resize-none rounded-xl border border-border/70 bg-background px-3.5 py-3 text-sm focus:ring-2 focus:ring-emerald-500/30 focus:outline-none"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Footer */}
-                        <div className="flex items-center justify-end gap-2 border-t border-border/70 px-5 py-4">
-                            <Button
-                                variant="outline"
-                                onClick={fecharModal}
-                                className="h-10 rounded-xl px-5 font-bold"
-                            >
-                                Cancelar
-                            </Button>
-                            <Button
-                                onClick={enviarNotificacao}
-                                disabled={
-                                    selecionados.length === 0 ||
-                                    mensagem.trim() === ''
-                                }
-                                className="h-10 rounded-xl bg-emerald-500 px-6 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                <Send className="mr-2 size-4" />
-                                Enviar ({selecionados.length})
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <NotificacaoModal
+                canal={modalCanal}
+                onClose={fecharModal}
+                segurados={CLIENTES_MOCK}
+            />
         </>
     );
 }

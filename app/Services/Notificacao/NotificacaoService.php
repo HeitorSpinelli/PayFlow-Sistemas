@@ -18,6 +18,7 @@ class NotificacaoService
                 'segurado_id'      => $seguradoId,
                 'user_id'          => auth()->id(),
                 'canal'            => $data['canal'],
+                'assunto_email' => $data['tipo_notificacao'],
                 'mensagem'         => $data['mensagem'],
                 'tipo_notificacao' => $data['tipo_notificacao'],
                 'status'           => 'Pendente',

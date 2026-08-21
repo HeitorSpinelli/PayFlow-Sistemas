@@ -11,9 +11,8 @@ class notificacoes extends Model
     protected $fillable = [
         'user_id',
         'segurado_id',
-        'tipo_notificacao',
+        'tipo_notificacao_id',
         'canal',
-        'assunto_email',
         'mensagem',
         'data_envio',
         'data_agendamento',
@@ -30,5 +29,9 @@ class notificacoes extends Model
     public function segurado()
     {
         return $this->belongsTo(Segurado::class, 'segurado_id');
+    }
+
+    public function tipoNotificacao(){
+        return $this->belongsTo(TipoNotificacao::class, 'tipo_notificacao_id');
     }
 }
