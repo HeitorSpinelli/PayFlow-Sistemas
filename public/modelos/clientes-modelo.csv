@@ -1,0 +1,5 @@
+nome_completo,cpf_cnpj,email,celular_whatsapp,seguradora,ramo,numero_apolice,inicio_vigencia,fim_vigencia,numero_parcela,valor_parcela,data_vencimento,status_pagamento
+João Pereira,123.456.789-00,joao.pereira@email.com,(19) 99887-1122,Porto Seguro,Auto,AP-30291,2026-08-01,2027-08-01,1,342.50,2026-09-03,Pendente
+João Pereira,123.456.789-00,joao.pereira@email.com,(19) 99887-1122,Porto Seguro,Auto,AP-30291,2026-08-01,2027-08-01,2,342.50,2026-10-03,Pendente
+Maria Souza,987.654.321-00,maria.souza@email.com,(19) 98123-4455,Bradesco Seguros,Residencial,AP-30412,2026-07-15,2027-07-15,1,189.90,2026-09-05,Atrasado
+Construtora Lima Ltda,12.345.678/0001-90,contato@construtoralima.com,(19) 99001-3344,SulAmérica,Vida,AP-30588,2026-08-05,2027-08-05,1,210.00,2026-09-05,Pendente
