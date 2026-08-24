@@ -5,6 +5,7 @@ namespace App\Services\Notificacao;
 use App\Models\notificacoes;
 use App\Models\Segurado;
 use Illuminate\Support\Facades\Mail;
+use App\Models\TipoNotificacao;
 use App\Mail\NotificacaoMail;
 
 class NotificacaoService
@@ -18,14 +19,14 @@ class NotificacaoService
                 'segurado_id'      => $seguradoId,
                 'user_id'          => auth()->id(),
                 'canal'            => $data['canal'],
-                'assunto_email' => $data['tipo_notificacao'],
                 'mensagem'         => $data['mensagem'],
-                'tipo_notificacao' => $data['tipo_notificacao'],
+                'tipo_notificacao_id' => $data['tipo_notificacao_id'],
                 'status'           => 'Pendente',
             ]);
             try {
+                $tipoNotificacao = TipoNotificacao::findOrFail($data['tipo_notificacao_id']);
                 Mail::to($segurado->email)->send(new NotificacaoMail(
-                    assunto: $data['tipo_notificacao'],
+                    assunto: $tipoNotificacao->nome_notificacao,
                     mensagem: $data['mensagem'],
                     nomeSegurado: $segurado->nome_completo,
                 ));

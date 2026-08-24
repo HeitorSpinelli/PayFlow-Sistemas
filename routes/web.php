@@ -6,8 +6,11 @@ use App\Http\Controllers\SeguradoController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\NotificacoesController;
 use App\Http\Controllers\ApolicesController;
+use App\Models\TipoNotificacao;
+use App\Http\Controllers\TipoNotificacoesController;
 use App\Http\Controllers\SeguradoraController;
 use App\Http\Controllers\pagamentoController;
+use App\Models\Segurado;
 use Illuminate\Support\Facades\Mail;
 
 // Rota Inicial
@@ -71,9 +74,20 @@ Route::middleware(['auth', 'can:is-admin'])->group(function () {
 
     Route::prefix('/notificacoes')->group(function () {
         Route::get('/', function () {
-            return inertia('FunctionsApp/notificacoes');
+            return inertia('FunctionsApp/notificacoes', [
+                'tipos' => TipoNotificacao::all(),
+                'segurados' => Segurado::all(),
+                'notificacoes' => \App\Models\notificacoes::with(['tipoNotificacao', 'segurado'])->paginate(10)
+            ]);
         })->name('notificacoes');
         Route::post('/', [NotificacoesController::class, 'store']);
+        Route::get('/filtrar', [NotificacoesController::class, 'filtrar']);
+    });
+
+    Route::prefix('/tipo_notificacoes')->group(function () {
+        Route::get('/', [TipoNotificacoesController::class, 'index']);
+        Route::post('/', [TipoNotificacoesController::class, 'store']);
+        Route::patch('/{id}', [TipoNotificacoesController::class, 'update']);
     });
 
     Route::get('/administracao/usuarios', [UserController::class, 'index'])->name('users');

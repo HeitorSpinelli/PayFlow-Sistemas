@@ -26,4 +26,26 @@ class NotificacoesController extends Controller
             return redirect()->back()->with('error', 'Erro ao enviar notificação: ' . $e->getMessage());
         }
     }
+
+    public function filtrar(Request $request)
+    {
+        $query = \App\Models\notificacoes::with(['tipoNotificacao', 'segurado']);
+        $query->when($request->has('canal'), function ($q) use ($request) {
+            $q->where('canal', $request->canal);
+        });
+        $query->when($request->has('status'), function ($q) use ($request) {
+            $q->where('status', $request->status);
+        });
+
+        $query->when($request->has('busca'), function ($q) use ($request) {
+            $q->where(function ($q2) use ($request) {
+                $q2->where('mensagem', 'ilike', '%' . $request->busca . '%')
+                    ->orWhere('canal', 'ilike', '%' . $request->busca . '%');
+            });
+        });
+
+        return inertia('FunctionsApp/notificacoes', [
+            'notificacoes' => $query->paginate(10)
+        ]);
+    }
 }

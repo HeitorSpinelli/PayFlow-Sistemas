@@ -28,11 +28,14 @@ class TipoNotificacoesController extends Controller
             'nome_notificacao' => 'required|string|max:50'
         ]);
 
-        try{
-            return TipoNotificacao::crete([
-                'nome_notificacao' => $request,
+        try {
+            TipoNotificacao::create([
+                'nome_notificacao' => $request->nome_notificacao
             ]);
-        }catch
+            return redirect()->back()->with('success', 'Tipo criado com sucesso!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erro ao criar tipo: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -40,7 +43,28 @@ class TipoNotificacoesController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
-    }
+        try {
+            $tipo = TipoNotificacao::findOrFail($id);
 
+            if ($request->has('nome_notificacao')) {
+                $request->validate([
+                    'nome_notificacao' => 'required|string|max:50'
+                ]);
+                $tipo->update([
+                    'nome_notificacao' => $request->nome_notificacao
+                ]);
+                return redirect()->back()->with('success', 'Nome Alterado');
+            } else {
+                $request->validate([
+                    'ativo' => 'required|boolean'
+                ]);
+                $tipo->update([
+                    'ativo' => $request->ativo
+                ]);
+                return redirect()->back()->with('success', 'Status Alterado');
+            }
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erro ao alterar: ' . $e->getMessage());
+        }
+    }
 }

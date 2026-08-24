@@ -1,47 +1,50 @@
-import { useMemo, useState } from 'react';
-import { Head } from '@inertiajs/react';
+import { useState } from 'react';
+import { Head, router } from '@inertiajs/react';
 import {
     ArrowRight,
     Bell,
-    Check,
     CheckCircle2,
     ChevronDown,
+    ChevronLeft,
+    ChevronRight,
     Clock,
     Mail,
     MessageCircle,
     Search,
     Send,
     Settings,
-    X,
     XCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import NotificacaoModal from '@/components/modals/create-notificacao-modal';
+import ConfigNotificacaoModal from '@/components/modals/configuracoes-notificacoes-modal';
 import { Segurado } from '@/types/notificacoes';
-
-/* ------------------------------------------------------------------ */
-/* Tipos                                                              */
-/* ------------------------------------------------------------------ */
 
 type Canal = 'email' | 'whatsapp';
 type StatusNotificacao = 'enviado' | 'pendente' | 'falha';
 
-interface Cliente {
+interface NotificacaoItem {
     id: number;
-    nome: string;
-    email: string;
-    telefone: string;
-    devedor: boolean;
+    canal: string;
+    mensagem: string;
+    status: string;
+    data_envio: string;
+    segurado: { nome_completo: string };
+    tipo_notificacao: { nome_notificacao: string } | null;
 }
 
-interface NotificacaoHistorico {
-    id: number;
-    tipo: string;
-    destinatario: string;
-    canal: Canal;
-    mensagem: string;
-    dataEnvio: string;
-    status: StatusNotificacao;
+interface PaginatedNotificacoes {
+    data: NotificacaoItem[];
+    current_page: number;
+    last_page: number;
+    total: number;
+    per_page: number;
+}
+
+interface Props {
+    tipos: { id: number; nome_notificacao: string; ativo: boolean }[];
+    segurados: Segurado[];
+    notificacoes: PaginatedNotificacoes;
 }
 
 interface Automacao {
@@ -51,73 +54,6 @@ interface Automacao {
     canais: Canal[];
     ativo: boolean;
 }
-
-interface NotificacaoModalProps {
-    canal: Canal | null;
-    onClose: () => void;
-    segurados: Segurado[];
-}
-
-/* ------------------------------------------------------------------ */
-/* Dados de exemplo (trocar pelos dados reais vindos do Inertia)      */
-/* ------------------------------------------------------------------ */
-
-const CLIENTES_MOCK: Segurado[] = [
-    {
-        id: 2,
-        nome_completo: 'Heitor Spineli',
-        email: 'heitorspineli85@gmail.com',
-        celular_whatsapp: '(19)99722-1083',
-        cpf_cnpj: '456.882.558.03',
-        devedor: false,
-    },
-    {
-        id: 3,
-        nome_completo: 'Maria Souza',
-        email: 'maria.souza@email.com',
-        celular_whatsapp: '(19) 98123-4455',
-        cpf_cnpj: '222.222.222-22',
-        devedor: true,
-    },
-    {
-        id: 4,
-        nome_completo: 'Carlos Lima',
-        email: 'carlos.lima@email.com',
-        celular_whatsapp: '(19) 99001-3344',
-        cpf_cnpj: '333.333.333-33',
-        devedor: false,
-    },
-];
-
-const HISTORICO_MOCK: NotificacaoHistorico[] = [
-    {
-        id: 1,
-        tipo: 'Lembrete de vencimento',
-        destinatario: 'João Pereira',
-        canal: 'whatsapp',
-        mensagem: 'Sua parcela vence em 3 dias.',
-        dataEnvio: '12/08/2026 09:12',
-        status: 'enviado',
-    },
-    {
-        id: 2,
-        tipo: 'Cobrança em atraso',
-        destinatario: 'Maria Souza',
-        canal: 'email',
-        mensagem: 'Identificamos um pagamento em atraso.',
-        dataEnvio: '12/08/2026 08:47',
-        status: 'falha',
-    },
-    {
-        id: 3,
-        tipo: 'Renovação de apólice',
-        destinatario: 'Carlos Lima',
-        canal: 'email',
-        mensagem: 'Sua apólice vence em 15 dias.',
-        dataEnvio: '11/08/2026 17:30',
-        status: 'enviado',
-    },
-];
 
 const AUTOMACOES_MOCK: Automacao[] = [
     {
@@ -146,10 +82,6 @@ const AUTOMACOES_MOCK: Automacao[] = [
     },
 ];
 
-/* ------------------------------------------------------------------ */
-/* Configuração visual de status e canal                              */
-/* ------------------------------------------------------------------ */
-
 const STATUS_CONFIG: Record<
     StatusNotificacao,
     { label: string; badge: string }
@@ -173,79 +105,72 @@ const CANAL_CONFIG: Record<Canal, { label: string; icon: typeof Mail }> = {
     whatsapp: { label: 'WhatsApp', icon: MessageCircle },
 };
 
-/* ------------------------------------------------------------------ */
-/* Toggle simples (sem depender de componente externo)                */
-/* ------------------------------------------------------------------ */
-
 function Toggle({ ativo, onChange }: { ativo: boolean; onChange: () => void }) {
     return (
         <button
             onClick={onChange}
             aria-pressed={ativo}
-            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-                ativo ? 'bg-emerald-500' : 'bg-muted'
-            }`}
+            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${ativo ? 'bg-emerald-500' : 'bg-muted'}`}
         >
             <span
-                className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                    ativo ? 'translate-x-5' : 'translate-x-0'
-                }`}
+                className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${ativo ? 'translate-x-5' : 'translate-x-0'}`}
             />
         </button>
     );
 }
 
-/* ------------------------------------------------------------------ */
-/* Componente principal                                               */
-/* ------------------------------------------------------------------ */
-
-export default function Notificacoes() {
+export default function Notificacoes({
+    tipos,
+    segurados,
+    notificacoes,
+}: Props) {
     const [aba, setAba] = useState<'historico' | 'automacoes'>('historico');
-    const [filtroCanal, setFiltroCanal] = useState('Todos');
-    const [filtroStatus, setFiltroStatus] = useState('Todos');
     const [automacoes, setAutomacoes] = useState(AUTOMACOES_MOCK);
-
     const [modalCanal, setModalCanal] = useState<Canal | null>(null);
+    const [configAberto, setConfigAberto] = useState(false);
+
+    // Estados dos filtros do histórico
+    const [filtroCanal, setFiltroCanal] = useState('');
+    const [filtroStatus, setFiltroStatus] = useState('');
     const [busca, setBusca] = useState('');
-    const [selecionados, setSelecionados] = useState<number[]>([]);
-    const [mensagem, setMensagem] = useState('');
 
     const totalHoje = 10;
     const totalEnviados = 20;
     const totalPendentes = 30;
     const totalFalhas = 7;
 
-    const historicoFiltrado = useMemo(() => {
-        return HISTORICO_MOCK.filter((item) => {
-            const passaCanal =
-                filtroCanal === 'Todos' ||
-                CANAL_CONFIG[item.canal].label === filtroCanal;
-            const passaStatus =
-                filtroStatus === 'Todos' ||
-                STATUS_CONFIG[item.status].label === filtroStatus;
-            return passaCanal && passaStatus;
-        });
-    }, [filtroCanal, filtroStatus]);
+    const buscarNotificacoes = (params: {
+        canal?: string;
+        status?: string;
+        busca?: string;
+        page?: number;
+    }) => {
+        const query: Record<string, string> = {};
+        if (params.canal) query.canal = params.canal;
+        if (params.status) query.status = params.status;
+        if (params.busca) query.busca = params.busca;
+        if (params.page) query.page = String(params.page);
 
-    const abrirModal = (canal: Canal) => {
-        setModalCanal(canal);
-        setSelecionados([]);
-        setMensagem('');
-        setBusca('');
+        router.get('/notificacoes/filtrar', query, {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['notificacoes'],
+        });
     };
 
+    const abrirModal = (canal: Canal) => setModalCanal(canal);
     const fecharModal = () => setModalCanal(null);
-
     const alternarAutomacao = (id: number) => {
         setAutomacoes((prev) =>
             prev.map((a) => (a.id === id ? { ...a, ativo: !a.ativo } : a)),
         );
     };
 
+    const historicoData = notificacoes?.data ?? [];
+
     return (
         <>
             <Head title="Notificações" />
-
             <div className="flex flex-col gap-6 p-6 sm:p-8">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -265,16 +190,15 @@ export default function Notificacoes() {
                         <Button
                             variant="outline"
                             className="h-11 rounded-xl px-5 font-bold"
+                            onClick={() => setConfigAberto(true)}
                         >
-                            <Settings className="mr-2 size-4" />
-                            Configurar
+                            <Settings className="mr-2 size-4" /> Configurar
                         </Button>
                         <Button
                             onClick={() => abrirModal('email')}
                             className="h-11 rounded-xl bg-emerald-500 px-5 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
                         >
-                            <Send className="mr-2 size-4" />
-                            Enviar Notificação
+                            <Send className="mr-2 size-4" /> Enviar Notificação
                         </Button>
                     </div>
                 </div>
@@ -294,7 +218,6 @@ export default function Notificacoes() {
                             <Bell className="size-5" />
                         </span>
                     </div>
-
                     <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
                         <div>
                             <p className="text-xs font-semibold text-muted-foreground">
@@ -308,7 +231,6 @@ export default function Notificacoes() {
                             <CheckCircle2 className="size-5" />
                         </span>
                     </div>
-
                     <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
                         <div>
                             <p className="text-xs font-semibold text-muted-foreground">
@@ -322,7 +244,6 @@ export default function Notificacoes() {
                             <Clock className="size-5" />
                         </span>
                     </div>
-
                     <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
                         <div>
                             <p className="text-xs font-semibold text-muted-foreground">
@@ -338,7 +259,7 @@ export default function Notificacoes() {
                     </div>
                 </div>
 
-                {/* Cards de canal: Email / WhatsApp */}
+                {/* Cards de canal */}
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                     <button
                         onClick={() => abrirModal('email')}
@@ -354,7 +275,6 @@ export default function Notificacoes() {
                                 />
                             </div>
                         </div>
-
                         <div className="flex items-center justify-between gap-3 px-5 py-4">
                             <div>
                                 <p className="text-base font-bold text-foreground">
@@ -370,7 +290,6 @@ export default function Notificacoes() {
                             </span>
                         </div>
                     </button>
-
                     <button
                         onClick={() => abrirModal('whatsapp')}
                         className="group relative flex flex-col overflow-hidden rounded-3xl border border-border/70 bg-card p-1.5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-emerald-500/40 hover:shadow-lg"
@@ -385,7 +304,6 @@ export default function Notificacoes() {
                                 />
                             </div>
                         </div>
-
                         <div className="flex items-center justify-between gap-3 px-5 py-4">
                             <div>
                                 <p className="text-base font-bold text-foreground">
@@ -403,25 +321,17 @@ export default function Notificacoes() {
                     </button>
                 </div>
 
-                {/* Abas: Histórico / Automações */}
+                {/* Abas */}
                 <div className="inline-flex w-fit gap-1 rounded-xl border border-border/70 bg-card p-1">
                     <button
                         onClick={() => setAba('historico')}
-                        className={`rounded-lg px-4 py-2 text-sm font-bold transition-colors ${
-                            aba === 'historico'
-                                ? 'bg-emerald-500 text-white shadow'
-                                : 'text-muted-foreground hover:text-foreground'
-                        }`}
+                        className={`rounded-lg px-4 py-2 text-sm font-bold transition-colors ${aba === 'historico' ? 'bg-emerald-500 text-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
                     >
                         Histórico
                     </button>
                     <button
                         onClick={() => setAba('automacoes')}
-                        className={`rounded-lg px-4 py-2 text-sm font-bold transition-colors ${
-                            aba === 'automacoes'
-                                ? 'bg-emerald-500 text-white shadow'
-                                : 'text-muted-foreground hover:text-foreground'
-                        }`}
+                        className={`rounded-lg px-4 py-2 text-sm font-bold transition-colors ${aba === 'automacoes' ? 'bg-emerald-500 text-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
                     >
                         Automações
                     </button>
@@ -429,49 +339,97 @@ export default function Notificacoes() {
 
                 {aba === 'historico' ? (
                     <div className="rounded-2xl border border-border/70 bg-card shadow-sm">
-                        <div className="flex flex-col gap-4 border-b border-border/70 p-5 sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                                <h2 className="text-base font-bold tracking-tight text-foreground">
-                                    Histórico de Notificações
-                                </h2>
-                                <p className="text-xs text-muted-foreground">
-                                    {historicoFiltrado.length} notificação(ões)
-                                    encontrada(s)
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="relative">
-                                    <select
-                                        value={filtroCanal}
-                                        onChange={(e) =>
-                                            setFiltroCanal(e.target.value)
-                                        }
-                                        className="h-10 appearance-none rounded-xl border border-border/70 bg-background pr-8 pl-3 text-sm font-semibold text-foreground focus:ring-2 focus:ring-emerald-500/30 focus:outline-none"
-                                    >
-                                        <option>Todos</option>
-                                        <option>E-mail</option>
-                                        <option>WhatsApp</option>
-                                    </select>
-                                    <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                        {/* Cabeçalho com filtros e busca */}
+                        <div className="flex flex-col gap-4 border-b border-border/70 p-5">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <h2 className="text-base font-bold tracking-tight text-foreground">
+                                        Histórico de Notificações
+                                    </h2>
+                                    <p className="text-xs text-muted-foreground">
+                                        {notificacoes?.total ?? 0}{' '}
+                                        notificação(ões) encontrada(s)
+                                    </p>
                                 </div>
-                                <div className="relative">
-                                    <select
-                                        value={filtroStatus}
-                                        onChange={(e) =>
-                                            setFiltroStatus(e.target.value)
-                                        }
-                                        className="h-10 appearance-none rounded-xl border border-border/70 bg-background pr-8 pl-3 text-sm font-semibold text-foreground focus:ring-2 focus:ring-emerald-500/30 focus:outline-none"
-                                    >
-                                        <option>Todos</option>
-                                        <option>Enviado</option>
-                                        <option>Pendente</option>
-                                        <option>Falha</option>
-                                    </select>
-                                    <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                                <div className="flex flex-wrap items-center gap-2">
+                                    {/* Busca */}
+                                    <div className="relative">
+                                        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                                        <input
+                                            value={busca}
+                                            onChange={(e) =>
+                                                setBusca(e.target.value)
+                                            }
+                                            onKeyDown={(e) =>
+                                                e.key === 'Enter' &&
+                                                buscarNotificacoes({
+                                                    canal: filtroCanal,
+                                                    status: filtroStatus,
+                                                    busca,
+                                                })
+                                            }
+                                            placeholder="Buscar..."
+                                            className="h-10 rounded-xl border border-border/70 bg-background pr-3 pl-9 text-sm focus:ring-2 focus:ring-emerald-500/30 focus:outline-none"
+                                        />
+                                    </div>
+                                    {/* Filtro Canal */}
+                                    <div className="relative">
+                                        <select
+                                            value={filtroCanal}
+                                            onChange={(e) => {
+                                                setFiltroCanal(e.target.value);
+                                                buscarNotificacoes({
+                                                    canal: e.target.value,
+                                                    status: filtroStatus,
+                                                    busca,
+                                                });
+                                            }}
+                                            className="h-10 appearance-none rounded-xl border border-border/70 bg-background pr-8 pl-3 text-sm font-semibold text-foreground focus:ring-2 focus:ring-emerald-500/30 focus:outline-none"
+                                        >
+                                            <option value="">
+                                                Todos os canais
+                                            </option>
+                                            <option value="email">
+                                                E-mail
+                                            </option>
+                                            <option value="whatsapp">
+                                                WhatsApp
+                                            </option>
+                                        </select>
+                                        <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                                    </div>
+                                    {/* Filtro Status */}
+                                    <div className="relative">
+                                        <select
+                                            value={filtroStatus}
+                                            onChange={(e) => {
+                                                setFiltroStatus(e.target.value);
+                                                buscarNotificacoes({
+                                                    canal: filtroCanal,
+                                                    status: e.target.value,
+                                                    busca,
+                                                });
+                                            }}
+                                            className="h-10 appearance-none rounded-xl border border-border/70 bg-background pr-8 pl-3 text-sm font-semibold text-foreground focus:ring-2 focus:ring-emerald-500/30 focus:outline-none"
+                                        >
+                                            <option value="">
+                                                Todos os status
+                                            </option>
+                                            <option value="Enviado">
+                                                Enviado
+                                            </option>
+                                            <option value="Pendente">
+                                                Pendente
+                                            </option>
+                                            <option value="Falha">Falha</option>
+                                        </select>
+                                        <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
+                        {/* Tabela */}
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[720px] text-left text-sm">
                                 <thead>
@@ -489,65 +447,126 @@ export default function Notificacoes() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {historicoFiltrado.map((item) => {
+                                    {historicoData.map((item) => {
+                                        const statusKey =
+                                            item.status.toLowerCase() as StatusNotificacao;
                                         const CanalIcon =
-                                            CANAL_CONFIG[item.canal].icon;
+                                            CANAL_CONFIG[item.canal as Canal]
+                                                ?.icon;
                                         return (
                                             <tr
                                                 key={item.id}
                                                 className="border-b border-border/40 transition-colors last:border-0 hover:bg-muted/40"
                                             >
                                                 <td className="px-5 py-3.5 font-semibold text-foreground">
-                                                    {item.tipo}
+                                                    {item.tipo_notificacao
+                                                        ?.nome_notificacao ??
+                                                        '-'}
                                                 </td>
                                                 <td className="px-5 py-3.5 text-muted-foreground">
-                                                    {item.destinatario}
+                                                    {item.segurado
+                                                        ?.nome_completo ?? '-'}
                                                 </td>
                                                 <td className="px-5 py-3.5">
                                                     <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                                                        <CanalIcon className="size-3.5" />
-                                                        {
-                                                            CANAL_CONFIG[
-                                                                item.canal
-                                                            ].label
-                                                        }
+                                                        {CanalIcon && (
+                                                            <CanalIcon className="size-3.5" />
+                                                        )}
+                                                        {CANAL_CONFIG[
+                                                            item.canal as Canal
+                                                        ]?.label ?? item.canal}
                                                     </span>
                                                 </td>
                                                 <td className="max-w-[220px] truncate px-5 py-3.5 text-muted-foreground">
                                                     {item.mensagem}
                                                 </td>
                                                 <td className="px-5 py-3.5 text-muted-foreground">
-                                                    {item.dataEnvio}
+                                                    {item.data_envio
+                                                        ? new Date(
+                                                              item.data_envio,
+                                                          ).toLocaleString(
+                                                              'pt-BR',
+                                                              {
+                                                                  timeZone:
+                                                                      'America/Sao_Paulo',
+                                                              },
+                                                          )
+                                                        : '-'}
                                                 </td>
                                                 <td className="px-5 py-3.5">
                                                     <span
-                                                        className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${STATUS_CONFIG[item.status].badge}`}
+                                                        className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${STATUS_CONFIG[statusKey]?.badge ?? ''}`}
                                                     >
-                                                        {
-                                                            STATUS_CONFIG[
-                                                                item.status
-                                                            ].label
-                                                        }
+                                                        {STATUS_CONFIG[
+                                                            statusKey
+                                                        ]?.label ?? item.status}
                                                     </span>
                                                 </td>
                                             </tr>
                                         );
                                     })}
-
-                                    {historicoFiltrado.length === 0 && (
+                                    {historicoData.length === 0 && (
                                         <tr>
                                             <td
                                                 colSpan={6}
                                                 className="px-5 py-10 text-center text-sm text-muted-foreground"
                                             >
-                                                Nenhuma notificação encontrada
-                                                para esse filtro.
+                                                Nenhuma notificação encontrada.
                                             </td>
                                         </tr>
                                     )}
                                 </tbody>
                             </table>
                         </div>
+
+                        {/* Paginação */}
+                        {notificacoes && notificacoes.last_page > 1 && (
+                            <div className="flex items-center justify-between border-t border-border/70 px-5 py-4">
+                                <p className="text-xs text-muted-foreground">
+                                    Página {notificacoes.current_page} de{' '}
+                                    {notificacoes.last_page}
+                                </p>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        disabled={
+                                            notificacoes.current_page === 1
+                                        }
+                                        onClick={() =>
+                                            buscarNotificacoes({
+                                                canal: filtroCanal,
+                                                status: filtroStatus,
+                                                busca,
+                                                page:
+                                                    notificacoes.current_page -
+                                                    1,
+                                            })
+                                        }
+                                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/70 text-muted-foreground hover:bg-muted disabled:opacity-40"
+                                    >
+                                        <ChevronLeft className="size-4" />
+                                    </button>
+                                    <button
+                                        disabled={
+                                            notificacoes.current_page ===
+                                            notificacoes.last_page
+                                        }
+                                        onClick={() =>
+                                            buscarNotificacoes({
+                                                canal: filtroCanal,
+                                                status: filtroStatus,
+                                                busca,
+                                                page:
+                                                    notificacoes.current_page +
+                                                    1,
+                                            })
+                                        }
+                                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/70 text-muted-foreground hover:bg-muted disabled:opacity-40"
+                                    >
+                                        <ChevronRight className="size-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div className="flex flex-col gap-4">
@@ -558,11 +577,7 @@ export default function Notificacoes() {
                             >
                                 <div className="flex items-start gap-3">
                                     <span
-                                        className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                                            automacao.ativo
-                                                ? 'bg-emerald-500/10 text-emerald-600'
-                                                : 'bg-muted text-muted-foreground'
-                                        }`}
+                                        className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${automacao.ativo ? 'bg-emerald-500/10 text-emerald-600' : 'bg-muted text-muted-foreground'}`}
                                     >
                                         <Bell className="size-5" />
                                     </span>
@@ -593,7 +608,6 @@ export default function Notificacoes() {
                                         </div>
                                     </div>
                                 </div>
-
                                 <div className="flex items-center gap-3 pl-13 sm:pl-0">
                                     <span className="text-xs font-semibold text-muted-foreground">
                                         {automacao.ativo
@@ -612,10 +626,17 @@ export default function Notificacoes() {
                     </div>
                 )}
             </div>
+
             <NotificacaoModal
                 canal={modalCanal}
                 onClose={fecharModal}
-                segurados={CLIENTES_MOCK}
+                segurados={segurados}
+                tipos={tipos}
+            />
+            <ConfigNotificacaoModal
+                aberto={configAberto}
+                onClose={() => setConfigAberto(false)}
+                tipos={tipos}
             />
         </>
     );

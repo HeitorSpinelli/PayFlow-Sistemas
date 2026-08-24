@@ -82,7 +82,6 @@ class ApoliceService
                 });
             }
 
-            // No ApoliceService.php
             if (!empty($filters['status']) && $filters['status'] !== 'Todos') {
                 $status = $filters['status'];
 
@@ -96,7 +95,6 @@ class ApoliceService
                 }
             }
 
-            // Troque o get() por paginate() com withQueryString()
             return $query->paginate(10)->withQueryString();
 
             return $query->paginate(10)->withQueryString();

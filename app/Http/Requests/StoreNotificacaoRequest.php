@@ -27,7 +27,7 @@ class StoreNotificacaoRequest extends FormRequest
             'segurado_ids.*'   => 'exists:segurados,id',
             'canal'            => 'required|string|in:email,whatsapp',
             'mensagem'         => 'required|string',
-            'tipo_notificacao' => 'required|string',
+            'tipo_notificacao_id' => 'required|integer|exists:tipos_notificacao,id'
         ];
     }
 }

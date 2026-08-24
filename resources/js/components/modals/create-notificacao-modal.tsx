@@ -9,21 +9,24 @@ interface NotificacaoModalProps {
     canal: Canal | null;
     onClose: () => void;
     segurados: Segurado[];
+    tipos: { id: number; nome_notificacao: string; ativo: boolean }[];
 }
 
 export default function NotificacaoModal({
     canal,
     onClose,
     segurados,
+    tipos,
 }: NotificacaoModalProps) {
     const [busca, setBusca] = useState('');
     const [selecionados, setSelecionados] = useState<number[]>([]);
     const [mensagem, setMensagem] = useState('');
+    const [tipo, setTipo] = useState('');
     const { data, setData, post, processing, errors } = useForm({
         segurado_ids: [] as number[],
         canal: '',
         mensagem: '',
-        tipo_notificacao: '',
+        tipo_notificacao_id: '',
     });
 
     const clientesFiltrados = useMemo(() => {
@@ -62,7 +65,7 @@ export default function NotificacaoModal({
         setData('segurado_ids', selecionados);
         setData('canal', canal ?? '');
         setData('mensagem', mensagem);
-        setData('tipo_notificacao', 'Manual');
+        setData('tipo_notificacao_id', tipo);
 
         post('/notificacoes', {
             onSuccess: () => {
@@ -90,7 +93,7 @@ export default function NotificacaoModal({
         <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
             onClick={onClose}
-            >
+        >
             <div
                 onClick={(e) => e.stopPropagation()}
                 className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xl"
@@ -140,11 +143,15 @@ export default function NotificacaoModal({
 
                         <div className="flex max-h-56 flex-col overflow-y-auto">
                             {clientesFiltrados.map((cliente) => {
-                                const marcado = selecionados.includes(cliente.id);
+                                const marcado = selecionados.includes(
+                                    cliente.id,
+                                );
                                 return (
                                     <button
                                         key={cliente.id}
-                                        onClick={() => alternarCliente(cliente.id)}
+                                        onClick={() =>
+                                            alternarCliente(cliente.id)
+                                        }
                                         className="flex items-center gap-3 border-b border-border/40 px-3.5 py-2.5 text-left last:border-0 hover:bg-muted/40"
                                     >
                                         <span
@@ -187,6 +194,24 @@ export default function NotificacaoModal({
                             )}
                         </div>
                     </div>
+                    {/* Tipo de Notificação */}
+                    <div className="grid gap-2">
+                        <label className="text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase">
+                            Tipo de Notificação
+                        </label>
+                        <select
+                            value={tipo}
+                            onChange={(e) => setTipo(e.target.value)}
+                            className="h-11 w-full rounded-xl border border-border/70 bg-background px-3.5 text-sm focus:ring-2 focus:ring-emerald-500/30 focus:outline-none"
+                        >
+                            <option value="">Selecione um tipo...</option>
+                            {tipos.map((t) => (
+                                <option key={t.id} value={t.id}>
+                                    {t.nome_notificacao}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
 
                     <div className="grid gap-2">
                         <label className="text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase">
@@ -217,7 +242,10 @@ export default function NotificacaoModal({
                     <Button
                         onClick={enviarNotificacao}
                         disabled={
-                            selecionados.length === 0 || mensagem.trim() === ''
+                            selecionados.length === 0 ||
+                            mensagem.trim() === '' ||
+                            tipo === '' ||
+                            processing
                         }
                         className="h-10 rounded-xl bg-emerald-500 px-6 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                     >
