@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent, KeyboardEvent } from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     ChevronRight,
@@ -10,6 +10,7 @@ import {
     FileSpreadsheet,
     ListChecks,
     Sparkles,
+    TriangleAlert,
     Upload,
     X,
 } from 'lucide-react';
@@ -25,6 +26,12 @@ interface ArquivoInfo {
     nome: string;
     tamanho: string;
     linhas: number | null;
+}
+
+interface ImportResumo {
+    total: number;
+    importados: number;
+    erros: string[];
 }
 
 /* ------------------------------------------------------------------ */
@@ -63,10 +70,10 @@ const PASSOS_TUTORIAL = [
 ];
 
 const REQUISITOS = [
-    'Arquivo no formato .csv (separado por vírgula)',
-    'Primeira linha com os nomes das colunas',
-    'Datas no formato AAAA-MM-DD',
-    'Tamanho máximo de 10 MB por arquivo',
+    'Arquivo no formato .csv (separado por vírgula ou ponto e vírgula)',
+    'Colunas: nome_completo, cpf_cnpj, seguradora, ramo, numero_apolice, numero_parcela, valor_parcela, data_vencimento',
+    'A seguradora e o ramo já precisam estar cadastrados no sistema',
+    'Datas no formato AAAA-MM-DD · Tamanho máximo de 10 MB',
 ];
 
 /* ------------------------------------------------------------------ */
@@ -86,45 +93,57 @@ function formatarTamanho(bytes: number) {
 export default function ImportarDados() {
     const inputRef = useRef<HTMLInputElement>(null);
 
+    const { props } = usePage<{ importResumo?: ImportResumo }>();
+
+    const { data, setData, post, processing, progress, errors, reset } = useForm<{
+        arquivo: File | null;
+    }>({
+        arquivo: null,
+    });
+
     const [estado, setEstado] = useState<EstadoArquivo>('vazio');
     const [arquivo, setArquivo] = useState<ArquivoInfo | null>(null);
     const [arrastando, setArrastando] = useState(false);
-    const [erro, setErro] = useState<string | null>(null);
+    const [erroLocal, setErroLocal] = useState<string | null>(null);
 
     const abrirSeletorDeArquivo = () => {
         inputRef.current?.click();
     };
 
-    const processarArquivo = useCallback((file: File) => {
-        const nomeValido = file.name.toLowerCase().endsWith('.csv');
-        if (!nomeValido) {
-            setErro('Esse arquivo não é uma planilha .csv. Selecione um arquivo válido.');
-            setEstado('erro');
-            setArquivo(null);
-            return;
-        }
+    const processarArquivo = useCallback(
+        (file: File) => {
+            const nomeValido = file.name.toLowerCase().endsWith('.csv');
+            if (!nomeValido) {
+                setErroLocal('Esse arquivo não é uma planilha .csv. Selecione um arquivo válido.');
+                setEstado('erro');
+                setArquivo(null);
+                return;
+            }
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const texto = String(e.target?.result ?? '');
-            const totalLinhas = texto
-                .split(/\r\n|\n/)
-                .filter((linha) => linha.trim().length > 0).length;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const texto = String(e.target?.result ?? '');
+                const totalLinhas = texto
+                    .split(/\r\n|\n/)
+                    .filter((linha) => linha.trim().length > 0).length;
 
-            setArquivo({
-                nome: file.name,
-                tamanho: formatarTamanho(file.size),
-                linhas: Math.max(totalLinhas - 1, 0),
-            });
-            setEstado('selecionado');
-            setErro(null);
-        };
-        reader.onerror = () => {
-            setErro('Não foi possível ler o arquivo. Tente novamente.');
-            setEstado('erro');
-        };
-        reader.readAsText(file);
-    }, []);
+                setArquivo({
+                    nome: file.name,
+                    tamanho: formatarTamanho(file.size),
+                    linhas: Math.max(totalLinhas - 1, 0),
+                });
+                setEstado('selecionado');
+                setErroLocal(null);
+                setData('arquivo', file);
+            };
+            reader.onerror = () => {
+                setErroLocal('Não foi possível ler o arquivo. Tente novamente.');
+                setEstado('erro');
+            };
+            reader.readAsText(file);
+        },
+        [setData],
+    );
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -149,13 +168,23 @@ export default function ImportarDados() {
     const limparArquivo = () => {
         setArquivo(null);
         setEstado('vazio');
-        setErro(null);
+        setErroLocal(null);
+        reset('arquivo');
     };
 
     const confirmarImportacao = () => {
-        // TODO: integrar com o backend (Inertia useForm / router.post) para
-        // enviar o arquivo selecionado e processar a importação no servidor.
+        if (!data.arquivo) return;
+
+        post('/importar-dados', {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                limparArquivo();
+            },
+        });
     };
+
+    const resumo = props.importResumo;
 
     return (
         <>
@@ -251,10 +280,10 @@ export default function ImportarDados() {
                                     Formato aceito: .csv · Tamanho máximo: 10 MB
                                 </p>
 
-                                {erro && (
+                                {(erroLocal || errors.arquivo) && (
                                     <div className="mt-1 flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-600">
                                         <AlertTriangle className="size-4 shrink-0" />
-                                        {erro}
+                                        {erroLocal ?? errors.arquivo}
                                     </div>
                                 )}
                             </div>
@@ -289,31 +318,87 @@ export default function ImportarDados() {
                                             </p>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={limparArquivo}
-                                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                                        aria-label="Remover arquivo"
-                                    >
-                                        <X className="size-4" />
-                                    </button>
+                                    {!processing && (
+                                        <button
+                                            onClick={limparArquivo}
+                                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                            aria-label="Remover arquivo"
+                                        >
+                                            <X className="size-4" />
+                                        </button>
+                                    )}
                                 </div>
+
+                                {processing && (
+                                    <div className="w-full max-w-sm">
+                                        <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                                            <div
+                                                className="h-full rounded-full bg-emerald-500 transition-all"
+                                                style={{ width: `${progress?.percentage ?? 0}%` }}
+                                            />
+                                        </div>
+                                        <p className="mt-1.5 text-xs font-semibold text-muted-foreground">
+                                            Enviando… {progress?.percentage ?? 0}%
+                                        </p>
+                                    </div>
+                                )}
+
+                                {errors.arquivo && !processing && (
+                                    <div className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-600">
+                                        <AlertTriangle className="size-4 shrink-0" />
+                                        {errors.arquivo}
+                                    </div>
+                                )}
 
                                 <div className="flex flex-col gap-2 sm:flex-row">
                                     <Button
                                         onClick={confirmarImportacao}
-                                        className="h-11 rounded-xl bg-emerald-500 px-8 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
+                                        disabled={processing}
+                                        className="h-11 rounded-xl bg-emerald-500 px-8 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                         <Sparkles className="mr-2 size-4" />
-                                        Confirmar importação
+                                        {processing ? 'Importando…' : 'Confirmar importação'}
                                     </Button>
                                     <Button
                                         onClick={abrirSeletorDeArquivo}
+                                        disabled={processing}
                                         variant="outline"
                                         className="h-11 rounded-xl px-6 font-bold"
                                     >
                                         Trocar arquivo
                                     </Button>
                                 </div>
+                            </div>
+                        )}
+
+                        {/* Resultado da última importação (vem do backend via flash) */}
+                        {resumo && (
+                            <div className="relative z-10 mt-6 rounded-2xl border border-border/70 bg-background p-5">
+                                <div className="mb-3 flex items-center gap-2">
+                                    <CircleCheck className="size-4 text-emerald-600" />
+                                    <p className="text-sm font-bold text-foreground">
+                                        {resumo.importados} de {resumo.total} linha(s) importada(s)
+                                        com sucesso
+                                    </p>
+                                </div>
+
+                                {resumo.erros.length > 0 && (
+                                    <div className="mt-3">
+                                        <p className="mb-2 flex items-center gap-1.5 text-xs font-bold text-red-600">
+                                            <TriangleAlert className="size-3.5" />
+                                            {resumo.erros.length} linha(s) com problema
+                                        </p>
+                                        <div className="max-h-40 overflow-y-auto rounded-xl border border-red-500/20 bg-red-500/5">
+                                            <ul className="divide-y divide-red-500/10 text-xs text-red-700">
+                                                {resumo.erros.map((msg, i) => (
+                                                    <li key={i} className="px-3 py-2">
+                                                        {msg}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -333,10 +418,15 @@ export default function ImportarDados() {
                                 Baixe o modelo oficial com as colunas já formatadas para evitar
                                 erros na importação.
                             </p>
-                            <Button variant="outline" className="h-10 w-full rounded-xl font-bold">
-                                <Download className="mr-2 size-4" />
-                                Baixar modelo .csv
-                            </Button>
+                            <a href="/modelos/clientes-modelo.csv" download>
+                                <Button
+                                    variant="outline"
+                                    className="h-10 w-full rounded-xl font-bold"
+                                >
+                                    <Download className="mr-2 size-4" />
+                                    Baixar modelo .csv
+                                </Button>
+                            </a>
                         </div>
 
                         <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">

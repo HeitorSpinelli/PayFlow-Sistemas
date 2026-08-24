@@ -11,6 +11,7 @@ use App\Http\Controllers\TipoNotificacoesController;
 use App\Http\Controllers\SeguradoraController;
 use App\Http\Controllers\pagamentoController;
 use App\Models\Segurado;
+use App\Http\Controllers\ImportacaoController;
 use Illuminate\Support\Facades\Mail;
 
 // Rota Inicial
@@ -54,7 +55,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Páginas Estáticas / Inertia Gerais
     Route::get('/cobrancas', fn() => inertia('FunctionsApp/cobrancas'))->name('cobrancas');
     Route::get('/agenda', fn() => inertia('FunctionsApp/agenda'))->name('agenda');
-    Route::get('/importar', fn() => inertia('FunctionsApp/importar'))->name('importar');
+    Route::get('/importar', fn() => inertia('FunctionsApp/importar', [
+        'importResumo' => session('importResumo'),
+    ]))->name('importar');
+
+    // Módulo: Importação de planilha
+    Route::post('/importar-dados', [ImportacaoController::class, 'store'])->name('importar-dados.store');
 });
 
 // Rotas Exclusivas para Administradores
