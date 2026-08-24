@@ -8,6 +8,7 @@ use App\Models\pagamento;
 use App\Models\segurado;
 use App\Models\Apolice;
 use App\Services\Pagamento\PagamentoService;
+use App\Services\Exportacoes\ExportacaoPagamentoService;
 
 class pagamentoController extends Controller
 {
@@ -64,5 +65,10 @@ class pagamentoController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Erro ao excluir pagamento: ' . $e->getMessage());
         }
+    }
+
+    public function exportar(ExportacaoPagamentoService $exportacaoService)
+    {
+        return $exportacaoService->exportarPagamentosCsv();
     }
 }

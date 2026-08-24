@@ -18,10 +18,7 @@ import { Input } from '@/components/ui/input';
 import CreatePagamentoModal from '@/components/modals/create-pagamentos-modal';
 import PagamentoProfileModal from '@/components/modals/create-pagamento-profile-modal';
 
-import {
-    formatarDataBR,
-    formatarMoeda,
-} from '@/utils/Masks';
+import { formatarDataBR, formatarMoeda } from '@/utils/Masks';
 
 // Interface para o objeto de paginação do Laravel (mesmo formato usado em Clientes)
 interface PaginatedPagamentos {
@@ -196,7 +193,8 @@ export default function Pagamentos({
                                 Lista de Pagamentos
                             </h3>
                             <p className="text-xs text-muted-foreground">
-                                {pagamentos?.total ?? 0} pagamento(s) encontrado(s)
+                                {pagamentos?.total ?? 0} pagamento(s)
+                                encontrado(s)
                             </p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2.5">
@@ -213,7 +211,9 @@ export default function Pagamentos({
                             {/* Dropdown de filtro por status */}
                             <div className="relative">
                                 <button
-                                    onClick={() => setFiltroAberto(!filtroAberto)}
+                                    onClick={() =>
+                                        setFiltroAberto(!filtroAberto)
+                                    }
                                     className="inline-flex h-10 min-w-[120px] items-center justify-between gap-2 rounded-xl border border-border/70 bg-background px-3 text-sm font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
                                 >
                                     <span className="flex items-center gap-2">
@@ -230,7 +230,9 @@ export default function Pagamentos({
                                         {opcoesFiltro.map((opcao) => (
                                             <button
                                                 key={opcao}
-                                                onClick={() => handleFiltroChange(opcao)}
+                                                onClick={() =>
+                                                    handleFiltroChange(opcao)
+                                                }
                                                 className={`flex w-full cursor-pointer items-center justify-between px-3 py-2 text-sm transition-colors ${
                                                     filtroSelecionado === opcao
                                                         ? 'bg-emerald-500 font-medium text-white'
@@ -238,7 +240,8 @@ export default function Pagamentos({
                                                 }`}
                                             >
                                                 {opcao}
-                                                {filtroSelecionado === opcao && (
+                                                {filtroSelecionado ===
+                                                    opcao && (
                                                     <Check className="size-4" />
                                                 )}
                                             </button>
@@ -247,11 +250,13 @@ export default function Pagamentos({
                                 )}
                             </div>
 
-                            {/* TODO: implementar lógica de exportação */}
-                            <button className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border/70 bg-background px-4 text-sm font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none">
+                            <a
+                                href="/pagamentos/exportar"
+                                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border/70 bg-background px-4 text-sm font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
+                            >
                                 <Download className="size-4 text-muted-foreground/60" />
                                 Exportar
-                            </button>
+                            </a>
                         </div>
                     </div>
 
@@ -260,20 +265,40 @@ export default function Pagamentos({
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-border/70 bg-muted/[0.18] font-medium text-muted-foreground">
-                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">ID</th>
-                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">Cliente</th>
-                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">Apólice / Parcela</th>
-                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">Valor</th>
-                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">Data Pagamento</th>
-                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">Forma</th>
-                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">Status</th>
-                                    <th className="h-11 px-4 text-right text-xs font-bold tracking-wider uppercase">Ações</th>
+                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
+                                        ID
+                                    </th>
+                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
+                                        Cliente
+                                    </th>
+                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
+                                        Apólice / Parcela
+                                    </th>
+                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
+                                        Valor
+                                    </th>
+                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
+                                        Data Pagamento
+                                    </th>
+                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
+                                        Forma
+                                    </th>
+                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
+                                        Status
+                                    </th>
+                                    <th className="h-11 px-4 text-right text-xs font-bold tracking-wider uppercase">
+                                        Ações
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {!pagamentos?.data || pagamentos.data.length === 0 ? (
+                                {!pagamentos?.data ||
+                                pagamentos.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={8} className="h-24 px-4 text-center text-muted-foreground">
+                                        <td
+                                            colSpan={8}
+                                            className="h-24 px-4 text-center text-muted-foreground"
+                                        >
                                             Nenhum pagamento encontrado.
                                         </td>
                                     </tr>
@@ -296,7 +321,9 @@ export default function Pagamentos({
                                                 R$ {formatarMoeda(p.valor)}
                                             </td>
                                             <td className="px-4 py-3.5 text-muted-foreground">
-                                                {formatarDataBR(p.data_pagamento)}
+                                                {formatarDataBR(
+                                                    p.data_pagamento,
+                                                )}
                                             </td>
                                             <td className="px-4 py-3.5 text-muted-foreground capitalize">
                                                 {p.forma_pagamento}
@@ -310,7 +337,9 @@ export default function Pagamentos({
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={() => abrirPerfil(p)}
+                                                    onClick={() =>
+                                                        abrirPerfil(p)
+                                                    }
                                                     className="h-8 w-8 rounded-lg p-0 hover:bg-emerald-500/10 hover:text-emerald-500"
                                                 >
                                                     <MoreHorizontal className="size-4" />

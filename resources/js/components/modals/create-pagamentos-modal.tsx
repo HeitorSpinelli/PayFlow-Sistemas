@@ -85,7 +85,7 @@ export default function CreatePagamentoModal({
     segurados,
     apolices,
 }: any) {
-    const { data, setData, post, reset, errors } = useForm({
+    const { data, setData, post, reset, clearErrors, errors } = useForm({
         segurado_id: '',
         apolice_id: '',
         parcela: '',
@@ -101,6 +101,17 @@ export default function CreatePagamentoModal({
     // Controla se a lista de sugestões está visível
     const [sugestoesAbertas, setSugestoesAbertas] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
+
+    // Sempre que o modal fechar (por X, Cancelar, clique fora, Esc, etc.), limpa tudo
+    useEffect(() => {
+        if (!open) {
+            reset();
+            clearErrors();
+            setBuscaSegurado('');
+            setSugestoesAbertas(false);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open]);
 
     // Filtra segurados pelo nome OU cpf_cnpj conforme o texto digitado (por prefixo)
     const sugestoes = (() => {
@@ -203,9 +214,7 @@ export default function CreatePagamentoModal({
     const handleSubmit = () => {
         post('/pagamentos', {
             onSuccess: () => {
-                reset();
                 toast.success('Pagamento registrado com sucesso!');
-                setBuscaSegurado('');
                 setOpen(false);
             },
             onError: () => {
@@ -228,7 +237,12 @@ export default function CreatePagamentoModal({
     };
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog
+            open={open}
+            onOpenChange={(isOpen) => {
+                setOpen(isOpen);
+            }}
+        >
             <DialogContent className="!flex max-h-[92vh] max-w-2xl flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 shadow-2xl">
                 <DialogHeader className="relative shrink-0 overflow-hidden border-b border-border/70 bg-gradient-to-br from-emerald-500/[0.12] via-background to-background px-6 py-6 pr-12 sm:px-8">
                     <div className="absolute -top-12 -right-10 h-36 w-36 rounded-full bg-emerald-500/10 blur-2xl" />
@@ -281,7 +295,11 @@ export default function CreatePagamentoModal({
                                             setData('valor', '');
                                         }
                                     }}
-                                    onFocus={() => setSugestoesAbertas(true)}
+                                    onFocus={() =>
+                                        setSugestoesAbertas(
+                                            buscaSegurado.trim().length > 0,
+                                        )
+                                    }
                                 />
 
                                 {/* Lista de sugestões — só aparece com texto digitado e sem segurado já escolhido */}
@@ -473,6 +491,11 @@ export default function CreatePagamentoModal({
                                     </label>
                                     <Input
                                         type="date"
+                                        max={
+                                            new Date()
+                                                .toISOString()
+                                                .split('T')[0]
+                                        }
                                         className={inputClass}
                                         value={data.data_pagamento}
                                         onChange={(e) =>

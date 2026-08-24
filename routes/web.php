@@ -50,6 +50,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/', [pagamentoController::class, 'store']);
         Route::put('/{id}', [pagamentoController::class, 'update'])->name('pagamentos.update');
         Route::delete('/{id}', [pagamentoController::class, 'destroy'])->name('pagamentos.destroy');
+        Route::get('/exportar', [pagamentoController::class, 'exportar']);
     });
 
     // Páginas Estáticas / Inertia Gerais
