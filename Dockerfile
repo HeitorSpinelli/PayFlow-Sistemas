@@ -27,9 +27,10 @@ RUN a2enmod rewrite
 WORKDIR /var/www/html
 COPY . .
 
-# Instala dependências PHP e gera autoloader
-RUN COMPOSER_MEMORY_LIMIT=-1 composer install --optimize-autoloader --no-dev
-RUN composer dump-autoload --optimize
+# Instala dependências PHP, gera autoloader e descobre pacotes
+RUN COMPOSER_MEMORY_LIMIT=-1 composer install --optimize-autoloader --no-dev \
+    && composer dump-autoload --optimize \
+    && php artisan package:discover --ansi 2>/dev/null || true
 
 # Instala dependências Node e builda o frontend
 RUN npm install && npm run build
