@@ -88,6 +88,10 @@ Route::middleware(['auth', 'can:is-admin'])->group(function () {
     Route::prefix('/notificacoes')->group(function () {
         Route::get('/', function () {
             return inertia('FunctionsApp/notificacoes', [
+                'totalHoje'     => \App\Models\notificacoes::whereDate('created_at', today())->count(),
+                'totalEnviados' => \App\Models\notificacoes::where('status', 'Enviado')->count(),
+                'totalPendentes' => \App\Models\notificacoes::where('status', 'Pendente')->count(),
+                'totalFalhas'   => \App\Models\notificacoes::where('status', 'Falha')->count(),
                 'tipos'        => TipoNotificacao::all(),
                 'segurados'    => Segurado::all(),
                 'notificacoes' => \App\Models\notificacoes::with(['tipoNotificacao', 'segurado'])->paginate(10),

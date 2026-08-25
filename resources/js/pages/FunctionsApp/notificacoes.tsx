@@ -47,6 +47,10 @@ interface Props {
     segurados: Segurado[];
     notificacoes: PaginatedNotificacoes;
     automacoes: Automacao[];
+    totalHoje: number;
+    totalEnviados: number;
+    totalPendentes: number;
+    totalFalhas: number;
 }
 
 const STATUS_CONFIG: Record<
@@ -91,6 +95,10 @@ export default function Notificacoes({
     segurados,
     notificacoes,
     automacoes,
+    totalHoje,
+    totalEnviados,
+    totalPendentes,
+    totalFalhas,
 }: Props) {
     const [aba, setAba] = useState<'historico' | 'automacoes'>('historico');
     const [modalCanal, setModalCanal] = useState<Canal | null>(null);
@@ -100,11 +108,6 @@ export default function Notificacoes({
     const [filtroCanal, setFiltroCanal] = useState('');
     const [filtroStatus, setFiltroStatus] = useState('');
     const [busca, setBusca] = useState('');
-
-    const totalHoje = 10;
-    const totalEnviados = 20;
-    const totalPendentes = 30;
-    const totalFalhas = 7;
 
     const buscarNotificacoes = (params: {
         canal?: string;
