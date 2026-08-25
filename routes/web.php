@@ -2,24 +2,31 @@
 
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
-use App\Http\Controllers\SeguradoController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\NotificacoesController;
-use App\Http\Controllers\ApolicesController;
-use App\Models\TipoNotificacao;
-use App\Http\Controllers\TipoNotificacoesController;
-use App\Http\Controllers\SeguradoraController;
-use App\Http\Controllers\pagamentoController;
 use App\Models\Segurado;
+use App\Models\TipoNotificacao;
+use App\Models\Automacao;
+use App\Http\Controllers\ApolicesController;
+use App\Http\Controllers\AutomacoesController;
 use App\Http\Controllers\ImportacaoController;
-use Illuminate\Support\Facades\Mail;
+use App\Http\Controllers\NotificacoesController;
+use App\Http\Controllers\pagamentoController;
+use App\Http\Controllers\SeguradoraController;
+use App\Http\Controllers\SeguradoController;
+use App\Http\Controllers\TipoNotificacoesController;
+use App\Http\Controllers\UserController;
 
-// Rota Inicial
+/* ------------------------------------------------------------------ */
+/* Rota Inicial                                                        */
+/* ------------------------------------------------------------------ */
+
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 
-// Rotas Protegidas por Autenticação
+/* ------------------------------------------------------------------ */
+/* Rotas Protegidas por Autenticação                                   */
+/* ------------------------------------------------------------------ */
+
 Route::middleware(['auth', 'verified'])->group(function () {
 
     // Dashboard
@@ -52,18 +59,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/{id}', [pagamentoController::class, 'destroy'])->name('pagamentos.destroy');
     });
 
-    // Páginas Estáticas / Inertia Gerais
+    // Páginas Estáticas
     Route::get('/cobrancas', fn() => inertia('FunctionsApp/cobrancas'))->name('cobrancas');
     Route::get('/agenda', fn() => inertia('FunctionsApp/agenda'))->name('agenda');
     Route::get('/importar', fn() => inertia('FunctionsApp/importar', [
         'importResumo' => session('importResumo'),
     ]))->name('importar');
 
-    // Módulo: Importação de planilha
+    // Módulo: Importação
     Route::post('/importar-dados', [ImportacaoController::class, 'store'])->name('importar-dados.store');
 });
 
-// Rotas Exclusivas para Administradores
+/* ------------------------------------------------------------------ */
+/* Rotas Exclusivas para Administradores                               */
+/* ------------------------------------------------------------------ */
+
 Route::middleware(['auth', 'can:is-admin'])->group(function () {
 
     // Módulo: Seguradoras
@@ -74,28 +84,37 @@ Route::middleware(['auth', 'can:is-admin'])->group(function () {
         Route::delete('/{id}', [SeguradoraController::class, 'destroy'])->name('seguradoras.destroy');
     });
 
-    Route::post('/seguradoras', [SeguradoraController::class, 'store']);
-    Route::delete('/clientes/{id}', [SeguradoController::class, 'destroy'])->name('clientes.destroy');
-    Route::put('/clientes/{id}', [SeguradoController::class, 'update'])->name('clientes.update');
-
+    // Módulo: Notificações
     Route::prefix('/notificacoes')->group(function () {
         Route::get('/', function () {
             return inertia('FunctionsApp/notificacoes', [
-                'tipos' => TipoNotificacao::all(),
-                'segurados' => Segurado::all(),
-                'notificacoes' => \App\Models\notificacoes::with(['tipoNotificacao', 'segurado'])->paginate(10)
+                'tipos'        => TipoNotificacao::all(),
+                'segurados'    => Segurado::all(),
+                'notificacoes' => \App\Models\notificacoes::with(['tipoNotificacao', 'segurado'])->paginate(10),
+                'automacoes' => \App\Models\Automacao::with('notificacoes')->get(),
             ]);
         })->name('notificacoes');
         Route::post('/', [NotificacoesController::class, 'store']);
         Route::get('/filtrar', [NotificacoesController::class, 'filtrar']);
     });
 
+    // Módulo: Tipos de Notificação
     Route::prefix('/tipo_notificacoes')->group(function () {
         Route::get('/', [TipoNotificacoesController::class, 'index']);
         Route::post('/', [TipoNotificacoesController::class, 'store']);
         Route::patch('/{id}', [TipoNotificacoesController::class, 'update']);
     });
 
+    // Módulo: Automações
+    Route::prefix('/automacoes')->group(function () {
+        Route::get('/', [AutomacoesController::class, 'index']);
+        Route::post('/', [AutomacoesController::class, 'store']);
+        Route::put('/{id}', [AutomacoesController::class, 'update']);
+        Route::patch('/{id}/toggle', [AutomacoesController::class, 'toggle']);
+        Route::delete('/{id}', [AutomacoesController::class, 'destroy']);
+    });
+
+    // Administração
     Route::get('/administracao/usuarios', [UserController::class, 'index'])->name('users');
 });
 

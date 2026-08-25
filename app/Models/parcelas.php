@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Apolice;
 
 class parcelas extends Model
 {
@@ -10,11 +12,16 @@ class parcelas extends Model
     protected $table = 'parcelas';
     protected $fillable = [
         'apolice_id',
-        'numero_parcela', 
-        'valor_parcela', 
+        'numero_parcela',
+        'valor_parcela',
         'data_vencimento',
-        'data_pagamento', 
+        'data_pagamento',
         'status_pagamento',
         'forma_pagamento_efetiva'
     ];
+
+    public function apolice(): BelongsTo
+    {
+        return $this->belongsTo(Apolice::class, 'apolice_id');
+    }
 }

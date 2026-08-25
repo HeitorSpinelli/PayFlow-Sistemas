@@ -15,10 +15,11 @@ import {
     Settings,
     XCircle,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Segurado, Automacao } from '@/types/notificacoes';
 import NotificacaoModal from '@/components/modals/create-notificacao-modal';
 import ConfigNotificacaoModal from '@/components/modals/configuracoes-notificacoes-modal';
-import { Segurado } from '@/types/notificacoes';
 
 type Canal = 'email' | 'whatsapp';
 type StatusNotificacao = 'enviado' | 'pendente' | 'falha';
@@ -45,42 +46,8 @@ interface Props {
     tipos: { id: number; nome_notificacao: string; ativo: boolean }[];
     segurados: Segurado[];
     notificacoes: PaginatedNotificacoes;
+    automacoes: Automacao[];
 }
-
-interface Automacao {
-    id: number;
-    titulo: string;
-    descricao: string;
-    canais: Canal[];
-    ativo: boolean;
-}
-
-const AUTOMACOES_MOCK: Automacao[] = [
-    {
-        id: 1,
-        titulo: 'Lembrete de vencimento',
-        descricao:
-            'Avisa o cliente automaticamente 3 dias antes do vencimento da parcela.',
-        canais: ['email', 'whatsapp'],
-        ativo: true,
-    },
-    {
-        id: 2,
-        titulo: 'Cobrança em atraso',
-        descricao:
-            'Dispara uma cobrança assim que um pagamento passa a estar em atraso.',
-        canais: ['whatsapp'],
-        ativo: true,
-    },
-    {
-        id: 3,
-        titulo: 'Renovação de apólice',
-        descricao:
-            'Lembra o cliente quando a apólice está próxima da data de renovação.',
-        canais: ['email'],
-        ativo: false,
-    },
-];
 
 const STATUS_CONFIG: Record<
     StatusNotificacao,
@@ -123,9 +90,9 @@ export default function Notificacoes({
     tipos,
     segurados,
     notificacoes,
+    automacoes,
 }: Props) {
     const [aba, setAba] = useState<'historico' | 'automacoes'>('historico');
-    const [automacoes, setAutomacoes] = useState(AUTOMACOES_MOCK);
     const [modalCanal, setModalCanal] = useState<Canal | null>(null);
     const [configAberto, setConfigAberto] = useState(false);
 
@@ -160,9 +127,26 @@ export default function Notificacoes({
 
     const abrirModal = (canal: Canal) => setModalCanal(canal);
     const fecharModal = () => setModalCanal(null);
-    const alternarAutomacao = (id: number) => {
-        setAutomacoes((prev) =>
-            prev.map((a) => (a.id === id ? { ...a, ativo: !a.ativo } : a)),
+
+    const toggleAutomacao = (id: number, ativo: boolean) => {
+        router.patch(
+            `/automacoes/${id}/toggle`,
+            { ativo: !ativo },
+            {
+                onSuccess: () => {
+                    toast.success(
+                        ativo ? 'Automação desativada!' : 'Automação ativada!',
+                        {
+                            position: 'top-right',
+                        },
+                    );
+                },
+                onError: () => {
+                    toast.error('Erro ao atualizar automação.', {
+                        position: 'top-right',
+                    });
+                },
+            },
         );
     };
 
@@ -570,59 +554,81 @@ export default function Notificacoes({
                     </div>
                 ) : (
                     <div className="flex flex-col gap-4">
-                        {automacoes.map((automacao) => (
-                            <div
-                                key={automacao.id}
-                                className="flex flex-col gap-4 rounded-2xl border border-border/70 bg-card p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between"
-                            >
-                                <div className="flex items-start gap-3">
-                                    <span
-                                        className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${automacao.ativo ? 'bg-emerald-500/10 text-emerald-600' : 'bg-muted text-muted-foreground'}`}
-                                    >
-                                        <Bell className="size-5" />
-                                    </span>
-                                    <div>
-                                        <p className="text-sm font-bold text-foreground">
-                                            {automacao.titulo}
-                                        </p>
-                                        <p className="mt-0.5 max-w-lg text-xs leading-relaxed text-muted-foreground">
-                                            {automacao.descricao}
-                                        </p>
-                                        <div className="mt-2 flex items-center gap-1.5">
-                                            {automacao.canais.map((canal) => {
-                                                const CanalIcon =
-                                                    CANAL_CONFIG[canal].icon;
-                                                return (
-                                                    <span
-                                                        key={canal}
-                                                        className="flex items-center gap-1 rounded-full border border-border/70 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground"
-                                                    >
-                                                        <CanalIcon className="size-3" />
-                                                        {
-                                                            CANAL_CONFIG[canal]
-                                                                .label
-                                                        }
-                                                    </span>
-                                                );
-                                            })}
+                        {automacoes.length === 0 ? (
+                            <div className="rounded-2xl border border-border/70 bg-card p-10 text-center shadow-sm">
+                                <p className="text-sm text-muted-foreground">
+                                    Nenhuma automação cadastrada.
+                                </p>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    Clique em "Configurar" para criar
+                                    automações.
+                                </p>
+                            </div>
+                        ) : (
+                            automacoes.map((automacao) => (
+                                <div
+                                    key={automacao.id}
+                                    className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-5 shadow-sm"
+                                >
+                                    <div className="flex items-start gap-3">
+                                        <span
+                                            className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${automacao.ativo ? 'bg-emerald-500/10 text-emerald-600' : 'bg-muted text-muted-foreground'}`}
+                                        >
+                                            <Bell className="size-5" />
+                                        </span>
+                                        <div>
+                                            <p className="text-sm font-bold text-foreground">
+                                                {automacao.tipo_condicao ===
+                                                    'apolice_vencendo' &&
+                                                    'Apólice vencendo'}
+                                                {automacao.tipo_condicao ===
+                                                    'parcela_vencendo' &&
+                                                    'Parcela vencendo'}
+                                                {automacao.tipo_condicao ===
+                                                    'parcela_em_atraso' &&
+                                                    'Parcela em atraso'}
+                                                {automacao.tipo_condicao ===
+                                                    'cliente_inativo' &&
+                                                    'Cliente inativo'}
+                                                <span className="ml-2 text-xs font-normal text-muted-foreground">
+                                                    — {automacao.dias} dia(s)
+                                                </span>
+                                            </p>
+                                            <p className="mt-0.5 text-xs text-muted-foreground">
+                                                {automacao.canal === 'email'
+                                                    ? 'E-mail'
+                                                    : 'WhatsApp'}
+                                                {automacao.tipo_notificacao &&
+                                                    ` · ${automacao.tipo_notificacao.nome_notificacao}`}
+                                            </p>
+                                            <p className="mt-0.5 max-w-lg text-xs leading-relaxed text-muted-foreground">
+                                                {automacao.mensagem}
+                                            </p>
                                         </div>
                                     </div>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-xs font-semibold text-muted-foreground">
+                                            {automacao.ativo
+                                                ? 'Ativado'
+                                                : 'Desativado'}
+                                        </span>
+                                        <button
+                                            onClick={() =>
+                                                toggleAutomacao(
+                                                    automacao.id,
+                                                    automacao.ativo,
+                                                )
+                                            }
+                                            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${automacao.ativo ? 'bg-emerald-500' : 'bg-muted'}`}
+                                        >
+                                            <span
+                                                className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${automacao.ativo ? 'translate-x-5' : 'translate-x-0'}`}
+                                            />
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-3 pl-13 sm:pl-0">
-                                    <span className="text-xs font-semibold text-muted-foreground">
-                                        {automacao.ativo
-                                            ? 'Ativado'
-                                            : 'Desativado'}
-                                    </span>
-                                    <Toggle
-                                        ativo={automacao.ativo}
-                                        onChange={() =>
-                                            alternarAutomacao(automacao.id)
-                                        }
-                                    />
-                                </div>
-                            </div>
-                        ))}
+                            ))
+                        )}
                     </div>
                 )}
             </div>
@@ -637,6 +643,7 @@ export default function Notificacoes({
                 aberto={configAberto}
                 onClose={() => setConfigAberto(false)}
                 tipos={tipos}
+                automacoes={automacoes}
             />
         </>
     );

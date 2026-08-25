@@ -1,0 +1,34 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('automacoes', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->string('tipo_condicao', 50);
+            $table->integer('dias');
+            $table->string('canal');
+            $table->foreignId('tipo_notificacao_id')->nullable()->constrained('tipos_notificacao')->onDelete('set null');
+            $table->text('mensagem');
+            $table->boolean('ativo')->default(true);
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('automacoes');
+    }
+};

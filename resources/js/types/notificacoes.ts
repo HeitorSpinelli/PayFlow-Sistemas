@@ -8,3 +8,12 @@ export interface Segurado {
     cpf_cnpj: string;
     devedor: boolean;
 }
+export interface Automacao {
+    id: number;
+    tipo_condicao: string;
+    dias: number;
+    canal: string;
+    mensagem: string;
+    ativo: boolean;
+    tipo_notificacao: { nome_notificacao: string } | null;
+}

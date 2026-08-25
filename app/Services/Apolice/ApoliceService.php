@@ -12,9 +12,26 @@ class ApoliceService
 
     public function store(array $data)
     {
-        //Tenta salvar a apolice. Se der erro ele pega a mensagem de erro e joga uma nova exceção com a mensagem personalizada
         try {
-            Apolice::create($data);
+            // Cria a apólice
+            $apolice = Apolice::create($data);
+
+            // Calcula o valor de cada parcela
+            $valorParcela = round($data['valor_premio_total'] / $data['quantidade_parcelas'], 2);
+
+            // Data base para calcular vencimentos (30 dias após início da vigência)
+            $dataBase = \Carbon\Carbon::parse($data['inicio_vigencia']);
+
+            // Cria cada parcela automaticamente
+            for ($i = 1; $i <= $data['quantidade_parcelas']; $i++) {
+                \App\Models\parcelas::create([
+                    'apolice_id'      => $apolice->id,
+                    'numero_parcela'  => $i,
+                    'valor_parcela'   => $valorParcela,
+                    'data_vencimento' => $dataBase->copy()->addMonths($i),
+                    'status_pagamento' => 'em_aberto',
+                ]);
+            }
         } catch (\Exception $e) {
             throw new \Exception('Erro ao cadastrar apólice: ' . $e->getMessage());
         }
