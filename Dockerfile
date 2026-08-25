@@ -27,14 +27,16 @@ RUN a2enmod rewrite
 WORKDIR /var/www/html
 COPY . .
 
-# Instala dependências PHP
-RUN COMPOSER_MEMORY_LIMIT=-1 composer install --optimize-autoloader --no-dev --no-scripts
+# Instala dependências PHP e gera autoloader
+RUN COMPOSER_MEMORY_LIMIT=-1 composer install --optimize-autoloader --no-dev
+RUN composer dump-autoload --optimize
 
 # Instala dependências Node e builda o frontend
 RUN npm install && npm run build
 
 # Permissões
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Script de inicialização
 COPY docker-entrypoint.sh /usr/local/bin/
