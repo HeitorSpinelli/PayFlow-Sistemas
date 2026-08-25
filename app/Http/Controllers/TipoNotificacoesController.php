@@ -23,9 +23,12 @@ class TipoNotificacoesController extends Controller
      */
     public function store(Request $request)
     {
-        //Validação dos dados
         $request->validate([
-            'nome_notificacao' => 'required|string|max:50'
+            'nome_notificacao' => 'required|string|max:50|unique:tipos_notificacao,nome_notificacao'
+        ], [
+            'nome_notificacao.unique' => 'Já existe um tipo de notificação com esse nome.',
+            'nome_notificacao.required' => 'O nome do tipo é obrigatório.',
+            'nome_notificacao.max' => 'O nome não pode ter mais de 50 caracteres.',
         ]);
 
         try {

@@ -32,6 +32,11 @@ class ProcessarAutomacoes implements ShouldQueue
         $automacoes = Automacao::with(['notificacoes'])->where('ativo', true)->get();
 
         foreach ($automacoes as $automacao) {
+            // Pula automações cujo tipo de notificação foi desativado
+            if (!$automacao->notificacoes || !$automacao->notificacoes->ativo) {
+                continue;
+            }
+
             match ($automacao->tipo_condicao) {
                 'apolice_vencendo'   => $this->processarApoliceVencendo($automacao, $service),
                 'parcela_vencendo'   => $this->processarParcelaVencendo($automacao, $service),

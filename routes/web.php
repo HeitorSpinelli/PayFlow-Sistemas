@@ -39,6 +39,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/{id}', [SeguradoController::class, 'update'])->name('clientes.update');
         Route::delete('/{id}', [SeguradoController::class, 'destroy'])->name('clientes.destroy');
         Route::get('/exportar', [SeguradoController::class, 'exportar']);
+        Route::get('/inativos', [SeguradoController::class, 'inativos'])->name('segurados.inativos');
+        Route::patch('/restaurar/{id}', [SeguradoController::class, 'restaurar'])->name('segurados.restore');
     });
 
     // Módulo: Apólices

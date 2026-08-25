@@ -19,6 +19,15 @@ class AutomacoesController extends Controller
     public function store(StoreAutomacaoRequest $request)
     {
         try {
+            $jaExiste = Automacao::where('tipo_condicao', $request->tipo_condicao)
+                ->where('canal', $request->canal)
+                ->where('tipo_notificacao_id', $request->tipo_notificacao_id)
+                ->exists();
+
+            if ($jaExiste) {
+                return redirect()->back()->with('error', 'Já existe uma automação com essa condição, canal e tipo.');
+            }
+
             Automacao::create([
                 'user_id'             => auth()->id(),
                 'tipo_condicao'       => $request->tipo_condicao,
@@ -44,30 +53,32 @@ class AutomacoesController extends Controller
         }
     }
 
-    public function toggle(Request $request, string $id){
-        
-        try{
+    public function toggle(Request $request, string $id)
+    {
+
+        try {
             $ativo = Automacao::findOrFail($id);
-    
+
             $request->validate([
                 'ativo' => 'required|boolean'
             ]);
             $ativo->update([
-                    'ativo' => $request->ativo
-                ]);
+                'ativo' => $request->ativo
+            ]);
             return redirect()->back()->with('success', 'Status Atualizado');
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Erros ao atualizar status');
         }
     }
 
-    public function destroy(string $id) {
-    try {
-        $automacao = Automacao::findOrFail($id);
-        $automacao->delete();
-        return redirect()->back()->with('success', 'Automação excluída');
-    } catch (\Exception $e) {
-        return redirect()->back()->with('error', 'Erro ao excluir automação: ' . $e->getMessage());
+    public function destroy(string $id)
+    {
+        try {
+            $automacao = Automacao::findOrFail($id);
+            $automacao->delete();
+            return redirect()->back()->with('success', 'Automação excluída');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erro ao excluir automação: ' . $e->getMessage());
+        }
     }
-}
 }

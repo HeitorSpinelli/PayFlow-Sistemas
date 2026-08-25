@@ -156,4 +156,21 @@ class ApoliceService
             throw new \Exception('Erro ao alterar o ramo da apólice: ' . $e->getMessage());
         }
     }
+
+    //Listando apenas clientes que estão com deleted at 
+    public function listarInativos()
+    {
+        return Apolice::onlyTrashed()->get();
+    }
+
+    //Restaura o segurado pelo id
+    public function restore(int $id)
+    {
+        try {
+            $apolice = Apolice::withTrashed()->findOrFail($id);
+            $apolice->restore();
+        } catch (\Exception $e) {
+            throw new \Exception('Erro ao restaurar segurado: ' . $e->getMessage());
+        }
+    }
 }

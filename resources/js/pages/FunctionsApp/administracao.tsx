@@ -1,4 +1,8 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { router } from '@inertiajs/react';
+import { toast } from 'sonner';
+import { RotateCcw } from 'lucide-react';
+
 interface User {
     id: number;
     name: string;
@@ -7,12 +11,38 @@ interface User {
     created_at?: string;
 }
 
-interface Props {
-    users: User[];
+interface SeguradoInativo {
+    id: number;
+    nome_completo: string;
+    cpf_cnpj: string;
+    email: string;
+    deleted_at: string;
 }
 
-export default function Administracao({ users }: Props) {
-    console.log("Usuários recebidos no front:", users);
+interface Props {
+    users: User[];
+    inativos: SeguradoInativo[];
+}
+
+export default function Administracao({ users, inativos }: Props) {
+    const restaurarSegurado = (id: number) => {
+        router.patch(
+            `/clientes/restaurar/${id}`,
+            {},
+            {
+                onSuccess: () => {
+                    toast.success('Cliente restaurado com sucesso!', {
+                        position: 'top-right',
+                    });
+                },
+                onError: () => {
+                    toast.error('Erro ao restaurar cliente.', {
+                        position: 'top-right',
+                    });
+                },
+            },
+        );
+    };
     return (
         <div className="min-h-screen space-y-6 bg-background p-6 sm:p-8">
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
@@ -100,14 +130,78 @@ export default function Administracao({ users }: Props) {
                     </div>
                 </TabsContent>
 
-                <TabsContent value="clientes">
-                    <div className="rounded-2xl border border-border/70 bg-background p-6">
-                        <h2 className="mb-2 text-lg font-semibold">
-                            Gerenciamento de Usuários
+                <TabsContent value="clientes" className="space-y-6">
+                    <div>
+                        <h2 className="text-xl font-bold tracking-tight">
+                            Clientes Inativos (Lixeira)
                         </h2>
                         <p className="text-sm text-muted-foreground">
-                            Listagem e controle de acessos dos usuários.
+                            Clientes excluídos podem ser restaurados a qualquer
+                            momento
                         </p>
+                    </div>
+
+                    <div className="overflow-hidden rounded-2xl border border-border/70 bg-background shadow-sm">
+                        <div className="overflow-x-auto">
+                            <table className="w-full border-collapse text-left">
+                                <thead>
+                                    <tr className="border-b border-border/70 bg-muted/30 text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+                                        <th className="p-4 pl-6">Cliente</th>
+                                        <th className="p-4">CPF/CNPJ</th>
+                                        <th className="p-4">Excluído em</th>
+                                        <th className="p-4 pr-6 text-right">
+                                            Ações
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border/70 text-sm">
+                                    {inativos.length === 0 ? (
+                                        <tr>
+                                            <td
+                                                colSpan={4}
+                                                className="p-8 text-center text-muted-foreground"
+                                            >
+                                                Nenhum cliente na lixeira.
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        inativos.map((segurado) => (
+                                            <tr
+                                                key={segurado.id}
+                                                className="hover:bg-muted/30"
+                                            >
+                                                <td className="p-4 pl-6 font-semibold text-foreground">
+                                                    {segurado.nome_completo}
+                                                </td>
+                                                <td className="p-4 text-muted-foreground">
+                                                    {segurado.cpf_cnpj}
+                                                </td>
+                                                <td className="p-4 text-muted-foreground">
+                                                    {new Date(
+                                                        segurado.deleted_at,
+                                                    ).toLocaleDateString(
+                                                        'pt-BR',
+                                                    )}
+                                                </td>
+                                                <td className="p-4 pr-6 text-right">
+                                                    <button
+                                                        onClick={() =>
+                                                            restaurarSegurado(
+                                                                segurado.id,
+                                                            )
+                                                        }
+                                                        className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600 hover:bg-emerald-500/20"
+                                                    >
+                                                        <RotateCcw className="size-3.5" />
+                                                        Restaurar
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </TabsContent>
 

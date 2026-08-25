@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Segurado extends Model
 {
     protected $table = 'segurados';
+    use SoftDeletes;
 
     protected $fillable = [
         'nome_completo',

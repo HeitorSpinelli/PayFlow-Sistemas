@@ -637,12 +637,14 @@ export default function Notificacoes({
             </div>
 
             <NotificacaoModal
+                key={modalCanal}
                 canal={modalCanal}
                 onClose={fecharModal}
                 segurados={segurados}
                 tipos={tipos}
             />
             <ConfigNotificacaoModal
+                key={String(configAberto)}
                 aberto={configAberto}
                 onClose={() => setConfigAberto(false)}
                 tipos={tipos}

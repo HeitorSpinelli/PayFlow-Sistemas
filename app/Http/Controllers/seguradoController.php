@@ -68,8 +68,27 @@ class SeguradoController extends Controller
         }
     }
 
+    public function inativos()
+    {
+        $segurados = $this->seguradoService->listarInativos();
+
+        return inertia('FunctionsApp/administracao', [
+            'segurados' => $segurados,
+        ]);
+    }
+
+    public function restaurar(int $id)
+    {
+        try {
+            $this->seguradoService->restore($id);
+            return redirect()->back()->with('success', 'Segurado Reativado Com Sucesso');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Não foi possivel reativar o segurado');
+        }
+    }
+
     public function exportar(ExportacaoSeguradosService $exportacaoService)
-    {   
+    {
         return $exportacaoService->exportarSeguradosCsv();
     }
 }
