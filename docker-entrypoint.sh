@@ -1,6 +1,13 @@
 #!/bin/bash
 
-# Gera a APP_KEY se não existir
+# Corrige permissões do storage
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Regenera o autoloader
+composer dump-autoload --optimize
+
+# Gera a APP_KEY
 php artisan key:generate --force
 
 # Roda as migrations
