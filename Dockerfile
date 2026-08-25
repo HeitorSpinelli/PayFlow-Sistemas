@@ -28,7 +28,7 @@ WORKDIR /var/www/html
 COPY . .
 
 # Instala dependências PHP
-RUN composer install --optimize-autoloader --no-dev
+RUN COMPOSER_MEMORY_LIMIT=-1 composer install --optimize-autoloader --no-dev --no-scripts
 
 # Instala dependências Node e builda o frontend
 RUN npm install && npm run build
