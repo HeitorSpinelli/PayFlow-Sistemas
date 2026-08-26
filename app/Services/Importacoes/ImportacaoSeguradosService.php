@@ -4,7 +4,7 @@ namespace App\Services\Importacoes;
 
 use App\Models\Apolice;
 use App\Models\HistoricoImportacao;
-use App\Models\parcelas as Parcela;
+use App\Models\Parcela as Parcela;
 use App\Models\Ramo;
 use App\Models\Segurado;
 use App\Models\Seguradora;

@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Http\Requests\StorePagamentoRequest;
-use App\Models\pagamento;
-use App\Models\segurado;
+use App\Models\Pagamento;
+use App\Models\Segurado;
 use App\Models\Apolice;
 use App\Services\Pagamento\PagamentoService;
 use App\Services\Exportacoes\ExportacaoPagamentoService;
@@ -22,8 +22,13 @@ class pagamentoController extends Controller
     public function store(StorePagamentoRequest $request)
     {
         $data = $request->validated();
-        $this->pagamentoService->store($data);
-        return redirect()->back()->with('success', 'Pagamento registrado com sucesso!');
+
+        try {
+            $this->pagamentoService->store($data);
+            return redirect()->back()->with('success', 'Pagamento registrado com sucesso!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erro ao registrar pagamento: ' . $e->getMessage());
+        }
     }
 
     public function show(Request $request)

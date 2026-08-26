@@ -7,7 +7,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use App\Models\Automacao;
 use App\Models\Segurado;
 use App\Models\Apolice;
-use App\Models\parcelas;
+use App\Models\Parcelas;
 use App\Services\Notificacao\NotificacaoService;
 use Dom\Notation;
 

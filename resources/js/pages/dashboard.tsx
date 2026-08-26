@@ -16,6 +16,14 @@ import {
     Users,
     Wallet,
 } from 'lucide-react';
+import { apolices } from '@/routes';
+
+interface Props {
+    totalClientes: number;
+    apolicesAtivas: number;
+    clientesDevedores: number;
+    receitaDoMes: number;
+}
 
 /* ------------------------------------------------------------------ */
 /* Dados de exemplo — trocar pelos dados reais vindos do Inertia      */
@@ -31,24 +39,83 @@ const RECEITA_MENSAL = [
 ];
 
 const VENCIMENTOS_PROXIMOS = [
-    { id: 1, cliente: 'Maria Souza', apolice: 'AP-30412', valor: 189.9, dias: 0, status: 'atrasado' as const },
-    { id: 2, cliente: 'Roberto Dias', apolice: 'AP-30733', valor: 620.0, dias: 1, status: 'atrasado' as const },
-    { id: 3, cliente: 'Fernanda Alves', apolice: 'AP-30690', valor: 455.3, dias: 2, status: 'pendente' as const },
-    { id: 4, cliente: 'Juliana Castro', apolice: 'AP-31005', valor: 512.75, dias: 4, status: 'pendente' as const },
-    { id: 5, cliente: 'André Ferreira', apolice: 'AP-31210', valor: 398.9, dias: 6, status: 'pendente' as const },
+    {
+        id: 1,
+        cliente: 'Maria Souza',
+        apolice: 'AP-30412',
+        valor: 189.9,
+        dias: 0,
+        status: 'atrasado' as const,
+    },
+    {
+        id: 2,
+        cliente: 'Roberto Dias',
+        apolice: 'AP-30733',
+        valor: 620.0,
+        dias: 1,
+        status: 'atrasado' as const,
+    },
+    {
+        id: 3,
+        cliente: 'Fernanda Alves',
+        apolice: 'AP-30690',
+        valor: 455.3,
+        dias: 2,
+        status: 'pendente' as const,
+    },
+    {
+        id: 4,
+        cliente: 'Juliana Castro',
+        apolice: 'AP-31005',
+        valor: 512.75,
+        dias: 4,
+        status: 'pendente' as const,
+    },
+    {
+        id: 5,
+        cliente: 'André Ferreira',
+        apolice: 'AP-31210',
+        valor: 398.9,
+        dias: 6,
+        status: 'pendente' as const,
+    },
 ];
 
 const NOTIFICACOES_RECENTES = [
-    { id: 1, texto: 'Cobrança enviada para Maria Souza', tempo: 'há 12 min', status: 'enviado' as const },
-    { id: 2, texto: 'Falha ao notificar Juliana Castro', tempo: 'há 40 min', status: 'falha' as const },
-    { id: 3, texto: 'Lembrete de renovação — Carlos Lima', tempo: 'há 2h', status: 'enviado' as const },
-    { id: 4, texto: 'Cobrança pendente — Roberto Dias', tempo: 'há 3h', status: 'pendente' as const },
+    {
+        id: 1,
+        texto: 'Cobrança enviada para Maria Souza',
+        tempo: 'há 12 min',
+        status: 'enviado' as const,
+    },
+    {
+        id: 2,
+        texto: 'Falha ao notificar Juliana Castro',
+        tempo: 'há 40 min',
+        status: 'falha' as const,
+    },
+    {
+        id: 3,
+        texto: 'Lembrete de renovação — Carlos Lima',
+        tempo: 'há 2h',
+        status: 'enviado' as const,
+    },
+    {
+        id: 4,
+        texto: 'Cobrança pendente — Roberto Dias',
+        tempo: 'há 3h',
+        status: 'pendente' as const,
+    },
 ];
 
 const AÇÕES_RAPIDAS = [
     { titulo: 'Nova Seguradora', href: '/seguradoras', icon: Building2 },
     { titulo: 'Agenda de Pagamentos', href: '/agenda', icon: Calendar },
-    { titulo: 'Importar Dados', href: '/importar-dados', icon: FileSpreadsheet },
+    {
+        titulo: 'Importar Dados',
+        href: '/importar-dados',
+        icon: FileSpreadsheet,
+    },
     { titulo: 'Enviar Notificação', href: '/notificacoes', icon: Send },
 ];
 
@@ -57,12 +124,21 @@ const AÇÕES_RAPIDAS = [
 /* ------------------------------------------------------------------ */
 
 function formatarMoeda(valor: number) {
-    return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    return valor.toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+    });
 }
 
 const STATUS_VENCIMENTO = {
-    atrasado: { label: 'Atrasado', badge: 'border-red-500/20 bg-red-500/10 text-red-600' },
-    pendente: { label: 'A vencer', badge: 'border-amber-500/20 bg-amber-500/10 text-amber-600' },
+    atrasado: {
+        label: 'Atrasado',
+        badge: 'border-red-500/20 bg-red-500/10 text-red-600',
+    },
+    pendente: {
+        label: 'A vencer',
+        badge: 'border-amber-500/20 bg-amber-500/10 text-amber-600',
+    },
 };
 
 const STATUS_NOTIFICACAO = {
@@ -75,8 +151,15 @@ const STATUS_NOTIFICACAO = {
 /* Componente principal                                               */
 /* ------------------------------------------------------------------ */
 
-export default function Dashboard() {
-    const { auth } = usePage().props as unknown as { auth: { user: { name: string } } };
+export default function Dashboard({
+    totalClientes,
+    apolicesAtivas,
+    clientesDevedores,
+    receitaDoMes,
+}: Props) {
+    const { auth } = usePage().props as unknown as {
+        auth: { user: { name: string } };
+    };
 
     const primeiroNome = auth?.user?.name?.split(' ')[0] ?? 'por aqui';
     const dataHoje = new Date().toLocaleDateString('pt-BR', {
@@ -84,12 +167,11 @@ export default function Dashboard() {
         day: '2-digit',
         month: 'long',
     });
-    
+
     const maxReceita = useMemo(
         () => Math.max(...RECEITA_MENSAL.map((d) => d.valor)),
         [],
     );
-
 
     return (
         <>
@@ -125,7 +207,9 @@ export default function Dashboard() {
                                 +8
                             </span>
                         </div>
-                        <p className="relative mt-4 text-2xl font-bold text-foreground">248</p>
+                        <p className="relative mt-4 text-2xl font-bold text-foreground">
+                            {totalClientes}
+                        </p>
                         <p className="relative text-xs font-semibold text-muted-foreground">
                             Total de Clientes
                         </p>
@@ -142,7 +226,9 @@ export default function Dashboard() {
                                 +14
                             </span>
                         </div>
-                        <p className="relative mt-4 text-2xl font-bold text-foreground">312</p>
+                        <p className="relative mt-4 text-2xl font-bold text-foreground">
+                            {apolicesAtivas}
+                        </p>
                         <p className="relative text-xs font-semibold text-muted-foreground">
                             Apólices Ativas
                         </p>
@@ -159,7 +245,9 @@ export default function Dashboard() {
                                 -3
                             </span>
                         </div>
-                        <p className="relative mt-4 text-2xl font-bold text-foreground">27</p>
+                        <p className="relative mt-4 text-2xl font-bold text-foreground">
+                            {clientesDevedores}
+                        </p>
                         <p className="relative text-xs font-semibold text-muted-foreground">
                             Clientes Devedores
                         </p>
@@ -177,7 +265,7 @@ export default function Dashboard() {
                             </span>
                         </div>
                         <p className="relative mt-4 text-2xl font-bold text-foreground">
-                            {formatarMoeda(23950)}
+                            {formatarMoeda(receitaDoMes)}
                         </p>
                         <p className="relative text-xs font-semibold text-muted-foreground">
                             Receita do Mês
@@ -210,7 +298,8 @@ export default function Dashboard() {
                                         (item.valor / maxReceita) * 100,
                                         6,
                                     );
-                                    const atual = idx === RECEITA_MENSAL.length - 1;
+                                    const atual =
+                                        idx === RECEITA_MENSAL.length - 1;
                                     return (
                                         <div
                                             key={item.mes}
@@ -218,7 +307,9 @@ export default function Dashboard() {
                                         >
                                             <div className="flex h-full w-full items-end">
                                                 <div
-                                                    style={{ height: `${altura}%` }}
+                                                    style={{
+                                                        height: `${altura}%`,
+                                                    }}
                                                     className={`w-full rounded-t-lg transition-all ${
                                                         atual
                                                             ? 'bg-gradient-to-t from-emerald-600 to-emerald-400 shadow-lg shadow-emerald-500/30'
@@ -249,7 +340,8 @@ export default function Dashboard() {
                                         Vencimentos próximos
                                     </h2>
                                     <p className="text-xs text-muted-foreground">
-                                        Clientes com pagamentos a vencer ou em atraso
+                                        Clientes com pagamentos a vencer ou em
+                                        atraso
                                     </p>
                                 </div>
                                 <Link
@@ -285,7 +377,11 @@ export default function Dashboard() {
                                             <span
                                                 className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${STATUS_VENCIMENTO[item.status].badge}`}
                                             >
-                                                {STATUS_VENCIMENTO[item.status].label}
+                                                {
+                                                    STATUS_VENCIMENTO[
+                                                        item.status
+                                                    ].label
+                                                }
                                             </span>
                                         </div>
                                     </div>
@@ -340,7 +436,10 @@ export default function Dashboard() {
 
                             <div className="flex flex-col gap-4">
                                 {NOTIFICACOES_RECENTES.map((n) => (
-                                    <div key={n.id} className="flex items-start gap-3">
+                                    <div
+                                        key={n.id}
+                                        className="flex items-start gap-3"
+                                    >
                                         <span
                                             className={`mt-1.5 size-2 shrink-0 rounded-full ${STATUS_NOTIFICACAO[n.status].dot}`}
                                         />

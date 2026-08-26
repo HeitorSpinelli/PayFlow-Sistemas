@@ -354,8 +354,8 @@ export default function Clientes({
                                             <td className="px-4 py-3.5 text-muted-foreground">
                                                 {segurado.cpf_cnpj
                                                     ? formataCpfCnpj(
-                                                            segurado.cpf_cnpj,
-                                                        )
+                                                          segurado.cpf_cnpj,
+                                                      )
                                                     : '-'}
                                             </td>
                                             <td className="px-4 py-3.5 text-muted-foreground">
@@ -462,7 +462,10 @@ export default function Clientes({
             </div>
 
             {/* Modal de criar cliente */}
-            <CreateSeguradoModal open={openModal} setOpen={setOpenModal} />
+            <CreateSeguradoModal 
+                key={openModal}
+                open={openModal} 
+                setOpen={setOpenModal} />
 
             {/* seguradoSelecionado diferente de null abre o modal de perfil para cada um */}
             {seguradoSelecionado && (

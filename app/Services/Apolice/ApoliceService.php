@@ -24,7 +24,7 @@ class ApoliceService
 
             // Cria cada parcela automaticamente
             for ($i = 1; $i <= $data['quantidade_parcelas']; $i++) {
-                \App\Models\parcelas::create([
+                \App\Models\Parcelas::create([
                     'apolice_id'      => $apolice->id,
                     'numero_parcela'  => $i,
                     'valor_parcela'   => $valorParcela,
@@ -113,8 +113,6 @@ class ApoliceService
             }
 
             return $query->paginate(10)->withQueryString();
-
-            return $query->paginate(10)->withQueryString();
         } catch (\Exception $e) {
             throw new \Exception('Erro ao buscar apólices: ' . $e->getMessage());
         }
@@ -172,5 +170,24 @@ class ApoliceService
         } catch (\Exception $e) {
             throw new \Exception('Erro ao restaurar segurado: ' . $e->getMessage());
         }
+    }
+
+    public function contarClientesDevedores()
+    {
+        return Segurado::whereHas('apolices.parcelas', function ($query) {
+            $query->where('status_pagamento', 'vencida');
+        })->count();
+    }
+    public function receitaDoMes()
+    {
+        return \App\Models\Pagamento::where('status', 'confirmado')
+            ->whereMonth('data_pagamento', now()->month)
+            ->whereYear('data_pagamento', now()->year)
+            ->sum('valor');
+    }
+
+    public function contarAtivas()
+    {
+        return Apolice::ativas()->count();
     }
 }

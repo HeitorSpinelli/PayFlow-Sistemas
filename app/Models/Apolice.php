@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Parcelas;
 
 class Apolice extends Model
 {
@@ -112,8 +113,12 @@ class Apolice extends Model
     {
         return $this->belongsTo(Ramo::class, 'ramo_id');
     }
-        public function pagamentos(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function pagamentos():HasMany
     {
         return $this->hasMany(Pagamento::class, 'apolice_id');
+    }
+    public function parcelas():HasMany
+    {
+        return $this->hasMany(parcelas::class, 'apolice_id');
     }
 }

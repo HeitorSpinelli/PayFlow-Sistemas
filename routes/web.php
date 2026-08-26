@@ -7,6 +7,7 @@ use App\Models\TipoNotificacao;
 use App\Models\Automacao;
 use App\Http\Controllers\ApolicesController;
 use App\Http\Controllers\AutomacoesController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ImportacaoController;
 use App\Http\Controllers\NotificacoesController;
 use App\Http\Controllers\pagamentoController;
@@ -30,7 +31,7 @@ Route::inertia('/', 'welcome', [
 Route::middleware(['auth', 'verified'])->group(function () {
 
     // Dashboard
-    Route::get('/dashboard', fn() => inertia('dashboard'))->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Módulo: Clientes (Segurados)
     Route::prefix('clientes')->group(function () {

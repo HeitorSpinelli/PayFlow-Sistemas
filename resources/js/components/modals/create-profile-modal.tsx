@@ -525,7 +525,7 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                     {segurado?.nome_completo}
                                 </span>
                                 ? Todos os dados vinculados a este segurado
-                                serão removidos permanentemente.
+                                serão desativados.
                             </p>
                         </Section>
                     )}

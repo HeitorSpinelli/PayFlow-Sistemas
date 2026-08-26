@@ -85,6 +85,25 @@ class ApolicesController extends Controller
         ]);
     }
 
+    public function inativos()
+    {
+        $segurados = $this->apoliceService->listarInativos();
+
+        return inertia('FunctionsApp/administracao', [
+            'segurados' => $segurados,
+        ]);
+    }
+
+    public function restaurar(int $id)
+    {
+        try {
+            $this->apoliceService->restore($id);
+            return redirect()->back()->with('success', 'Segurado Reativado Com Sucesso');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Não foi possivel reativar o segurado');
+        }
+    }
+
     public function exportar(ExportacaoApoliceService $exportacaoService)
     {   
         return $exportacaoService->exportarApolicesCsv();
