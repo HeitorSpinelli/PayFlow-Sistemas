@@ -103,6 +103,7 @@ export default function CreatePagamentoModal({
     const wrapperRef = useRef<HTMLDivElement>(null);
 
     // Sempre que o modal fechar (por X, Cancelar, clique fora, Esc, etc.), limpa tudo
+    // Serve como garantia extra — o caminho de sucesso já limpa explicitamente no handleSubmit
     useEffect(() => {
         if (!open) {
             reset();
@@ -215,6 +216,10 @@ export default function CreatePagamentoModal({
         post('/pagamentos', {
             onSuccess: () => {
                 toast.success('Pagamento registrado com sucesso!');
+                reset();
+                clearErrors();
+                setBuscaSegurado('');
+                setSugestoesAbertas(false);
                 setOpen(false);
             },
             onError: () => {

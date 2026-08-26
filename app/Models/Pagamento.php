@@ -27,11 +27,13 @@ class Pagamento extends Model
     public function scopeFilter(Builder $query, array $filters)
     {
         $query->when($filters['busca'] ?? null, function ($q, $busca) {
-            $q->whereHas('apolice.cliente', function ($sub) use ($busca) {
-                $sub->where('nome_completo', 'ilike', "%{$busca}%")
-                    ->orWhere('cpf_cnpj', 'ilike', "%{$busca}%");
-            })->orWhereHas('apolice', function ($sub) use ($busca) {
-                $sub->where('numero_apolice', 'ilike', "%{$busca}%");
+            $q->where(function ($sub) use ($busca) {
+                $sub->whereHas('apolice.cliente', function ($cliente) use ($busca) {
+                    $cliente->where('nome_completo', 'ilike', "%{$busca}%")
+                        ->orWhere('cpf_cnpj', 'ilike', "%{$busca}%");
+                })->orWhereHas('apolice', function ($apolice) use ($busca) {
+                    $apolice->where('numero_apolice', 'ilike', "%{$busca}%");
+                });
             });
         });
 

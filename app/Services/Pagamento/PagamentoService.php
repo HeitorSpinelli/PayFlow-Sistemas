@@ -11,18 +11,20 @@ class PagamentoService
     public function store(array $data)
     {
         return DB::transaction(function () use ($data) {
-            $pagamento = pagamento::create($data);
-
-            $parcela = parcelas::where('apolice_id', $data['apolice_id'])
+            $parcela = Parcelas::where('apolice_id', $data['apolice_id'])
                 ->where('numero_parcela', $data['parcela'])
                 ->first();
 
-            if ($parcela) {
-                $parcela->update([
-                    'status_pagamento' => 'paga',
-                    'data_pagamento'   => $data['data_pagamento'],
-                ]);
+            if (!$parcela) {
+                throw new \Exception('Não existe a parcela informada para esta apólice.');
             }
+
+            $pagamento = Pagamento::create($data);
+
+            $parcela->update([
+                'status_pagamento' => 'paga',
+                'data_pagamento'   => $data['data_pagamento'],
+            ]);
 
             return $pagamento;
         });
@@ -30,13 +32,13 @@ class PagamentoService
 
     public function count()
     {
-        return pagamento::count();
+        return Pagamento::count();
     }
 
     public function destroy(int $id)
     {
         try {
-            $pagamento = pagamento::findOrFail($id);
+            $pagamento = Pagamento::findOrFail($id);
             $pagamento->delete();
         } catch (\Exception $e) {
             throw new \Exception('Erro ao excluir pagamento: ' . $e->getMessage());

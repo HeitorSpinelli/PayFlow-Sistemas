@@ -19,7 +19,6 @@ class StorePagamentoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'segurado_id'      => 'required|integer|exists:segurados,id',
             'apolice_id'       => 'required|integer|exists:apolices,id',
             'parcela'          => [
                 'required',
@@ -39,8 +38,6 @@ class StorePagamentoRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'segurado_id.required' => 'O campo segurado é obrigatório.',
-            'segurado_id.exists' => 'O segurado selecionado não existe.',
             'apolice_id.required' => 'O campo apólice é obrigatório.',
             'apolice_id.exists' => 'A apólice selecionada não existe.',
             'parcela.required' => 'O campo parcela é obrigatório.',

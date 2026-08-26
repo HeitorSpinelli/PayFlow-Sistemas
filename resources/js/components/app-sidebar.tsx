@@ -51,11 +51,6 @@ const mainNavItems: NavItem[] = [
         icon: Wallet, // Ícone 5 (Cartão)
     },
     {
-        title: 'Cobranças',
-        href: '/cobrancas',
-        icon: FileSpreadsheet, // Ícone 4 (Cifrão/Recibo)
-    },
-    {
         title: 'Agenda',
         href: '/agenda',
         icon: CalendarDays, // Ícone 6 (Calendário)
