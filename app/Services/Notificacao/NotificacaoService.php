@@ -2,7 +2,7 @@
 
 namespace App\Services\Notificacao;
 
-use App\Models\notificacoes;
+use App\Models\Notificacoes;
 use App\Models\Segurado;
 use Illuminate\Support\Facades\Mail;
 use App\Models\TipoNotificacao;
@@ -15,7 +15,7 @@ class NotificacaoService
         foreach ($data['segurado_ids'] as $seguradoId) {
             $segurado = Segurado::findOrFail($seguradoId);
 
-            $notificacao = notificacoes::create([
+            $notificacao = Notificacoes::create([
                 'segurado_id'      => $seguradoId,
                 'user_id'          => auth()->id(),
                 'canal'            => $data['canal'],

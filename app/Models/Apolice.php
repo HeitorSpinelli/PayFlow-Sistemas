@@ -119,6 +119,6 @@ class Apolice extends Model
     }
     public function parcelas():HasMany
     {
-        return $this->hasMany(parcelas::class, 'apolice_id');
+        return $this->hasMany(Parcelas::class, 'apolice_id');
     }
 }

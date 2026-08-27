@@ -29,7 +29,7 @@ class NotificacoesController extends Controller
 
     public function filtrar(Request $request)
     {
-        $query = \App\Models\notificacoes::with(['tipoNotificacao', 'segurado']);
+        $query = \App\Models\Notificacoes::with(['tipoNotificacao', 'segurado']);
         $query->when($request->has('canal'), function ($q) use ($request) {
             $q->where('canal', $request->canal);
         });
