@@ -6,6 +6,7 @@ use App\Models\Seguradora;
 use App\Models\Segurado;
 use App\Models\Ramo;
 use App\Models\Apolice;
+use Illuminate\Support\Facades\DB;
 
 class ApoliceService
 {
@@ -120,14 +121,16 @@ class ApoliceService
     public function destroy(int $id)
     {
         try {
-            $apolice = Apolice::findOrFail($id);
-            foreach ($apolice->parcelas as $parcela) {
-                $parcela->delete();
-            }
-            foreach ($apolice->pagamentos as $pagamento) {
-                $pagamento->delete();
-            }
-            $apolice->delete();
+            DB::transaction(function () use ($id) {
+                $apolice = Apolice::findOrFail($id);
+                foreach ($apolice->parcelas as $parcela) {
+                    $parcela->delete();
+                }
+                foreach ($apolice->pagamentos as $pagamento) {
+                    $pagamento->delete();
+                }
+                $apolice->delete();
+            });
         } catch (\Exception $e) {
             throw new \Exception('Erro ao excluir apólice: ' . $e->getMessage());
         }
@@ -171,16 +174,18 @@ class ApoliceService
     public function restore(int $id)
     {
         try {
-            $apolice = Apolice::withTrashed()->findOrFail($id);
-            $apolice->restore();
-            $parcelas = $apolice->parcelas()->onlyTrashed()->get();
-            foreach ($parcelas as $parcela) {
-                $parcela->restore();
-            }
-            $pagamentos = $apolice->pagamentos()->onlyTrashed()->get();
-            foreach ($pagamentos as $pagamento) {
-                $pagamento->restore();
-            }
+            DB::transaction(function () use ($id) {
+                $apolice = Apolice::withTrashed()->findOrFail($id);
+                $apolice->restore();
+                $parcelas = $apolice->parcelas()->onlyTrashed()->get();
+                foreach ($parcelas as $parcela) {
+                    $parcela->restore();
+                }
+                $pagamentos = $apolice->pagamentos()->onlyTrashed()->get();
+                foreach ($pagamentos as $pagamento) {
+                    $pagamento->restore();
+                }
+            });
         } catch (\Exception $e) {
             throw new \Exception('Erro ao restaurar segurado: ' . $e->getMessage());
         }
