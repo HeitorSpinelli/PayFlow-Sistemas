@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Requests\StorePagamentoRequest;
 use App\Models\Pagamento;
+use App\Models\Parcelas;
 use App\Models\Segurado;
 use App\Models\Apolice;
 use App\Services\Pagamento\PagamentoService;
@@ -70,6 +71,7 @@ class pagamentoController extends Controller
             'pagamentos' => $pagamentos,
             'totalRecebido' => Pagamento::sum('valor'),
             'totalConfirmados' => Pagamento::count(),
+            'totalParcelas' => Parcelas::count(),
             'segurados' => Segurado::select('id', 'nome_completo', 'cpf_cnpj')->get(),
             'apolices' => Apolice::select('id', 'numero_apolice', 'cliente_id', 'valor_premio_total', 'quantidade_parcelas')
                 ->with(['pagamentos:id,apolice_id,parcela'])

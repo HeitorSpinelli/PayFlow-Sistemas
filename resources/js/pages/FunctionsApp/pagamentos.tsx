@@ -37,6 +37,7 @@ interface PageProps {
     pagamentos?: PaginatedPagamentos;
     totalRecebido?: number;
     totalConfirmados?: number;
+    totalParcelas?: number;
     segurados?: any[];
     apolices?: any[];
 }
@@ -45,6 +46,7 @@ export default function Pagamentos({
     pagamentos,
     totalRecebido = 0,
     totalConfirmados = 0,
+    totalParcelas = 0,
     segurados,
     apolices,
 }: PageProps) {
@@ -172,10 +174,10 @@ export default function Pagamentos({
                         <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl"></div>
                         <div className="relative z-10 flex flex-col gap-1">
                             <span className="text-xs font-medium text-muted-foreground">
-                                Total de Registros
+                                Total de Parcelas
                             </span>
                             <span className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                                {pagamentos?.total ?? 0}
+                                {totalParcelas}
                             </span>
                         </div>
                         <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
