@@ -33,13 +33,30 @@ class pagamentoController extends Controller
 
     public function show(Request $request)
     {
+        // Mostra só 1 linha por cliente (a 1ª parcela com o pagamento mais recente
+        // entre as apólices dele) na listagem principal; o restante (outras
+        // apólices/parcelas) fica disponível no histórico do cliente, aberto
+        // pelo menu de 3 pontos
+        $idsPagamentosRecentes = Pagamento::query()
+            ->join('apolices', 'apolices.id', '=', 'pagamentos.apolice_id')
+            ->where('pagamentos.parcela', 1)
+            ->orderBy('apolices.cliente_id')
+            ->orderByDesc('pagamentos.data_pagamento')
+            ->orderByDesc('pagamentos.id')
+            ->get(['apolices.cliente_id', 'pagamentos.id'])
+            ->unique('cliente_id')
+            ->pluck('id');
+
         $pagamentos = Pagamento::with('apolice.cliente')
+            ->whereIn('id', $idsPagamentosRecentes)
             ->filter($request->all())
             ->paginate(10)
             ->withQueryString()
             ->through(function ($pagamento) {
                 return [
                     'id' => $pagamento->id,
+                    'apolice_id' => $pagamento->apolice_id,
+                    'cliente_id' => $pagamento->apolice->cliente_id ?? null,
                     'cliente' => $pagamento->apolice->cliente->nome_completo ?? '—',
                     'apolice' => $pagamento->apolice->numero_apolice ?? '—',
                     'parcela' => $pagamento->parcela,
@@ -70,6 +87,13 @@ class pagamentoController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Erro ao excluir pagamento: ' . $e->getMessage());
         }
+    }
+
+    public function porCliente(int $clienteId)
+    {
+        return response()->json(
+            $this->pagamentoService->listarPorCliente($clienteId)
+        );
     }
 
     public function exportar(ExportacaoPagamentoService $exportacaoService)

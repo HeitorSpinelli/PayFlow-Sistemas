@@ -60,6 +60,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/', [pagamentoController::class, 'store']);
         Route::delete('/{id}', [pagamentoController::class, 'destroy'])->name('pagamentos.destroy');
         Route::get('/exportar', [pagamentoController::class, 'exportar']);
+        Route::get('/cliente/{clienteId}', [pagamentoController::class, 'porCliente']);
     });
 
     // Páginas Estáticas

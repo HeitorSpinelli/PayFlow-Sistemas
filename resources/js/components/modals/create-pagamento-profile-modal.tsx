@@ -4,10 +4,11 @@ import {
     ChevronRight,
     CreditCard,
     FileText,
+    History,
     ScrollText,
     Trash2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,6 +17,13 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 type Modo = 'visualizar' | 'excluir';
 
 function Section({ icon, title, description, children }: any) {
@@ -56,6 +64,53 @@ export default function PagamentoProfileModal({
     pagamento,
 }: any) {
     const [modo, setModo] = useState<Modo>('visualizar');
+    const [historico, setHistorico] = useState<any[]>([]);
+    const [carregandoHistorico, setCarregandoHistorico] = useState(false);
+    const [apoliceSelecionada, setApoliceSelecionada] = useState('');
+
+    // Busca todos os pagamentos (de todas as parcelas/apólices) do mesmo cliente
+    useEffect(() => {
+        if (!open || !pagamento?.cliente_id) {
+            setHistorico([]);
+            return;
+        }
+
+        // Começa mostrando a apólice do pagamento que foi clicado
+        setApoliceSelecionada(String(pagamento.apolice_id ?? ''));
+        setCarregandoHistorico(true);
+        fetch(`/pagamentos/cliente/${pagamento.cliente_id}`, {
+            headers: { Accept: 'application/json' },
+        })
+            .then((res) => res.json())
+            .then((data) => setHistorico(data))
+            .catch(() => toast.error('Erro ao carregar histórico de pagamentos.'))
+            .finally(() => setCarregandoHistorico(false));
+    }, [open, pagamento?.cliente_id, pagamento?.apolice_id]);
+
+    // Apólices distintas presentes no histórico, para o seletor
+    const apolicesDoCliente = useMemo(() => {
+        const vistas = new Map<
+            string,
+            { numero: string; quantidadeParcelas: number | null }
+        >();
+        historico.forEach((h) => {
+            if (h.apolice_id != null) {
+                vistas.set(String(h.apolice_id), {
+                    numero: h.apolice,
+                    quantidadeParcelas: h.apolice_quantidade_parcelas ?? null,
+                });
+            }
+        });
+        return Array.from(vistas, ([id, dados]) => ({ id, ...dados }));
+    }, [historico]);
+
+    const apoliceAtual = apolicesDoCliente.find(
+        (a) => a.id === apoliceSelecionada,
+    );
+
+    const historicoFiltrado = historico.filter(
+        (h) => String(h.apolice_id) === apoliceSelecionada,
+    );
 
     const fechar = () => {
         setModo('visualizar');
@@ -121,18 +176,42 @@ export default function PagamentoProfileModal({
                             <Section
                                 icon={<ScrollText className="h-4 w-4" />}
                                 title="Apólice"
-                                description="Referência da parcela paga"
+                                description="Escolha uma apólice do cliente para ver as parcelas pagas"
                             >
                                 <div className="grid gap-3 sm:grid-cols-2">
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
+                                            Número
+                                        </label>
+                                        <Select
+                                            value={apoliceSelecionada}
+                                            onValueChange={
+                                                setApoliceSelecionada
+                                            }
+                                        >
+                                            <SelectTrigger className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 text-sm shadow-sm">
+                                                <SelectValue placeholder="Selecione" />
+                                            </SelectTrigger>
+                                            <SelectContent className="rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-md">
+                                                {apolicesDoCliente.map(
+                                                    (a) => (
+                                                        <SelectItem
+                                                            key={a.id}
+                                                            value={a.id}
+                                                            className="cursor-pointer rounded-lg"
+                                                        >
+                                                            {a.numero}
+                                                        </SelectItem>
+                                                    ),
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                     <InfoField
-                                        label="Número"
-                                        value={pagamento.apolice}
-                                    />
-                                    <InfoField
-                                        label="Parcela"
+                                        label="Parcelas pagas"
                                         value={
-                                            pagamento.parcela
-                                                ? `${pagamento.parcela}ª`
+                                            apoliceAtual
+                                                ? `${historicoFiltrado.length} de ${apoliceAtual.quantidadeParcelas ?? '?'}`
                                                 : ''
                                         }
                                     />
@@ -177,6 +256,82 @@ export default function PagamentoProfileModal({
                                     </p>
                                 </Section>
                             )}
+
+                            <Section
+                                icon={<History className="h-4 w-4" />}
+                                title="Parcelas da apólice"
+                                description={
+                                    apoliceAtual
+                                        ? `${apoliceAtual.numero} — ${pagamento.cliente}`
+                                        : pagamento.cliente
+                                }
+                            >
+                                {carregandoHistorico ? (
+                                    <p className="text-sm text-muted-foreground">
+                                        Carregando...
+                                    </p>
+                                ) : historicoFiltrado.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground">
+                                        Nenhum outro pagamento encontrado.
+                                    </p>
+                                ) : (
+                                    <div className="overflow-hidden rounded-xl border border-border/70">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="border-b border-border/70 bg-background/60 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                                                    <th className="px-3 py-2 text-left">
+                                                        Parcela
+                                                    </th>
+                                                    <th className="px-3 py-2 text-left">
+                                                        Valor
+                                                    </th>
+                                                    <th className="px-3 py-2 text-left">
+                                                        Data
+                                                    </th>
+                                                    <th className="px-3 py-2 text-left">
+                                                        Status
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {historicoFiltrado.map((h) => (
+                                                    <tr
+                                                        key={h.id}
+                                                        className={`border-b border-border/70 last:border-b-0 ${
+                                                            h.id ===
+                                                            pagamento.id
+                                                                ? 'bg-emerald-500/10'
+                                                                : ''
+                                                        }`}
+                                                    >
+                                                        <td className="px-3 py-2 text-foreground">
+                                                            {h.parcela}ª
+                                                        </td>
+                                                        <td className="px-3 py-2 text-foreground">
+                                                            R$ {h.valor}
+                                                        </td>
+                                                        <td className="px-3 py-2 text-muted-foreground">
+                                                            {h.data_pagamento}
+                                                        </td>
+                                                        <td className="px-3 py-2">
+                                                            <span
+                                                                className={`inline-flex rounded-lg px-2 py-0.5 text-xs font-semibold capitalize ${
+                                                                    h.status ===
+                                                                    'confirmado'
+                                                                        ? 'bg-emerald-500/10 text-emerald-600'
+                                                                        : 'bg-amber-500/10 text-amber-600'
+                                                                }`}
+                                                            >
+                                                                {h.status}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </Section>
                         </>
                     )}
                     {modo === 'excluir' && (

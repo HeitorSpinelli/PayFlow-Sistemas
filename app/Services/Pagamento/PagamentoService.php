@@ -44,4 +44,33 @@ class PagamentoService
             throw new \Exception('Erro ao excluir pagamento: ' . $e->getMessage());
         }
     }
+
+    // Todos os pagamentos (de todas as parcelas/apólices) de um mesmo cliente
+    public function listarPorCliente(int $clienteId)
+    {
+        try {
+            return Pagamento::with('apolice')
+                ->whereHas('apolice', function ($query) use ($clienteId) {
+                    $query->where('cliente_id', $clienteId);
+                })
+                ->orderBy('apolice_id')
+                ->orderBy('parcela')
+                ->get()
+                ->map(function ($pagamento) {
+                    return [
+                        'id'                          => $pagamento->id,
+                        'apolice_id'                  => $pagamento->apolice_id,
+                        'apolice'                     => $pagamento->apolice->numero_apolice ?? '—',
+                        'apolice_quantidade_parcelas' => $pagamento->apolice->quantidade_parcelas ?? null,
+                        'parcela'                     => $pagamento->parcela,
+                        'valor'                       => $pagamento->valor,
+                        'data_pagamento'              => $pagamento->data_pagamento,
+                        'forma_pagamento'             => $pagamento->forma_pagamento,
+                        'status'                      => $pagamento->status,
+                    ];
+                });
+        } catch (\Exception $e) {
+            throw new \Exception('Erro ao listar pagamentos do cliente: ' . $e->getMessage());
+        }
+    }
 }
