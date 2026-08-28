@@ -1,28 +1,6 @@
-# ============================================================
-# STAGE 1 — Build dos assets do frontend (Vite + React)
-# ============================================================
-FROM node:20-alpine AS node-build
+FROM php:8.5-apache AS app
 
-WORKDIR /app
-
-# Copia só os arquivos de dependência primeiro (cache de layer do Docker:
-# se o package.json não mudar, o Docker reaproveita essa camada e pula o npm install)
-COPY package.json package-lock.json ./
-RUN npm ci
-
-# Copia o restante do código necessário pro build do Vite
-COPY resources/ resources/
-COPY public/ public/
-COPY vite.config.ts tsconfig.json components.json ./
-
-RUN npm run build
-
-# ============================================================
-# STAGE 2 — Imagem final PHP + Apache
-# ============================================================
-FROM php:8.4-apache AS app
-
-# Dependências de sistema necessárias pras extensões PHP abaixo
+# --- Dependências de sistema (PHP extensions + Node) ---
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     libzip-dev \
@@ -30,6 +8,9 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     unzip \
     git \
+    curl \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 # Extensões PHP que o Laravel + driver do Postgres (Supabase) precisam
@@ -56,15 +37,27 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Copia só os arquivos de dependência primeiro (mesmo truque de cache do Stage 1)
+# --- Dependências PHP primeiro (cache de layer) ---
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction
 
-# Copia o resto do código da aplicação
+# --- Dependências Node (cache de layer separado do composer) ---
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# --- Agora copia o resto do código da aplicação ---
+# Isso precisa vir ANTES do npm run build, porque o Wayfinder (plugin do Vite)
+# executa comandos "php artisan" que leem as rotas reais do projeto (routes/web.php etc)
+# para gerar os arquivos TypeScript correspondentes.
 COPY . .
 
-# Copia os assets já compilados do Stage 1 (não precisamos do Node na imagem final)
-COPY --from=node-build /app/public/build /var/www/html/public/build
+# Gera a APP_KEY temporária só pra permitir os comandos artisan rodarem durante o build
+# (o wayfinder precisa do framework "bootável", mesmo sem banco de dados disponível ainda).
+# A APP_KEY real de produção continua vindo das env vars do Render em runtime.
+RUN php artisan key:generate --force || true
+
+# Build do frontend — agora com PHP disponível pro Wayfinder gerar as rotas TS
+RUN npm run build
 
 # Roda os scripts do composer que dependem do código completo já estar presente
 RUN composer dump-autoload --optimize
