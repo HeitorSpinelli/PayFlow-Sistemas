@@ -121,6 +121,12 @@ class ApoliceService
     {
         try {
             $apolice = Apolice::findOrFail($id);
+            foreach ($apolice->parcelas as $parcela) {
+                $parcela->delete();
+            }
+            foreach ($apolice->pagamentos as $pagamento) {
+                $pagamento->delete();
+            }
             $apolice->delete();
         } catch (\Exception $e) {
             throw new \Exception('Erro ao excluir apólice: ' . $e->getMessage());
@@ -167,6 +173,14 @@ class ApoliceService
         try {
             $apolice = Apolice::withTrashed()->findOrFail($id);
             $apolice->restore();
+            $parcelas = $apolice->parcelas()->onlyTrashed()->get();
+            foreach ($parcelas as $parcela) {
+                $parcela->restore();
+            }
+            $pagamentos = $apolice->pagamentos()->onlyTrashed()->get();
+            foreach ($pagamentos as $pagamento) {
+                $pagamento->restore();
+            }
         } catch (\Exception $e) {
             throw new \Exception('Erro ao restaurar segurado: ' . $e->getMessage());
         }

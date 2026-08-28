@@ -35,7 +35,7 @@ class SeguradoService
         try {
             $segurado = Segurado::findOrFail($id);
             foreach ($segurado->apolices as $apolice) {
-                $apolice->delete();
+                $this->apolice_service->destroy($apolice->id);
             }
             $segurado->delete();
         } catch (\Exception $e) {
@@ -65,9 +65,9 @@ class SeguradoService
         try {
             $segurado = Segurado::withTrashed()->findOrFail($id);
             $segurado->restore();
-            $apolices = $segurado->apolices()->withTrashed()->get();
+            $apolices = $segurado->apolices()->onlyTrashed()->get();
             foreach($apolices as $apolice) {
-                $apolice->restore();
+                $this->apolice_service->restore($apolice->id);
             }
         } catch (\Exception $e) {
             throw new \Exception('Erro ao restaurar segurado: ' . $e->getMessage());
