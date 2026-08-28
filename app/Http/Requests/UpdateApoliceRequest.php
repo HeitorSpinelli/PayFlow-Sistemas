@@ -29,7 +29,7 @@ class UpdateApoliceRequest extends FormRequest
             'ramo_id' => 'required|exists:ramos,id',
             'valor_premio_total' => 'required|numeric',
             'valor_cobertura' => 'required|numeric',
-            'quantidade_parcelas' => 'required|integer',
+            'quantidade_parcelas' => 'required|integer|min:1|max:12',
             'forma_pagamento' => 'required|string|max:50',
             'inicio_vigencia' => 'required|date',
             'fim_vigencia' => 'required|after:inicio_vigencia',
