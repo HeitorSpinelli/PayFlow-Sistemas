@@ -33,13 +33,11 @@ class pagamentoController extends Controller
 
     public function show(Request $request)
     {
-        // Mostra só 1 linha por cliente (a 1ª parcela com o pagamento mais recente
-        // entre as apólices dele) na listagem principal; o restante (outras
-        // apólices/parcelas) fica disponível no histórico do cliente, aberto
-        // pelo menu de 3 pontos
+        // Mostra só 1 linha por cliente (o pagamento mais recente entre todas
+        // as parcelas/apólices dele) na listagem principal; o restante fica
+        // disponível no histórico do cliente, aberto pelo menu de 3 pontos
         $idsPagamentosRecentes = Pagamento::query()
             ->join('apolices', 'apolices.id', '=', 'pagamentos.apolice_id')
-            ->where('pagamentos.parcela', 1)
             ->orderBy('apolices.cliente_id')
             ->orderByDesc('pagamentos.data_pagamento')
             ->orderByDesc('pagamentos.id')
