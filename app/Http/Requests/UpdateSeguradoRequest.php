@@ -29,7 +29,8 @@ class UpdateSeguradoRequest extends FormRequest
             'celular_whatsapp' => 'nullable|string|max:20',
             'endereco'         => 'nullable|string|max:255',
             'cidade'           => 'nullable|string|max:100',
-            'estado'           => 'nullable|string|max:100',
+            'bairro'           => 'nullable|string|max:100',
+            'estado'           => 'nullable|string|size:2',
             'cep'              => 'nullable|string|max:10',
             'observacoes'      => 'nullable|string|max:255',
         ];

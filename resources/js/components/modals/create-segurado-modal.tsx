@@ -25,14 +25,12 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 
-import { 
-    aplicarMascaraCEP, 
-    formataCpfCnpj, 
-    formatarTelefone, 
+import {
+    aplicarMascaraCEP,
+    formataCpfCnpj,
+    formatarTelefone,
 } from '@/utils/Masks'; // Ajuste o caminho conforme a pasta onde você salvou o arquivo
 import 'react-toastify/dist/ReactToastify.css';
-
-
 
 function Section({ icon, title, description, children }: any) {
     return (
@@ -385,109 +383,41 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                         </div>
                     </Section>
 
-                    <Section
-                        icon={<MapPin className="h-4 w-4" />}
-                        title="Localização"
-                        description="Endereço principal"
-                    >
-                        <div className="space-y-4">
-                            <div className="space-y-2">
-                                <label className="text-sm leading-none font-medium">
-                                    Estado *
-                                </label>
-                                <Select
-                                    value={data.estado}
-                                    onValueChange={(valor) =>
-                                        setData('estado', valor)
-                                    }
-                                >
-                                    <SelectTrigger className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none">
-                                        <SelectValue placeholder="Selecione o estado" />
-                                    </SelectTrigger>
-                                    <SelectContent className="rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-md">
-                                        {estados.map((estado) => (
-                                            <SelectItem
-                                                key={estado.id}
-                                                value={estado.sigla}
-                                                className="cursor-pointer rounded-lg"
-                                            >
-                                                {estado.nome}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {errors.estado && (
-                                    <span className="text-xs font-medium text-rose-500">
-                                        {errors.estado}
-                                    </span>
-                                )}
-                            </div>
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <div className="space-y-2">
-                                    <label className="text-sm leading-none font-medium">
-                                        Cidade *
-                                    </label>
-                                    <Input
-                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
-                                        placeholder="São Paulo"
-                                        value={data.cidade}
-                                        onChange={(e) =>
-                                            setData('cidade', e.target.value)
-                                        }
-                                    />
-                                    {errors.cidade && (
-                                        <span className="text-xs font-medium text-rose-500">
-                                            {errors.cidade}
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm leading-none font-medium">
-                                        CEP *
-                                    </label>
-                                    <Input
-                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
-                                        type="text"
-                                        placeholder="00000-000"
-                                        value={data.cep}
-                                        onChange={(e) => {
-                                            const cepMascarado =
-                                                aplicarMascaraCEP(
-                                                    e.target.value,
-                                                );
-                                            setData('cep', cepMascarado);
-                                        }}
-                                        onBlur={(e) =>
-                                            buscarCep(e.target.value)
-                                        }
-                                    />
-                                    {errors.cep && (
-                                        <span className="text-xs font-medium text-rose-500">
-                                            {errors.cep}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm leading-none font-medium">
-                                    Endereço *
-                                </label>
-                                <Input
-                                    className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
-                                    placeholder="Avenida Bernardino de Campos"
-                                    value={data.endereco}
-                                    onChange={(e) =>
-                                        setData('endereco', e.target.value)
-                                    }
-                                />
-                                {errors.endereco && (
-                                    <span className="text-xs font-medium text-rose-500">
-                                        {errors.endereco}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                    </Section>
+                    <div className="space-y-2">
+                        <label className="text-sm leading-none font-medium">
+                            Endereço *
+                        </label>
+                        <Input
+                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                            placeholder="Avenida Bernardino de Campos"
+                            value={data.endereco}
+                            onChange={(e) =>
+                                setData('endereco', e.target.value)
+                            }
+                        />
+                        {errors.endereco && (
+                            <span className="text-xs font-medium text-rose-500">
+                                {errors.endereco}
+                            </span>
+                        )}
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm leading-none font-medium">
+                            Bairro
+                        </label>
+                        <Input
+                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                            placeholder="Centro"
+                            value={data.bairro}
+                            onChange={(e) => setData('bairro', e.target.value)}
+                        />
+                        {errors.bairro && (
+                            <span className="text-xs font-medium text-rose-500">
+                                {errors.bairro}
+                            </span>
+                        )}
+                    </div>
 
                     <Section
                         icon={<FileText className="h-4 w-4" />}

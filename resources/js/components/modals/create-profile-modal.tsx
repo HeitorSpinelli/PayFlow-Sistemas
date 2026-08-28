@@ -92,6 +92,7 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
         telefone_fixo: segurado?.telefone_fixo ?? '',
         celular_whatsapp: segurado?.celular_whatsapp ?? '',
         endereco: segurado?.endereco ?? '',
+        bairro: segurado?.bairro ?? '',
         cidade: segurado?.cidade ?? '',
         estado: segurado?.estado ?? '',
         cep: segurado?.cep ?? '',
@@ -175,8 +176,8 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
         modo === 'editar'
             ? 'Editar'
             : modo === 'excluir'
-            ? 'Excluir'
-            : 'Detalhes';
+              ? 'Excluir'
+              : 'Detalhes';
 
     return (
         <Dialog open={open} onOpenChange={fechar}>
@@ -414,6 +415,28 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                             }
                                         />
                                     </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-sm leading-none font-medium">
+                                            Bairro
+                                        </label>
+                                        <Input
+                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                            value={data.bairro}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'bairro',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                        {errors.bairro && (
+                                            <span className="text-xs font-medium text-rose-500">
+                                                {errors.bairro}
+                                            </span>
+                                        )}
+                                    </div>
+
                                     <div className="grid gap-4 sm:grid-cols-3">
                                         <div className="space-y-2">
                                             <label className="text-sm leading-none font-medium">

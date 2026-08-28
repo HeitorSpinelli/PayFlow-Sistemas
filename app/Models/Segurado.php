@@ -20,6 +20,7 @@ class Segurado extends Model
         'celular_whatsapp',
         'endereco',
         'cidade',
+        'bairro',
         'estado',
         'cep',
         'observacoes'

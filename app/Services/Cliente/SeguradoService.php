@@ -5,6 +5,7 @@ namespace App\Services\Cliente;
 use App\Models\Apolice;
 use App\Models\Segurado;
 use App\Services\Apolice\ApoliceService;
+use Illuminate\Support\Facades\DB;
 
 class SeguradoService
 {
@@ -33,11 +34,13 @@ class SeguradoService
     public function destroy(int $id)
     {
         try {
-            $segurado = Segurado::findOrFail($id);
+            DB::transaction(function () use ($id) {
+                $segurado = Segurado::findOrFail($id);
             foreach ($segurado->apolices as $apolice) {
                 $this->apolice_service->destroy($apolice->id);
             }
             $segurado->delete();
+            });
         } catch (\Exception $e) {
             throw new \Exception('Erro ao excluir segurado: ' . $e->getMessage());
         }
@@ -46,6 +49,7 @@ class SeguradoService
     public function update(int $id, array $data)
     {
         try {
+            unset($data['cpf_cnpj']);
             $segurado = Segurado::findOrFail($id);
             $segurado->update($data);
         } catch (\Exception $e) {
@@ -63,12 +67,14 @@ class SeguradoService
     public function restore(int $id)
     {
         try {
-            $segurado = Segurado::withTrashed()->findOrFail($id);
+            DB::transaction(function () use ($id) {
+                $segurado = Segurado::withTrashed()->findOrFail($id);
             $segurado->restore();
             $apolices = $segurado->apolices()->onlyTrashed()->get();
             foreach($apolices as $apolice) {
                 $this->apolice_service->restore($apolice->id);
             }
+            });
         } catch (\Exception $e) {
             throw new \Exception('Erro ao restaurar segurado: ' . $e->getMessage());
         }

@@ -36,4 +36,10 @@ class UpdateApoliceRequest extends FormRequest
             'observacoes' => 'nullable|string'
         ];
     }
+    public function messages(): array
+    {
+        return [
+            'quantidade_parcelas.max' => 'O máximo de parcelas é 12'
+        ];
+    }
 }
