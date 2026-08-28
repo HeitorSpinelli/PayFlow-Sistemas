@@ -43,18 +43,23 @@ class Segurado extends Model
 
     public function scopeFilter($query, array $filters)
     {
-        //Se usuario digitou algo no campo que seja diferente de nulo, ele entra no function anonimo
-        // onde define q onde nome for parecidos ao busca ou cpf_cnpj
+        // Bloco de busca — agora isolado dentro de parênteses
         $query->when($filters['busca'] ?? null, function ($q, $busca) {
             $buscaLimpa = preg_replace('/\D/', '', $busca);
-            $q->where('nome_completo', 'iLike', "%{$busca}%");
-            if (!empty($buscaLimpa)) {
-                $q->orWhere('cpf_cnpj', 'iLike', "%{$busca}%")
-                    ->orWhereRaw("REGEXP_REPLACE(cpf_cnpj, '[^0-9]', '', 'g') iLike ?", ["%{$buscaLimpa}%"]);
-            } else {
-                $q->orWhere('cpf_cnpj', 'iLike', "%{$busca}%");
-            }
+
+            $q->where(function ($subQuery) use ($busca, $buscaLimpa) {
+                $subQuery->where('nome_completo', 'iLike', "%{$busca}%");
+
+                if (!empty($buscaLimpa)) {
+                    $subQuery->orWhere('cpf_cnpj', 'iLike', "%{$busca}%")
+                        ->orWhereRaw("REGEXP_REPLACE(cpf_cnpj, '[^0-9]', '', 'g') iLike ?", ["%{$buscaLimpa}%"]);
+                } else {
+                    $subQuery->orWhere('cpf_cnpj', 'iLike', "%{$busca}%");
+                }
+            });
         });
+
+        // Bloco de status — continua igual, fora do agrupamento acima
         $query->when($filters['status'] ?? null, function ($q, $status) {
             if ($status === 'Ativos') {
                 $q->has('apolices');
