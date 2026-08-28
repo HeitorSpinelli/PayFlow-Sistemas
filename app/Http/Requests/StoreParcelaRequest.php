@@ -24,10 +24,11 @@ class StoreParcelaRequest extends FormRequest
     {
         return [
             'apolice_id' => 'required|exists:apolices,id',
-            'numero_parcela' => 'required|integer',
+            'numero_parcela' => 'required|integer|max:12',
             'valor_parcela' => 'required|numeric',
             'data_vencimento' => 'required|date',
             'status_pagamento' => 'required|string'
         ];
     }
 }
+
