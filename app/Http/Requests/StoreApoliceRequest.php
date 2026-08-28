@@ -29,7 +29,7 @@ class StoreApoliceRequest extends FormRequest
             'ramo_id' => 'required|exists:ramos,id',
             'valor_premio_total' => 'required|numeric|min:0',
             'valor_cobertura' => 'required|numeric|min:0',
-            'quantidade_parcelas' => 'required|integer|min:1',
+            'quantidade_parcelas' => 'required|integer|min:1|max:12',
             'forma_pagamento' => 'required|string|max:50',
             'inicio_vigencia' => 'required|date',
             'fim_vigencia' => 'required|date|after:inicio_vigencia',
