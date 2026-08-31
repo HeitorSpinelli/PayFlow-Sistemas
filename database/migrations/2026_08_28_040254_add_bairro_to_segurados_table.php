@@ -9,7 +9,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('segurados', function (Blueprint $table) {
-            $table->dropColumn('100');
             $table->string('bairro', 100)->nullable()->after('endereco');
         });
     }
@@ -18,7 +17,6 @@ return new class extends Migration
     {
         Schema::table('segurados', function (Blueprint $table) {
             $table->dropColumn('bairro');
-            $table->string('100')->nullable();
         });
     }
 };

@@ -121,8 +121,12 @@ Route::middleware(['auth', 'can:is-admin'])->group(function () {
         Route::delete('/{id}', [AutomacoesController::class, 'destroy']);
     });
 
+    
     // Administração
-    Route::get('/administracao/usuarios', [UserController::class, 'index'])->name('users');
+    Route::prefix('/administracao')->group(function () {
+        Route::get('/usuarios', [UserController::class, 'index'])->name('users');
+        Route::put('/usuarios/{id}', [UserController::class, 'update']);
+    });
 });
 
 require __DIR__ . '/settings.php';

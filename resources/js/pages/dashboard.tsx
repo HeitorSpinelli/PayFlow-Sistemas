@@ -10,13 +10,21 @@ import {
     Clock,
     FileSpreadsheet,
     Send,
-    ShieldCheck,
     Sparkles,
     UserRoundX,
-    Users,
-    Wallet,
 } from 'lucide-react';
-import { apolices } from '@/routes';
+import {
+    Bar,
+    BarChart,
+    CartesianGrid,
+    Cell,
+    Pie,
+    PieChart,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
+} from 'recharts';
 
 interface VencimentoProximo {
     id: number;
@@ -27,26 +35,22 @@ interface VencimentoProximo {
     status: 'atrasado' | 'pendente';
 }
 
+interface DistribuicaoRamo {
+    tipo: string;
+    total: number;
+}
+
 interface Props {
-    totalClientes: number;
-    apolicesAtivas: number;
     clientesDevedores: number;
-    receitaDoMes: number;
     vencimentosProximos: VencimentoProximo[];
+    receitaMensal: Record<string, any>[];
+    clientesAtivosMensal: Record<string, any>[];
+    distribuicaoPorRamo: DistribuicaoRamo[];
 }
 
 /* ------------------------------------------------------------------ */
-/* Dados de exemplo — trocar pelos dados reais vindos do Inertia      */
+/* Dados de exemplo — só o que ainda não vem do backend                */
 /* ------------------------------------------------------------------ */
-
-const RECEITA_MENSAL = [
-    { mes: 'Mar', valor: 18200 },
-    { mes: 'Abr', valor: 21400 },
-    { mes: 'Mai', valor: 19800 },
-    { mes: 'Jun', valor: 24100 },
-    { mes: 'Jul', valor: 26700 },
-    { mes: 'Ago', valor: 23950 },
-];
 
 const NOTIFICACOES_RECENTES = [
     {
@@ -86,6 +90,19 @@ const AÇÕES_RAPIDAS = [
     { titulo: 'Enviar Notificação', href: '/notificacoes', icon: Send },
 ];
 
+// Paleta das fatias da pizza — ancorada nas 3 cores que o resto do sistema
+// já usa (emerald = positivo, amber = pendente, rose = atenção/negativo),
+// variando tom/saturação em vez de introduzir matizes novos (azul, roxo, etc.)
+const CORES_RAMO = [
+    '#10b981', // emerald-500
+    '#f59e0b', // amber-500
+    '#f43f5e', // rose-500
+    '#6ee7b7', // emerald-300
+    '#fcd34d', // amber-300
+    '#fda4af', // rose-300
+    '#94a3b8', // slate-400 (fallback neutro)
+];
+
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
 /* ------------------------------------------------------------------ */
@@ -95,6 +112,18 @@ function formatarMoeda(valor: number) {
         style: 'currency',
         currency: 'BRL',
     });
+}
+
+// Calcula a variação percentual entre o último e o penúltimo ponto de uma
+// série mensal (mês atual vs. mês anterior). Retorna null quando não há
+// base de comparação válida (ex: mês anterior com valor 0).
+function useVariacaoMensal(serie: Record<string, any>[], campo: string) {
+    return useMemo(() => {
+        const atual = serie[serie.length - 1]?.[campo] ?? 0;
+        const anterior = serie[serie.length - 2]?.[campo] ?? 0;
+        if (anterior <= 0) return null;
+        return ((atual - anterior) / anterior) * 100;
+    }, [serie, campo]);
 }
 
 const STATUS_VENCIMENTO = {
@@ -115,15 +144,132 @@ const STATUS_NOTIFICACAO = {
 };
 
 /* ------------------------------------------------------------------ */
+/* Componente reutilizável — elimina a duplicação entre os dois        */
+/* gráficos de barra mensais (Receita e Clientes ativos), que antes    */
+/* eram ~90 linhas quase idênticas copiadas e coladas.                 */
+/* ------------------------------------------------------------------ */
+
+interface TrendBarChartProps {
+    title: string;
+    subtitle: string;
+    data: Record<string, any>[];
+    dataKey: string;
+    color: string;
+    mutedColor: string;
+    cursorColor: string;
+    variacao: number | null;
+    tooltipFormatter: (value: number) => string;
+    emptyMessage: string;
+}
+
+function TrendBarChart({
+    title,
+    subtitle,
+    data,
+    dataKey,
+    color,
+    mutedColor,
+    cursorColor,
+    variacao,
+    tooltipFormatter,
+    emptyMessage,
+}: TrendBarChartProps) {
+    return (
+        <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card p-6 shadow-sm">
+            <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-emerald-500/10 blur-2xl" />
+
+            <div className="relative mb-5 flex items-start justify-between gap-2">
+                <div>
+                    <h2 className="text-sm font-bold tracking-tight text-foreground">
+                        {title}
+                    </h2>
+                    <p className="text-xs text-muted-foreground">{subtitle}</p>
+                </div>
+                {variacao !== null && (
+                    <span
+                        className={`flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${
+                            variacao >= 0
+                                ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600'
+                                : 'border-red-500/20 bg-red-500/10 text-red-600'
+                        }`}
+                    >
+                        {variacao >= 0 ? (
+                            <ArrowUpRight className="size-3" />
+                        ) : (
+                            <ArrowDownRight className="size-3" />
+                        )}
+                        {Math.abs(variacao).toFixed(1)}%
+                    </span>
+                )}
+            </div>
+
+            {data.length === 0 ? (
+                <p className="relative py-10 text-center text-sm text-muted-foreground">
+                    {emptyMessage}
+                </p>
+            ) : (
+                <div className="relative h-40">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                            data={data}
+                            margin={{ top: 4, right: 0, left: 0, bottom: 0 }}
+                        >
+                            <CartesianGrid
+                                vertical={false}
+                                className="stroke-border/40"
+                            />
+                            <XAxis
+                                dataKey="mes"
+                                tickLine={false}
+                                axisLine={false}
+                                tick={{ fontSize: 11 }}
+                                className="fill-muted-foreground"
+                            />
+                            <YAxis hide />
+                            <Tooltip
+                                content={({ active, payload }: any) =>
+                                    active && payload?.length ? (
+                                        <div className="rounded-lg border border-border/70 bg-popover px-3 py-2 text-xs shadow-md">
+                                            <p className="font-bold text-foreground">
+                                                {tooltipFormatter(
+                                                    payload[0].value,
+                                                )}
+                                            </p>
+                                        </div>
+                                    ) : null
+                                }
+                                cursor={{ fill: cursorColor }}
+                            />
+                            <Bar dataKey={dataKey} radius={[6, 6, 0, 0]}>
+                                {data.map((_, idx) => (
+                                    <Cell
+                                        key={idx}
+                                        fill={
+                                            idx === data.length - 1
+                                                ? color
+                                                : mutedColor
+                                        }
+                                    />
+                                ))}
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            )}
+        </div>
+    );
+}
+
+/* ------------------------------------------------------------------ */
 /* Componente principal                                               */
 /* ------------------------------------------------------------------ */
 
 export default function Dashboard({
-    totalClientes,
-    apolicesAtivas,
     clientesDevedores,
-    receitaDoMes,
     vencimentosProximos = [],
+    receitaMensal = [],
+    clientesAtivosMensal = [],
+    distribuicaoPorRamo = [],
 }: Props) {
     const { auth } = usePage().props as unknown as {
         auth: { user: { name: string } };
@@ -136,10 +282,8 @@ export default function Dashboard({
         month: 'long',
     });
 
-    const maxReceita = useMemo(
-        () => Math.max(...RECEITA_MENSAL.map((d) => d.valor)),
-        [],
-    );
+    const variacaoReceita = useVariacaoMensal(receitaMensal, 'valor');
+    const variacaoClientes = useVariacaoMensal(clientesAtivosMensal, 'total');
 
     return (
         <>
@@ -162,142 +306,66 @@ export default function Dashboard({
                     </div>
                 </div>
 
-                {/* KPIs */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
-                        <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-emerald-500/10 blur-2xl" />
-                        <div className="relative flex items-start justify-between">
-                            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
-                                <Users className="size-5" />
-                            </span>
-                            <span className="flex items-center gap-0.5 text-xs font-bold text-emerald-600">
-                                <ArrowUpRight className="size-3.5" />
-                                +8
-                            </span>
+                {/* Faixa de alerta — Clientes Devedores */}
+                <div className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-rose-500/20 bg-rose-500/[0.04] px-5 py-4 shadow-sm sm:px-6">
+                    <div className="pointer-events-none absolute -top-12 -right-8 h-32 w-32 rounded-full bg-rose-500/10 blur-3xl" />
+                    <div className="relative flex items-center gap-3.5">
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-500/10 text-rose-600">
+                            <UserRoundX className="size-5" />
+                        </span>
+                        <div>
+                            <p className="text-2xl font-bold text-foreground">
+                                {clientesDevedores}
+                            </p>
+                            <p className="text-xs font-semibold text-muted-foreground">
+                                {clientesDevedores === 1
+                                    ? 'Cliente com parcela vencida'
+                                    : 'Clientes com parcelas vencidas'}
+                            </p>
                         </div>
-                        <p className="relative mt-4 text-2xl font-bold text-foreground">
-                            {totalClientes}
-                        </p>
-                        <p className="relative text-xs font-semibold text-muted-foreground">
-                            Total de Clientes
-                        </p>
                     </div>
-
-                    <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
-                        <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-emerald-500/10 blur-2xl" />
-                        <div className="relative flex items-start justify-between">
-                            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
-                                <ShieldCheck className="size-5" />
-                            </span>
-                            <span className="flex items-center gap-0.5 text-xs font-bold text-emerald-600">
-                                <ArrowUpRight className="size-3.5" />
-                                +14
-                            </span>
-                        </div>
-                        <p className="relative mt-4 text-2xl font-bold text-foreground">
-                            {apolicesAtivas}
-                        </p>
-                        <p className="relative text-xs font-semibold text-muted-foreground">
-                            Apólices Ativas
-                        </p>
-                    </div>
-
-                    <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
-                        <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-red-500/10 blur-2xl" />
-                        <div className="relative flex items-start justify-between">
-                            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/10 text-red-600">
-                                <UserRoundX className="size-5" />
-                            </span>
-                            <span className="flex items-center gap-0.5 text-xs font-bold text-emerald-600">
-                                <ArrowDownRight className="size-3.5" />
-                                -3
-                            </span>
-                        </div>
-                        <p className="relative mt-4 text-2xl font-bold text-foreground">
-                            {clientesDevedores}
-                        </p>
-                        <p className="relative text-xs font-semibold text-muted-foreground">
-                            Clientes Devedores
-                        </p>
-                    </div>
-
-                    <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
-                        <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-emerald-500/10 blur-2xl" />
-                        <div className="relative flex items-start justify-between">
-                            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
-                                <Wallet className="size-5" />
-                            </span>
-                            <span className="flex items-center gap-0.5 text-xs font-bold text-emerald-600">
-                                <ArrowUpRight className="size-3.5" />
-                                +7,2%
-                            </span>
-                        </div>
-                        <p className="relative mt-4 text-2xl font-bold text-foreground">
-                            {formatarMoeda(receitaDoMes)}
-                        </p>
-                        <p className="relative text-xs font-semibold text-muted-foreground">
-                            Receita do Mês
-                        </p>
-                    </div>
+                    {clientesDevedores > 0 && (
+                        <Link
+                            href="/agenda"
+                            className="relative flex shrink-0 items-center gap-1 text-xs font-bold text-rose-600 hover:text-rose-700"
+                        >
+                            Ver agenda
+                            <ChevronRight className="size-3.5" />
+                        </Link>
+                    )}
                 </div>
 
-                {/* Corpo: gráfico + vencimentos | ações rápidas + notificações */}
+                {/* Corpo: gráficos + vencimentos | pizza + ações rápidas + notificações */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.7fr_1fr]">
                     <div className="flex flex-col gap-6">
-                        {/* Gráfico de receita */}
-                        <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-sm">
-                            <div className="mb-6 flex items-center justify-between">
-                                <div>
-                                    <h2 className="text-base font-bold tracking-tight text-foreground">
-                                        Receita mensal
-                                    </h2>
-                                    <p className="text-xs text-muted-foreground">
-                                        Últimos 6 meses
-                                    </p>
-                                </div>
-                                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-bold text-emerald-600">
-                                    +7,2% vs. mês anterior
-                                </span>
-                            </div>
-
-                            <div className="flex h-48 items-end gap-3 sm:gap-5">
-                                {RECEITA_MENSAL.map((item, idx) => {
-                                    const altura = Math.max(
-                                        (item.valor / maxReceita) * 100,
-                                        6,
-                                    );
-                                    const atual =
-                                        idx === RECEITA_MENSAL.length - 1;
-                                    return (
-                                        <div
-                                            key={item.mes}
-                                            className="flex flex-1 flex-col items-center gap-2"
-                                        >
-                                            <div className="flex h-full w-full items-end">
-                                                <div
-                                                    style={{
-                                                        height: `${altura}%`,
-                                                    }}
-                                                    className={`w-full rounded-t-lg transition-all ${
-                                                        atual
-                                                            ? 'bg-gradient-to-t from-emerald-600 to-emerald-400 shadow-lg shadow-emerald-500/30'
-                                                            : 'bg-emerald-500/15'
-                                                    }`}
-                                                />
-                                            </div>
-                                            <span
-                                                className={`text-[11px] font-bold ${
-                                                    atual
-                                                        ? 'text-emerald-600'
-                                                        : 'text-muted-foreground'
-                                                }`}
-                                            >
-                                                {item.mes}
-                                            </span>
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                        {/* Receita e Clientes ativos lado a lado */}
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                            <TrendBarChart
+                                title="Receita mensal"
+                                subtitle="Últimos 6 meses"
+                                data={receitaMensal}
+                                dataKey="valor"
+                                color="#10b981"
+                                mutedColor="rgba(16,185,129,0.22)"
+                                cursorColor="rgba(16,185,129,0.08)"
+                                variacao={variacaoReceita}
+                                tooltipFormatter={(v) => formatarMoeda(v)}
+                                emptyMessage="Nenhum pagamento confirmado no período."
+                            />
+                            <TrendBarChart
+                                title="Clientes ativos"
+                                subtitle="Últimos 6 meses"
+                                data={clientesAtivosMensal}
+                                dataKey="total"
+                                color="#0d9488"
+                                mutedColor="rgba(13,148,136,0.22)"
+                                cursorColor="rgba(13,148,136,0.08)"
+                                variacao={variacaoClientes}
+                                tooltipFormatter={(v) =>
+                                    `${v} cliente(s) ativo(s)`
+                                }
+                                emptyMessage="Nenhum dado de cliente ativo no período."
+                            />
                         </div>
 
                         {/* Vencimentos próximos */}
@@ -365,6 +433,108 @@ export default function Dashboard({
 
                     {/* Coluna lateral */}
                     <div className="flex flex-col gap-6">
+                        {/* Distribuição por tipo de seguro (pizza) */}
+                        <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-sm">
+                            <h2 className="mb-1 text-base font-bold tracking-tight text-foreground">
+                                Tipos de seguro
+                            </h2>
+                            <p className="mb-4 text-xs text-muted-foreground">
+                                Apólices por ramo, todas as seguradoras
+                            </p>
+
+                            {distribuicaoPorRamo.length === 0 ? (
+                                <p className="py-8 text-center text-sm text-muted-foreground">
+                                    Nenhuma apólice cadastrada ainda.
+                                </p>
+                            ) : (
+                                <>
+                                    <div className="h-52">
+                                        <ResponsiveContainer
+                                            width="100%"
+                                            height="100%"
+                                        >
+                                            <PieChart>
+                                                <Pie
+                                                    data={distribuicaoPorRamo}
+                                                    dataKey="total"
+                                                    nameKey="tipo"
+                                                    innerRadius={48}
+                                                    outerRadius={78}
+                                                    paddingAngle={2}
+                                                >
+                                                    {distribuicaoPorRamo.map(
+                                                        (_, idx) => (
+                                                            <Cell
+                                                                key={idx}
+                                                                fill={
+                                                                    CORES_RAMO[
+                                                                        idx %
+                                                                            CORES_RAMO.length
+                                                                    ]
+                                                                }
+                                                            />
+                                                        ),
+                                                    )}
+                                                </Pie>
+                                                <Tooltip
+                                                    content={({
+                                                        active,
+                                                        payload,
+                                                    }: any) =>
+                                                        active &&
+                                                        payload?.length ? (
+                                                            <div className="rounded-lg border border-border/70 bg-popover px-3 py-2 text-xs shadow-md">
+                                                                <p className="font-bold text-foreground">
+                                                                    {
+                                                                        payload[0]
+                                                                            .name
+                                                                    }
+                                                                </p>
+                                                                <p className="text-muted-foreground">
+                                                                    {
+                                                                        payload[0]
+                                                                            .value
+                                                                    }{' '}
+                                                                    apólice(s)
+                                                                </p>
+                                                            </div>
+                                                        ) : null
+                                                    }
+                                                />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                    <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
+                                        {distribuicaoPorRamo.map(
+                                            (item, idx) => (
+                                                <div
+                                                    key={item.tipo}
+                                                    className="flex items-center gap-1.5 text-xs"
+                                                >
+                                                    <span
+                                                        className="size-2.5 shrink-0 rounded-full"
+                                                        style={{
+                                                            backgroundColor:
+                                                                CORES_RAMO[
+                                                                    idx %
+                                                                        CORES_RAMO.length
+                                                                ],
+                                                        }}
+                                                    />
+                                                    <span className="font-medium text-foreground">
+                                                        {item.tipo}
+                                                    </span>
+                                                    <span className="text-muted-foreground">
+                                                        ({item.total})
+                                                    </span>
+                                                </div>
+                                            ),
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
                         {/* Ações rápidas */}
                         <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-sm">
                             <h2 className="mb-4 text-base font-bold tracking-tight text-foreground">

@@ -37,8 +37,14 @@ class SeguradoController extends Controller
             ->withQueryString();
 
         $total = Segurado::count();
-        $totalAtivos = Segurado::has('apolices')->count();
-        $totalInativos = Segurado::doesntHave('apolices')->count();
+
+        // Ativo = tem pelo menos uma apólice DENTRO da vigência
+        $totalAtivos = Segurado::whereHas('apolices', function ($q) {
+            $q->ativas();
+        })->count();
+        $totalInativos = Segurado::whereDoesntHave('apolices', function ($q) {
+            $q->ativas();
+        })->count();
 
         return inertia('FunctionsApp/clientes', [
             'segurados' => $segurados,

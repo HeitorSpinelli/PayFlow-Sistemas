@@ -280,6 +280,10 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                         />
                                     </div>
                                     <InfoField
+                                        label="Bairro"
+                                        value={segurado?.bairro}
+                                    />
+                                    <InfoField
                                         label="Cidade / Estado"
                                         value={
                                             segurado?.cidade && segurado?.estado

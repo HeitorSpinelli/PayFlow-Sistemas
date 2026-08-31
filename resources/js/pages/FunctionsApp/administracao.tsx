@@ -2,6 +2,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { router } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { RotateCcw } from 'lucide-react';
+import { useState } from 'react';
+import UserProfileModal from '@/components/modals/user-profile-modal';
 
 interface User {
     id: number;
@@ -25,6 +27,16 @@ interface Props {
 }
 
 export default function Administracao({ users, inativos }: Props) {
+    const [openPerfil, setOpenPerfil] = useState(false);
+    const [usuarioSelecionado, setUsuarioSelecionado] = useState<User | null>(
+        null,
+    );
+
+    const abrirPerfil = (user: User) => {
+        setUsuarioSelecionado(user);
+        setOpenPerfil(true);
+    };
+
     const restaurarSegurado = (id: number) => {
         router.patch(
             `/clientes/restaurar/${id}`,
@@ -74,7 +86,7 @@ export default function Administracao({ users, inativos }: Props) {
                         </button>
                     </div>
 
-                    {/* Tabela de Usuários Estática */}
+                    {/* Tabela de Usuários */}
                     <div className="overflow-hidden rounded-2xl border border-border/70 bg-background shadow-sm">
                         <div className="overflow-x-auto">
                             <table className="w-full border-collapse text-left">
@@ -119,8 +131,15 @@ export default function Administracao({ users, inativos }: Props) {
                                                     Ativo
                                                 </span>
                                             </td>
-                                            <td className="cursor-pointer p-4 pr-6 text-right font-bold tracking-widest text-muted-foreground hover:text-foreground">
-                                                ...
+                                            <td className="p-4 pr-6 text-right">
+                                                <button
+                                                    onClick={() =>
+                                                        abrirPerfil(user)
+                                                    }
+                                                    className="cursor-pointer font-bold tracking-widest text-muted-foreground hover:text-foreground"
+                                                >
+                                                    ...
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}
@@ -216,6 +235,14 @@ export default function Administracao({ users, inativos }: Props) {
                     </div>
                 </TabsContent>
             </Tabs>
+
+            {usuarioSelecionado && (
+                <UserProfileModal
+                    open={openPerfil}
+                    setOpen={setOpenPerfil}
+                    user={usuarioSelecionado}
+                />
+            )}
         </div>
     );
 }

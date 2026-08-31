@@ -33,18 +33,13 @@ class Segurado extends Model
 
     public function getStatusAttribute(): string
     {
-        // Se a relação 'apolices' já foi trazida com with('apolices'), usa ela em memória
-        if ($this->relationLoaded('apolices')) {
-            return $this->apolices->isNotEmpty() ? 'Ativo' : 'Inativo';
-        }
-
-        // Caso contrário, faz a verificação rápida
-        return $this->apolices()->exists() ? 'Ativo' : 'Inativo';
+        // Ativo = tem pelo menos uma apólice DENTRO da vigência (não só "tem apólice")
+        return $this->apolices()->ativas()->exists() ? 'Ativo' : 'Inativo';
     }
 
     public function scopeFilter($query, array $filters)
     {
-        // Bloco de busca — agora isolado dentro de parênteses
+        // Bloco de busca — isolado dentro de parênteses
         $query->when($filters['busca'] ?? null, function ($q, $busca) {
             $buscaLimpa = preg_replace('/\D/', '', $busca);
 
@@ -60,16 +55,20 @@ class Segurado extends Model
             });
         });
 
-        // Bloco de status — continua igual, fora do agrupamento acima
+        // Bloco de status — agora usando whereHas/whereDoesntHave com o scope ativas()
+        // em vez de has/doesntHave, que só checavam "tem qualquer apólice"
         $query->when($filters['status'] ?? null, function ($q, $status) {
             if ($status === 'Ativos') {
-                $q->has('apolices');
+                $q->whereHas('apolices', function ($sub) {
+                    $sub->ativas();
+                });
             } elseif ($status === 'Inativos') {
-                $q->doesntHave('apolices');
+                $q->whereDoesntHave('apolices', function ($sub) {
+                    $sub->ativas();
+                });
             }
         });
     }
-
 
     protected $appends = ['status'];
 }

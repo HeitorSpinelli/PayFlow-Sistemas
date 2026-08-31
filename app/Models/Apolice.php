@@ -74,11 +74,21 @@ class Apolice extends Model
             }
         });
     }
-    public function scopeAtivas($query)
+
+    /**
+     * Apólices vigentes numa determinada data.
+     * Sem argumento, usa a data de hoje (comportamento original, preservado).
+     * Passando uma data, simula "quem estava vigente naquele dia" — usado
+     * pelos gráficos do dashboard para reconstruir vigência em meses passados.
+     */
+    public function scopeAtivas($query, $data = null)
     {
-        return $query->where('inicio_vigencia', '<=', now())
-            ->where('fim_vigencia', '>=', now());
+        $data = $data ?? now();
+
+        return $query->where('inicio_vigencia', '<=', $data)
+            ->where('fim_vigencia', '>=', $data);
     }
+
     public function scopeVencidasOuParaRenovar($query)
     {
         return $query->where('fim_vigencia', '<', now());
@@ -113,11 +123,11 @@ class Apolice extends Model
     {
         return $this->belongsTo(Ramo::class, 'ramo_id');
     }
-    public function pagamentos():HasMany
+    public function pagamentos(): HasMany
     {
         return $this->hasMany(Pagamento::class, 'apolice_id');
     }
-    public function parcelas():HasMany
+    public function parcelas(): HasMany
     {
         return $this->hasMany(Parcelas::class, 'apolice_id');
     }

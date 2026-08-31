@@ -67,6 +67,7 @@
         "react-dom": "^19.2.0",
         "react-i18next": "^17.0.8",
         "react-toastify": "^11.1.0",
+        "recharts": "^3.10.1",
         "sonner": "^2.0.7",
         "tailwind-merge": "^3.0.1",
         "tailwindcss": "^4.0.0",

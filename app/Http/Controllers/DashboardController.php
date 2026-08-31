@@ -25,12 +25,20 @@ class DashboardController extends Controller
         $receitaDoMes = $this->apoliceService->receitaDoMes();
         $vencimentosProximos = $this->apoliceService->vencimentosProximos();
 
+        // Dados para os gráficos do dashboard
+        $receitaMensal = $this->apoliceService->receitaUltimosMeses();
+        $clientesAtivosMensal = $this->seguradoService->clientesAtivosUltimosMeses();
+        $distribuicaoPorRamo = $this->apoliceService->distribuicaoPorRamo();
+
         return inertia('dashboard', [
             'totalClientes' => $totalClientes,
             'apolicesAtivas' => $apolicesAtivas,
             'clientesDevedores' => $clientesDevedores,
             'receitaDoMes' => $receitaDoMes,
             'vencimentosProximos' => $vencimentosProximos,
+            'receitaMensal' => $receitaMensal,
+            'clientesAtivosMensal' => $clientesAtivosMensal,
+            'distribuicaoPorRamo' => $distribuicaoPorRamo,
         ]);
     }
 }
