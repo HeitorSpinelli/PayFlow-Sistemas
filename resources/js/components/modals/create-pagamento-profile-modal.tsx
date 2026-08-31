@@ -84,7 +84,9 @@ export default function PagamentoProfileModal({
         })
             .then((res) => res.json())
             .then((data) => setHistorico(data))
-            .catch(() => toast.error('Erro ao carregar histórico de pagamentos.'))
+            .catch(() =>
+                toast.error('Erro ao carregar histórico de pagamentos.'),
+            )
             .finally(() => setCarregandoHistorico(false));
     }, [open, pagamento?.cliente_id, pagamento?.apolice_id]);
 
@@ -194,17 +196,15 @@ export default function PagamentoProfileModal({
                                                 <SelectValue placeholder="Selecione" />
                                             </SelectTrigger>
                                             <SelectContent className="rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-md">
-                                                {apolicesDoCliente.map(
-                                                    (a) => (
-                                                        <SelectItem
-                                                            key={a.id}
-                                                            value={a.id}
-                                                            className="cursor-pointer rounded-lg"
-                                                        >
-                                                            {a.numero}
-                                                        </SelectItem>
-                                                    ),
-                                                )}
+                                                {apolicesDoCliente.map((a) => (
+                                                    <SelectItem
+                                                        key={a.id}
+                                                        value={a.id}
+                                                        className="cursor-pointer rounded-lg"
+                                                    >
+                                                        {a.numero}
+                                                    </SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                     </div>
