@@ -486,8 +486,7 @@ export default function CreatePagamentoModal({
                                         placeholder="0,00"
                                         className={inputClass}
                                         value={
-                                            data.valor &&
-                                            Number(data.valor) > 0
+                                            data.valor && Number(data.valor) > 0
                                                 ? formatarMoeda(
                                                       Number(data.valor),
                                                   )
