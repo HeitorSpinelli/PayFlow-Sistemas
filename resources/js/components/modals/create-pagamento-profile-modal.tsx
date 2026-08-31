@@ -24,6 +24,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { formatarMoeda, formatarDataBR } from '@/utils/Masks';
 type Modo = 'visualizar' | 'excluir';
 
 function Section({ icon, title, description, children }: any) {
@@ -228,13 +229,15 @@ export default function PagamentoProfileModal({
                                         label="Valor"
                                         value={
                                             pagamento.valor
-                                                ? `R$ ${pagamento.valor}`
+                                                ? `R$ ${formatarMoeda(pagamento.valor)}`
                                                 : ''
                                         }
                                     />
                                     <InfoField
                                         label="Data do pagamento"
-                                        value={pagamento.data_pagamento}
+                                        value={formatarDataBR(
+                                            pagamento.data_pagamento,
+                                        )}
                                     />
                                     <div className="sm:col-span-2">
                                         <InfoField
@@ -308,10 +311,15 @@ export default function PagamentoProfileModal({
                                                             {h.parcela}ª
                                                         </td>
                                                         <td className="px-3 py-2 text-foreground">
-                                                            R$ {h.valor}
+                                                            R${' '}
+                                                            {formatarMoeda(
+                                                                h.valor,
+                                                            )}
                                                         </td>
                                                         <td className="px-3 py-2 text-muted-foreground">
-                                                            {h.data_pagamento}
+                                                            {formatarDataBR(
+                                                                h.data_pagamento,
+                                                            )}
                                                         </td>
                                                         <td className="px-3 py-2">
                                                             <span

@@ -69,8 +69,8 @@ class pagamentoController extends Controller
 
         return inertia('FunctionsApp/pagamentos', [
             'pagamentos' => $pagamentos,
-            'totalRecebido' => Pagamento::sum('valor'),
-            'totalConfirmados' => Pagamento::count(),
+            'totalRecebido' => Pagamento::where('status', 'confirmado')->sum('valor'),
+            'totalConfirmados' => Pagamento::where('status', 'confirmado')->count(),
             'totalParcelas' => Parcelas::count(),
             'segurados' => Segurado::select('id', 'nome_completo', 'cpf_cnpj')->get(),
             'apolices' => Apolice::select('id', 'numero_apolice', 'cliente_id', 'valor_premio_total', 'quantidade_parcelas')

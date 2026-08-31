@@ -2,15 +2,17 @@
 
 namespace App\Services\Apolice;
 
-use App\Models\Seguradora;
-use App\Models\Segurado;
-use App\Models\Ramo;
 use App\Models\Apolice;
+use App\Models\Pagamento;
+use App\Models\Parcelas;
+use App\Models\Ramo;
+use App\Models\Segurado;
+use App\Models\Seguradora;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class ApoliceService
 {
-
     public function store(array $data)
     {
         try {
@@ -21,53 +23,57 @@ class ApoliceService
             $valorParcela = round($data['valor_premio_total'] / $data['quantidade_parcelas'], 2);
 
             // Data base para calcular vencimentos (30 dias após início da vigência)
-            $dataBase = \Carbon\Carbon::parse($data['inicio_vigencia']);
+            $dataBase = Carbon::parse($data['inicio_vigencia']);
 
             // Cria cada parcela automaticamente
             for ($i = 1; $i <= $data['quantidade_parcelas']; $i++) {
-                \App\Models\Parcelas::create([
-                    'apolice_id'      => $apolice->id,
-                    'numero_parcela'  => $i,
-                    'valor_parcela'   => $valorParcela,
+                Parcelas::create([
+                    'apolice_id' => $apolice->id,
+                    'numero_parcela' => $i,
+                    'valor_parcela' => $valorParcela,
                     'data_vencimento' => $dataBase->copy()->addMonths($i),
                     'status_pagamento' => 'em_aberto',
                 ]);
             }
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao cadastrar apólice: ' . $e->getMessage());
+            throw new \Exception('Erro ao cadastrar apólice: '.$e->getMessage());
         }
     }
-    //Função para buscar os segurados cadastrados no banco, selecionando apenas os campos id, nome_completo e cpf_cnpj
+
+    // Função para buscar os segurados cadastrados no banco, selecionando apenas os campos id, nome_completo e cpf_cnpj
     public function buscar()
     {
         try {
             return Segurado::select('id', 'nome_completo', 'cpf_cnpj')->get();
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao buscar segurados: ' . $e->getMessage());
+            throw new \Exception('Erro ao buscar segurados: '.$e->getMessage());
         }
     }
+
     public function buscarSeguradoras()
     {
         try {
             return Seguradora::select('id', 'nome_fantasia')->get();
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao buscar seguradoras: ' . $e->getMessage());
+            throw new \Exception('Erro ao buscar seguradoras: '.$e->getMessage());
         }
     }
+
     public function buscarRamos()
     {
         try {
             return Ramo::select('id', 'nome_ramo', 'seguradora_id')->get();
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao buscar ramos: ' . $e->getMessage());
+            throw new \Exception('Erro ao buscar ramos: '.$e->getMessage());
         }
     }
+
     public function buscarApolices(array $filters = [])
     {
         try {
             $query = Apolice::query()
-                ->join('segurados',   'apolices.cliente_id',    '=', 'segurados.id')
-                ->join('ramos',       'apolices.ramo_id',       '=', 'ramos.id')
+                ->join('segurados', 'apolices.cliente_id', '=', 'segurados.id')
+                ->join('ramos', 'apolices.ramo_id', '=', 'ramos.id')
                 ->join('seguradoras', 'apolices.seguradora_id', '=', 'seguradoras.id')
                 ->select(
                     'apolices.id',
@@ -83,7 +89,7 @@ class ApoliceService
                     'seguradoras.nome_fantasia'
                 );
 
-            if (!empty($filters['busca'])) {
+            if (! empty($filters['busca'])) {
                 $termo = $filters['busca'];
 
                 $query->where(function ($q) use ($termo) {
@@ -100,7 +106,7 @@ class ApoliceService
                 });
             }
 
-            if (!empty($filters['status']) && $filters['status'] !== 'Todos') {
+            if (! empty($filters['status']) && $filters['status'] !== 'Todos') {
                 $status = $filters['status'];
 
                 if ($status === 'Vigente') {
@@ -115,9 +121,10 @@ class ApoliceService
 
             return $query->paginate(10)->withQueryString();
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao buscar apólices: ' . $e->getMessage());
+            throw new \Exception('Erro ao buscar apólices: '.$e->getMessage());
         }
     }
+
     public function destroy(int $id)
     {
         try {
@@ -132,27 +139,30 @@ class ApoliceService
                 $apolice->delete();
             });
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao excluir apólice: ' . $e->getMessage());
+            throw new \Exception('Erro ao excluir apólice: '.$e->getMessage());
         }
     }
+
     public function update(int $id, array $data)
     {
         try {
             $apolice = Apolice::findOrFail($id);
             $apolice->update($data);
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao atualizar apólice: ' . $e->getMessage());
+            throw new \Exception('Erro ao atualizar apólice: '.$e->getMessage());
         }
     }
-    //Função para contar o total de apolices cadastradas no banco
+
+    // Função para contar o total de apolices cadastradas no banco
     public function count()
     {
         try {
             return Apolice::count();
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao contar apólices: ' . $e->getMessage());
+            throw new \Exception('Erro ao contar apólices: '.$e->getMessage());
         }
     }
+
     public function AlterarRamo(int $apoliceId, int $novoRamoId)
     {
         try {
@@ -160,17 +170,17 @@ class ApoliceService
             $apolice->ramo_id = $novoRamoId;
             $apolice->save();
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao alterar o ramo da apólice: ' . $e->getMessage());
+            throw new \Exception('Erro ao alterar o ramo da apólice: '.$e->getMessage());
         }
     }
 
-    //Listando apenas clientes que estão com deleted at 
+    // Listando apenas clientes que estão com deleted at
     public function listarInativos()
     {
         return Apolice::onlyTrashed()->get();
     }
 
-    //Restaura o segurado pelo id
+    // Restaura o segurado pelo id
     public function restore(int $id)
     {
         try {
@@ -187,7 +197,7 @@ class ApoliceService
                 }
             });
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao restaurar segurado: ' . $e->getMessage());
+            throw new \Exception('Erro ao restaurar segurado: '.$e->getMessage());
         }
     }
 
@@ -197,9 +207,10 @@ class ApoliceService
             $query->where('status_pagamento', 'vencida');
         })->count();
     }
+
     public function receitaDoMes()
     {
-        return \App\Models\Pagamento::where('status', 'confirmado')
+        return Pagamento::where('status', 'confirmado')
             ->whereMonth('data_pagamento', now()->month)
             ->whereYear('data_pagamento', now()->year)
             ->sum('valor');
@@ -208,5 +219,32 @@ class ApoliceService
     public function contarAtivas()
     {
         return Apolice::ativas()->count();
+    }
+
+    // Parcelas em atraso ou que vencem nos próximos $diasFuturos dias,
+    // ordenadas da mais urgente pra menos urgente — usado no dashboard
+    public function vencimentosProximos(int $diasFuturos = 7, int $limite = 8)
+    {
+        $hoje = Carbon::today();
+
+        return Parcelas::with('apolice.cliente')
+            ->where('status_pagamento', '!=', 'paga')
+            ->where('data_vencimento', '<=', $hoje->copy()->addDays($diasFuturos))
+            ->orderBy('data_vencimento')
+            ->limit($limite)
+            ->get()
+            ->map(function ($parcela) use ($hoje) {
+                $vencimento = Carbon::parse($parcela->data_vencimento);
+                $atrasado = $vencimento->lte($hoje);
+
+                return [
+                    'id' => $parcela->id,
+                    'cliente' => $parcela->apolice->cliente->nome_completo ?? '—',
+                    'apolice' => $parcela->apolice->numero_apolice ?? '—',
+                    'valor' => (float) $parcela->valor_parcela,
+                    'dias' => abs($hoje->diffInDays($vencimento)),
+                    'status' => $atrasado ? 'atrasado' : 'pendente',
+                ];
+            });
     }
 }

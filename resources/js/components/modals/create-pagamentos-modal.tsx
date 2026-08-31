@@ -27,7 +27,12 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { removeMask, formataCpfCnpj } from '@/utils/Masks';
+import {
+    removeMask,
+    formataCpfCnpj,
+    formatarMoeda,
+    valorDigitadoParaNumero,
+} from '@/utils/Masks';
 
 function Section({ icon, title, description, children }: any) {
     return (
@@ -476,12 +481,25 @@ export default function CreatePagamentoModal({
                                         Valor (R$) *
                                     </label>
                                     <Input
-                                        type="number"
+                                        type="text"
+                                        inputMode="numeric"
                                         placeholder="0,00"
                                         className={inputClass}
-                                        value={data.valor}
+                                        value={
+                                            data.valor &&
+                                            Number(data.valor) > 0
+                                                ? formatarMoeda(
+                                                      Number(data.valor),
+                                                  )
+                                                : ''
+                                        }
                                         onChange={(e) =>
-                                            setData('valor', e.target.value)
+                                            setData(
+                                                'valor',
+                                                valorDigitadoParaNumero(
+                                                    e.target.value,
+                                                ).toFixed(2),
+                                            )
                                         }
                                     />
                                     {(errors as any).valor && (

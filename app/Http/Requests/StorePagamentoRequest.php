@@ -30,7 +30,7 @@ class StorePagamentoRequest extends FormRequest
             'valor'            => 'required|numeric|min:0.01',
             'data_pagamento'   => 'required|date|before_or_equal:today',
             'forma_pagamento'  => 'required|string|in:boleto,pix,cartão,débito',
-            'status'           => 'required|string|in:confirmado,pendente',
+            'status'           => 'required|string|in:confirmado',
             'observacoes'      => 'nullable|string',
         ];
     }

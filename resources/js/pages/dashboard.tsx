@@ -18,11 +18,21 @@ import {
 } from 'lucide-react';
 import { apolices } from '@/routes';
 
+interface VencimentoProximo {
+    id: number;
+    cliente: string;
+    apolice: string;
+    valor: number;
+    dias: number;
+    status: 'atrasado' | 'pendente';
+}
+
 interface Props {
     totalClientes: number;
     apolicesAtivas: number;
     clientesDevedores: number;
     receitaDoMes: number;
+    vencimentosProximos: VencimentoProximo[];
 }
 
 /* ------------------------------------------------------------------ */
@@ -36,49 +46,6 @@ const RECEITA_MENSAL = [
     { mes: 'Jun', valor: 24100 },
     { mes: 'Jul', valor: 26700 },
     { mes: 'Ago', valor: 23950 },
-];
-
-const VENCIMENTOS_PROXIMOS = [
-    {
-        id: 1,
-        cliente: 'Maria Souza',
-        apolice: 'AP-30412',
-        valor: 189.9,
-        dias: 0,
-        status: 'atrasado' as const,
-    },
-    {
-        id: 2,
-        cliente: 'Roberto Dias',
-        apolice: 'AP-30733',
-        valor: 620.0,
-        dias: 1,
-        status: 'atrasado' as const,
-    },
-    {
-        id: 3,
-        cliente: 'Fernanda Alves',
-        apolice: 'AP-30690',
-        valor: 455.3,
-        dias: 2,
-        status: 'pendente' as const,
-    },
-    {
-        id: 4,
-        cliente: 'Juliana Castro',
-        apolice: 'AP-31005',
-        valor: 512.75,
-        dias: 4,
-        status: 'pendente' as const,
-    },
-    {
-        id: 5,
-        cliente: 'André Ferreira',
-        apolice: 'AP-31210',
-        valor: 398.9,
-        dias: 6,
-        status: 'pendente' as const,
-    },
 ];
 
 const NOTIFICACOES_RECENTES = [
@@ -156,6 +123,7 @@ export default function Dashboard({
     apolicesAtivas,
     clientesDevedores,
     receitaDoMes,
+    vencimentosProximos = [],
 }: Props) {
     const { auth } = usePage().props as unknown as {
         auth: { user: { name: string } };
@@ -354,7 +322,12 @@ export default function Dashboard({
                             </div>
 
                             <div className="flex flex-col">
-                                {VENCIMENTOS_PROXIMOS.map((item) => (
+                                {vencimentosProximos.length === 0 && (
+                                    <p className="py-6 text-center text-sm text-muted-foreground">
+                                        Nenhum vencimento em atraso ou próximo.
+                                    </p>
+                                )}
+                                {vencimentosProximos.map((item) => (
                                     <div
                                         key={item.id}
                                         className="flex items-center justify-between gap-3 border-b border-border/40 py-3 last:border-0"

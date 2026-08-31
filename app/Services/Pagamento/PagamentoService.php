@@ -3,6 +3,7 @@
 namespace App\Services\Pagamento;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Models\Pagamento;
 use App\Models\Parcelas;
 
@@ -41,12 +42,15 @@ class PagamentoService
             $pagamento = Pagamento::findOrFail($id);
             $pagamento->delete();
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao excluir pagamento: ' . $e->getMessage());
+            Log::error('Erro ao excluir pagamento', ['id' => $id, 'erro' => $e->getMessage()]);
+            throw new \Exception('Não foi possível excluir o pagamento. Tente novamente ou contate o suporte.');
         }
     }
 
-    // Todos os pagamentos (de todas as parcelas/apólices) de um mesmo cliente
-    public function listarPorCliente(int $clienteId)
+    // Todos os pagamentos (de todas as parcelas/apólices) de um mesmo cliente.
+    // Limitado a $limite registros — evita carregar um histórico enorme de
+    // uma vez só num cliente muito antigo.
+    public function listarPorCliente(int $clienteId, int $limite = 100)
     {
         try {
             return Pagamento::with('apolice')
@@ -55,6 +59,7 @@ class PagamentoService
                 })
                 ->orderBy('apolice_id')
                 ->orderBy('parcela')
+                ->limit($limite)
                 ->get()
                 ->map(function ($pagamento) {
                     return [
@@ -70,7 +75,8 @@ class PagamentoService
                     ];
                 });
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao listar pagamentos do cliente: ' . $e->getMessage());
+            Log::error('Erro ao listar pagamentos do cliente', ['cliente_id' => $clienteId, 'erro' => $e->getMessage()]);
+            throw new \Exception('Não foi possível carregar o histórico de pagamentos.');
         }
     }
 }
