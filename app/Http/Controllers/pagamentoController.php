@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Http\Requests\StorePagamentoRequest;
+use App\Models\Apolice;
 use App\Models\Pagamento;
 use App\Models\Parcelas;
 use App\Models\Segurado;
-use App\Models\Apolice;
-use App\Services\Pagamento\PagamentoService;
 use App\Services\Exportacoes\ExportacaoPagamentoService;
+use App\Services\Pagamento\PagamentoService;
+use Illuminate\Http\Request;
 
 class pagamentoController extends Controller
 {
@@ -26,9 +26,10 @@ class pagamentoController extends Controller
 
         try {
             $this->pagamentoService->store($data);
+
             return redirect()->back()->with('success', 'Pagamento registrado com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao registrar pagamento: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erro ao registrar pagamento: '.$e->getMessage());
         }
     }
 
@@ -83,9 +84,10 @@ class pagamentoController extends Controller
     {
         try {
             $this->pagamentoService->destroy($id);
+
             return redirect()->back()->with('success', 'Pagamento excluído com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao excluir pagamento: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erro ao excluir pagamento: '.$e->getMessage());
         }
     }
 

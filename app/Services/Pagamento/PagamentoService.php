@@ -2,10 +2,10 @@
 
 namespace App\Services\Pagamento;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use App\Models\Pagamento;
 use App\Models\Parcelas;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PagamentoService
 {
@@ -16,7 +16,7 @@ class PagamentoService
                 ->where('numero_parcela', $data['parcela'])
                 ->first();
 
-            if (!$parcela) {
+            if (! $parcela) {
                 throw new \Exception('Não existe a parcela informada para esta apólice.');
             }
 
@@ -24,7 +24,7 @@ class PagamentoService
 
             $parcela->update([
                 'status_pagamento' => 'paga',
-                'data_pagamento'   => $data['data_pagamento'],
+                'data_pagamento' => $data['data_pagamento'],
             ]);
 
             return $pagamento;
@@ -63,15 +63,15 @@ class PagamentoService
                 ->get()
                 ->map(function ($pagamento) {
                     return [
-                        'id'                          => $pagamento->id,
-                        'apolice_id'                  => $pagamento->apolice_id,
-                        'apolice'                     => $pagamento->apolice->numero_apolice ?? '—',
+                        'id' => $pagamento->id,
+                        'apolice_id' => $pagamento->apolice_id,
+                        'apolice' => $pagamento->apolice->numero_apolice ?? '—',
                         'apolice_quantidade_parcelas' => $pagamento->apolice->quantidade_parcelas ?? null,
-                        'parcela'                     => $pagamento->parcela,
-                        'valor'                       => $pagamento->valor,
-                        'data_pagamento'              => $pagamento->data_pagamento,
-                        'forma_pagamento'             => $pagamento->forma_pagamento,
-                        'status'                      => $pagamento->status,
+                        'parcela' => $pagamento->parcela,
+                        'valor' => $pagamento->valor,
+                        'data_pagamento' => $pagamento->data_pagamento,
+                        'forma_pagamento' => $pagamento->forma_pagamento,
+                        'status' => $pagamento->status,
                     ];
                 });
         } catch (\Exception $e) {
