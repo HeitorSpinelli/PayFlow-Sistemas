@@ -305,36 +305,6 @@ export default function Dashboard({
                         </p>
                     </div>
                 </div>
-
-                {/* Faixa de alerta — Clientes Devedores */}
-                <div className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-rose-500/20 bg-rose-500/[0.04] px-5 py-4 shadow-sm sm:px-6">
-                    <div className="pointer-events-none absolute -top-12 -right-8 h-32 w-32 rounded-full bg-rose-500/10 blur-3xl" />
-                    <div className="relative flex items-center gap-3.5">
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-500/10 text-rose-600">
-                            <UserRoundX className="size-5" />
-                        </span>
-                        <div>
-                            <p className="text-2xl font-bold text-foreground">
-                                {clientesDevedores}
-                            </p>
-                            <p className="text-xs font-semibold text-muted-foreground">
-                                {clientesDevedores === 1
-                                    ? 'Cliente com parcela vencida'
-                                    : 'Clientes com parcelas vencidas'}
-                            </p>
-                        </div>
-                    </div>
-                    {clientesDevedores > 0 && (
-                        <Link
-                            href="/agenda"
-                            className="relative flex shrink-0 items-center gap-1 text-xs font-bold text-rose-600 hover:text-rose-700"
-                        >
-                            Ver agenda
-                            <ChevronRight className="size-3.5" />
-                        </Link>
-                    )}
-                </div>
-
                 {/* Corpo: gráficos + vencimentos | pizza + ações rápidas + notificações */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.7fr_1fr]">
                     <div className="flex flex-col gap-6">

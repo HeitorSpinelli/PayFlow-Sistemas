@@ -18,6 +18,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { formatarDataBR } from '@/utils/Masks';
 
 type Modo = 'visualizar' | 'editar' | 'excluir';
 
@@ -88,20 +89,17 @@ export default function CreateApoliceProfileModal({
                 valor_cobertura: apolice.valor_cobertura ?? '',
                 quantidade_parcelas: apolice.quantidade_parcelas ?? '',
                 forma_pagamento: apolice.forma_pagamento ?? '',
-                inicio_vigencia: apolice.inicio_vigencia ?? '',
-                fim_vigencia: apolice.fim_vigencia ?? '',
+                inicio_vigencia: apolice.inicio_vigencia
+                    ? apolice.inicio_vigencia.split('T')[0]
+                    : '',
+                fim_vigencia: apolice.fim_vigencia
+                    ? apolice.fim_vigencia.split('T')[0]
+                    : '',
                 status: apolice.status ?? '',
                 observacoes: apolice.observacoes ?? '',
             });
         }
     }, [apolice, open]);
-
-    const formatarDataBR = (dataString: string) => {
-        if (!dataString) return '-';
-        // Divide a string no 'T' para pegar apenas a parte da data (AAAA-MM-DD)
-        const [ano, mes, dia] = dataString.split('T')[0].split('-');
-        return `${dia}/${mes}/${ano}`;
-    };
 
     const fechar = () => {
         setModo('visualizar');
@@ -340,9 +338,7 @@ export default function CreateApoliceProfileModal({
                                                 Valor do prêmio total
                                             </label>
                                             <Input
-                                                value={
-                                                    data.valor_premio_total
-                                                }
+                                                value={data.valor_premio_total}
                                                 onChange={(e) =>
                                                     setData(
                                                         'valor_premio_total',
@@ -376,9 +372,7 @@ export default function CreateApoliceProfileModal({
                                                 Quantidade de parcelas
                                             </label>
                                             <Input
-                                                value={
-                                                    data.quantidade_parcelas
-                                                }
+                                                value={data.quantidade_parcelas}
                                                 onChange={(e) =>
                                                     setData(
                                                         'quantidade_parcelas',

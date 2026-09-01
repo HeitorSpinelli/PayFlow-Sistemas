@@ -50,7 +50,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/', [ApolicesController::class, 'store']);
         Route::put('/{id}', [ApolicesController::class, 'update'])->name('apolices.update');
         Route::delete('/{id}', [ApolicesController::class, 'destroy'])->name('apolices.destroy');
-        Route::patch('/{id}/alterar-ramo', [ApolicesController::class, 'atualizarRamo']);
+        Route::patch('/{id}/alterar-ramo', [ApolicesController::class, 'updateRamo']);
+        Route::get('/inativos', [ApolicesController::class, 'inativos'])->name('apolices.inativos');
+        Route::patch('/restaurar/{id}', [ApolicesController::class, 'restaurar'])->name('apolices.restore');
         Route::get('/exportar', [ApolicesController::class, 'exportar']);
     });
 

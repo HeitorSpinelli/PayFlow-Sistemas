@@ -64,6 +64,7 @@ class ApoliceService
             throw new \Exception('Erro ao buscar ramos: ' . $e->getMessage());
         }
     }
+
     public function buscarApolices(array $filters = [])
     {
         try {
@@ -78,10 +79,14 @@ class ApoliceService
                     'apolices.quantidade_parcelas',
                     'apolices.inicio_vigencia',
                     'apolices.fim_vigencia',
-                    'apolices.status',
+                    'apolices.valor_cobertura',
+                    'apolices.forma_pagamento',
                     'segurados.nome_completo',
                     'segurados.cpf_cnpj',
                     'ramos.nome_ramo',
+                    'segurados.id as cliente_id',
+                    'ramos.id as ramo_id',
+                    'seguradoras.id as seguradora_id',
                     'seguradoras.nome_fantasia'
                 );
 

@@ -33,7 +33,6 @@ class StoreApoliceRequest extends FormRequest
             'forma_pagamento' => 'required|string|max:50',
             'inicio_vigencia' => 'required|date',
             'fim_vigencia' => 'required|date|after:inicio_vigencia',
-            'status' => 'required|string|in:Ativa,Inativa',
             'observacoes' => 'nullable|string'
         ];
     }
