@@ -63,57 +63,54 @@ export default function PagamentoProfileModal({
     open,
     setOpen,
     pagamento,
+    apolices,
 }: any) {
     const [modo, setModo] = useState<Modo>('visualizar');
-    const [historico, setHistorico] = useState<any[]>([]);
-    const [carregandoHistorico, setCarregandoHistorico] = useState(false);
     const [apoliceSelecionada, setApoliceSelecionada] = useState('');
 
-    // Busca todos os pagamentos (de todas as parcelas/apólices) do mesmo cliente
+    // Começa mostrando a apólice do pagamento que foi clicado
     useEffect(() => {
-        if (!open || !pagamento?.cliente_id) {
-            setHistorico([]);
-            return;
+        if (open) {
+            setApoliceSelecionada(String(pagamento?.apolice_id ?? ''));
         }
+    }, [open, pagamento?.apolice_id]);
 
-        // Começa mostrando a apólice do pagamento que foi clicado
-        setApoliceSelecionada(String(pagamento.apolice_id ?? ''));
-        setCarregandoHistorico(true);
-        fetch(`/pagamentos/cliente/${pagamento.cliente_id}`, {
-            headers: { Accept: 'application/json' },
-        })
-            .then((res) => res.json())
-            .then((data) => setHistorico(data))
-            .catch(() =>
-                toast.error('Erro ao carregar histórico de pagamentos.'),
-            )
-            .finally(() => setCarregandoHistorico(false));
-    }, [open, pagamento?.cliente_id, pagamento?.apolice_id]);
-
-    // Apólices distintas presentes no histórico, para o seletor
+    // Todas as apólices do cliente (inclusive as ainda não pagas ou a vencer), para o seletor
     const apolicesDoCliente = useMemo(() => {
-        const vistas = new Map<
-            string,
-            { numero: string; quantidadeParcelas: number | null }
-        >();
-        historico.forEach((h) => {
-            if (h.apolice_id != null) {
-                vistas.set(String(h.apolice_id), {
-                    numero: h.apolice,
-                    quantidadeParcelas: h.apolice_quantidade_parcelas ?? null,
-                });
-            }
-        });
-        return Array.from(vistas, ([id, dados]) => ({ id, ...dados }));
-    }, [historico]);
+        return (apolices ?? [])
+            .filter(
+                (a: any) =>
+                    String(a.cliente_id) === String(pagamento.cliente_id),
+            )
+            .map((a: any) => ({
+                id: String(a.id),
+                numero: a.numero_apolice,
+                quantidadeParcelas: a.quantidade_parcelas ?? null,
+                parcelas: a.parcelas ?? [],
+            }));
+    }, [apolices, pagamento.cliente_id]);
 
     const apoliceAtual = apolicesDoCliente.find(
-        (a) => a.id === apoliceSelecionada,
+        (a: any) => a.id === apoliceSelecionada,
     );
 
-    const historicoFiltrado = historico.filter(
-        (h) => String(h.apolice_id) === apoliceSelecionada,
-    );
+    // Todas as parcelas da apólice selecionada — pagas, em aberto e a vencer
+    const parcelasDaApoliceAtual = useMemo(() => {
+        return [...(apoliceAtual?.parcelas ?? [])].sort(
+            (a: any, b: any) => a.numero_parcela - b.numero_parcela,
+        );
+    }, [apoliceAtual]);
+
+    const parcelasPagas = parcelasDaApoliceAtual.filter(
+        (p: any) => p.status_pagamento === 'paga',
+    ).length;
+
+    // Próxima parcela pendente que ainda não venceu — só ela recebe o selo
+    // "A vencer"; parcelas atrasadas viram "Atrasado" e as pendentes mais à
+    // frente ficam neutras ("Em aberto")
+    const proximaParcelaPendenteId = parcelasDaApoliceAtual.find(
+        (p: any) => p.status_pagamento !== 'paga' && (p.dias_atraso ?? 0) === 0,
+    )?.id;
 
     const fechar = () => {
         setModo('visualizar');
@@ -136,7 +133,7 @@ export default function PagamentoProfileModal({
 
     return (
         <Dialog open={open} onOpenChange={fechar}>
-            <DialogContent className="!flex max-h-[90vh] max-w-lg flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 shadow-2xl">
+            <DialogContent className="!flex max-h-[92vh] flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 shadow-2xl sm:max-w-4xl">
                 <DialogHeader className="relative shrink-0 overflow-hidden border-b border-border/70 bg-gradient-to-br from-emerald-500/[0.12] via-background to-background px-6 py-6 pr-12 sm:px-8">
                     <div className="absolute -top-12 -right-10 h-36 w-36 rounded-full bg-emerald-500/10 blur-2xl" />
                     <div className="relative flex items-center gap-3">
@@ -196,15 +193,17 @@ export default function PagamentoProfileModal({
                                                 <SelectValue placeholder="Selecione" />
                                             </SelectTrigger>
                                             <SelectContent className="rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-md">
-                                                {apolicesDoCliente.map((a) => (
-                                                    <SelectItem
-                                                        key={a.id}
-                                                        value={a.id}
-                                                        className="cursor-pointer rounded-lg"
-                                                    >
-                                                        {a.numero}
-                                                    </SelectItem>
-                                                ))}
+                                                {apolicesDoCliente.map(
+                                                    (a: any) => (
+                                                        <SelectItem
+                                                            key={a.id}
+                                                            value={a.id}
+                                                            className="cursor-pointer rounded-lg"
+                                                        >
+                                                            {a.numero}
+                                                        </SelectItem>
+                                                    ),
+                                                )}
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -212,7 +211,7 @@ export default function PagamentoProfileModal({
                                         label="Parcelas pagas"
                                         value={
                                             apoliceAtual
-                                                ? `${historicoFiltrado.length} de ${apoliceAtual.quantidadeParcelas ?? '?'}`
+                                                ? `${parcelasPagas} de ${apoliceAtual.quantidadeParcelas ?? '?'}`
                                                 : ''
                                         }
                                     />
@@ -269,13 +268,10 @@ export default function PagamentoProfileModal({
                                         : pagamento.cliente
                                 }
                             >
-                                {carregandoHistorico ? (
+                                {parcelasDaApoliceAtual.length === 0 ? (
                                     <p className="text-sm text-muted-foreground">
-                                        Carregando...
-                                    </p>
-                                ) : historicoFiltrado.length === 0 ? (
-                                    <p className="text-sm text-muted-foreground">
-                                        Nenhum outro pagamento encontrado.
+                                        Nenhuma parcela encontrada para essa
+                                        apólice.
                                     </p>
                                 ) : (
                                     <div className="overflow-hidden rounded-xl border border-border/70">
@@ -297,44 +293,89 @@ export default function PagamentoProfileModal({
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {historicoFiltrado.map((h) => (
-                                                    <tr
-                                                        key={h.id}
-                                                        className={`border-b border-border/70 last:border-b-0 ${
-                                                            h.id ===
-                                                            pagamento.id
-                                                                ? 'bg-emerald-500/10'
-                                                                : ''
-                                                        }`}
-                                                    >
-                                                        <td className="px-3 py-2 text-foreground">
-                                                            {h.parcela}ª
-                                                        </td>
-                                                        <td className="px-3 py-2 text-foreground">
-                                                            R${' '}
-                                                            {formatarMoeda(
-                                                                h.valor,
-                                                            )}
-                                                        </td>
-                                                        <td className="px-3 py-2 text-muted-foreground">
-                                                            {formatarDataBR(
-                                                                h.data_pagamento,
-                                                            )}
-                                                        </td>
-                                                        <td className="px-3 py-2">
-                                                            <span
-                                                                className={`inline-flex rounded-lg px-2 py-0.5 text-xs font-semibold capitalize ${
-                                                                    h.status ===
-                                                                    'confirmado'
-                                                                        ? 'bg-emerald-500/10 text-emerald-600'
-                                                                        : 'bg-amber-500/10 text-amber-600'
+                                                {parcelasDaApoliceAtual.map(
+                                                    (p: any) => {
+                                                        const paga =
+                                                            p.status_pagamento ===
+                                                            'paga';
+                                                        // dias_atraso vem do backend (Parcelas::diasEmAtraso) —
+                                                        // só é > 0 pra parcela não paga cujo vencimento já passou
+                                                        const atrasada =
+                                                            !paga &&
+                                                            (p.dias_atraso ??
+                                                                0) > 0;
+                                                        // só a próxima parcela pendente (a mais próxima de vencer) ganha o selo "A vencer"
+                                                        const proximaAVencer =
+                                                            !paga &&
+                                                            !atrasada &&
+                                                            p.id ===
+                                                                proximaParcelaPendenteId;
+                                                        const statusLabel = paga
+                                                            ? 'Paga'
+                                                            : atrasada
+                                                              ? 'Atrasado'
+                                                              : proximaAVencer
+                                                                ? 'A vencer'
+                                                                : 'Em aberto';
+                                                        const destacada =
+                                                            apoliceSelecionada ===
+                                                                String(
+                                                                    pagamento.apolice_id,
+                                                                ) &&
+                                                            p.numero_parcela ===
+                                                                Number(
+                                                                    pagamento.parcela,
+                                                                );
+
+                                                        return (
+                                                            <tr
+                                                                key={p.id}
+                                                                className={`border-b border-border/70 last:border-b-0 ${
+                                                                    destacada
+                                                                        ? 'bg-emerald-500/10'
+                                                                        : ''
                                                                 }`}
                                                             >
-                                                                {h.status}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                ))}
+                                                                <td className="px-3 py-2 text-foreground">
+                                                                    {
+                                                                        p.numero_parcela
+                                                                    }
+                                                                    ª
+                                                                </td>
+                                                                <td className="px-3 py-2 text-foreground">
+                                                                    R${' '}
+                                                                    {formatarMoeda(
+                                                                        p.valor_parcela,
+                                                                    )}
+                                                                </td>
+                                                                <td className="px-3 py-2 text-muted-foreground">
+                                                                    {formatarDataBR(
+                                                                        paga
+                                                                            ? p.data_pagamento
+                                                                            : p.data_vencimento,
+                                                                    )}
+                                                                </td>
+                                                                <td className="px-3 py-2">
+                                                                    <span
+                                                                        className={`inline-flex rounded-lg px-2 py-0.5 text-xs font-semibold capitalize ${
+                                                                            paga
+                                                                                ? 'bg-emerald-500/10 text-emerald-600'
+                                                                                : atrasada
+                                                                                  ? 'bg-red-500/10 text-red-600'
+                                                                                  : proximaAVencer
+                                                                                    ? 'bg-amber-500/10 text-amber-600'
+                                                                                    : 'bg-muted text-muted-foreground'
+                                                                        }`}
+                                                                    >
+                                                                        {
+                                                                            statusLabel
+                                                                        }
+                                                                    </span>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    },
+                                                )}
                                             </tbody>
                                         </table>
                                     </div>

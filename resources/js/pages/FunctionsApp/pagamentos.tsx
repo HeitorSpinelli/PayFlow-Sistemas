@@ -427,6 +427,7 @@ export default function Pagamentos({
                     open={openProfile}
                     setOpen={setOpenProfile}
                     pagamento={pagamentoSelecionado}
+                    apolices={apolices}
                 />
             )}
         </>
