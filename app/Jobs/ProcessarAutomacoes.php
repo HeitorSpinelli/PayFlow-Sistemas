@@ -104,8 +104,15 @@ class ProcessarAutomacoes implements ShouldQueue
 
     private function processarParcelaVencendo(Automacao $automacao, NotificacaoService $service): void
     {
-        //define parcelas com status de pagamento vencidas ou data de vencimento menor igual a atual
-        $parcelas = parcelas::with('apolice.cliente')->whereBetween('data_vencimento', [now(), now()->addDays($automacao->dias)])->get();
+        // 'dias' define a antecedência do aviso: notifica só as parcelas cujo
+        // vencimento cai EXATAMENTE daqui a X dias (não um intervalo), pra evitar
+        // reenviar o mesmo aviso todo dia até o vencimento (o job roda diariamente).
+        $dataAlvo = now()->addDays($automacao->dias)->toDateString();
+
+        $parcelas = Parcelas::with('apolice.cliente')
+            ->whereDate('data_vencimento', $dataAlvo)
+            ->where('status_pagamento', '!=', 'paga')
+            ->get();
 
         //Para cada parcela dentro de apolice do cliente dono da mesma usar o service de disparo de email
         foreach ($parcelas as $parcela) {
