@@ -2,16 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Models\Parcelas;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Apolice extends Model
 {
     protected $table = 'apolices';
+
     use SoftDeletes;
 
     protected $appends = ['status_vigencia'];
@@ -23,7 +24,7 @@ class Apolice extends Model
 
     public function getStatusVigenciaAttribute(): string
     {
-        if (!$this->fim_vigencia || !$this->inicio_vigencia) {
+        if (! $this->fim_vigencia || ! $this->inicio_vigencia) {
             return 'N/A';
         }
 
@@ -57,7 +58,7 @@ class Apolice extends Model
                     ->orWhereHas('cliente', function ($sub) use ($busca, $buscaLimpa) {
                         $sub->where('nome_completo', 'iLike', "%{$busca}%")
                             ->orWhere('cpf_cnpj', 'iLike', "%{$busca}%");
-                        if (!empty($buscaLimpa)) {
+                        if (! empty($buscaLimpa)) {
                             $sub->orWhereRaw("REGEXP_REPLACE(cpf_cnpj, '[^0-9]', '', 'g') iLike ?", ["%{$buscaLimpa}%"]);
                         }
                     });
@@ -106,7 +107,7 @@ class Apolice extends Model
         'inicio_vigencia',
         'fim_vigencia',
         'status',
-        'observacoes'
+        'observacoes',
     ];
 
     public function cliente(): BelongsTo
@@ -123,12 +124,24 @@ class Apolice extends Model
     {
         return $this->belongsTo(Ramo::class, 'ramo_id');
     }
+
     public function pagamentos(): HasMany
     {
         return $this->hasMany(Pagamento::class, 'apolice_id');
     }
+
     public function parcelas(): HasMany
     {
         return $this->hasMany(Parcelas::class, 'apolice_id');
+    }
+
+    public function dadosVeiculo(): HasOne
+    {
+        return $this->hasOne(DadosVeiculoApolice::class, 'apolice_id');
+    }
+
+    public function dadosResidencia(): HasOne
+    {
+        return $this->hasOne(DadosResidenciaApolice::class, 'apolice_id');
     }
 }

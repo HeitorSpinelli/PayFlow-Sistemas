@@ -4,6 +4,13 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
@@ -19,6 +26,19 @@ import {
     Mail,
     Hash,
 } from 'lucide-react';
+
+// Categoria decide quais dados extras a apólice desse ramo vai exigir no
+// cadastro (placa/chassi para veículo, endereço do imóvel para residencial).
+const CATEGORIAS_RAMO = [
+    { value: 'veiculo', label: 'Veículo (auto/moto)' },
+    { value: 'residencial', label: 'Residencial' },
+    { value: 'outro', label: 'Outro' },
+];
+
+interface RamoNovo {
+    nome_ramo: string;
+    categoria: string;
+}
 
 function Section({ icon, title, description, children }: any) {
     return (
@@ -40,8 +60,9 @@ function Section({ icon, title, description, children }: any) {
 }
 
 export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
-    const [ramos, setRamos] = useState<string[]>([]);
+    const [ramos, setRamos] = useState<RamoNovo[]>([]);
     const [novoRamo, setNovoRamo] = useState('');
+    const [novaCategoria, setNovaCategoria] = useState('');
 
     const { data, setData, post, processing, errors } = useForm({
         nome_fantasia: '',
@@ -49,20 +70,28 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
         cnpj: '',
         contato_nome: '',
         email_suporte: '',
-        ramos: [] as string[],
+        ramos: [] as RamoNovo[],
     });
 
     const adicionarRamo = () => {
         if (!novoRamo.trim()) return;
-        if (ramos.includes(novoRamo.trim())) {
+        if (!novaCategoria) {
+            toast.error('Selecione a categoria do ramo.');
+            return;
+        }
+        if (ramos.some((r) => r.nome_ramo === novoRamo.trim())) {
             toast.error('Ramo já adicionado!');
             return;
         }
 
-        const ramosAtualizados = [...ramos, novoRamo.trim()];
+        const ramosAtualizados = [
+            ...ramos,
+            { nome_ramo: novoRamo.trim(), categoria: novaCategoria },
+        ];
         setRamos(ramosAtualizados);
         setData('ramos', ramosAtualizados);
         setNovoRamo('');
+        setNovaCategoria('');
     };
 
     const removerRamo = (index: number) => {
@@ -81,6 +110,7 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
     const fechar = () => {
         setRamos([]);
         setNovoRamo('');
+        setNovaCategoria('');
         setOpen(false);
     };
 
@@ -110,7 +140,7 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
             cnpj: '',
             contato_nome: '',
             email_suporte: '',
-            ramos: [] as string[],
+            ramos: [] as RamoNovo[],
         };
         setData(limparFormulario);
     };
@@ -260,7 +290,7 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
                         description="Adicione os ramos suportados pela seguradora"
                     >
                         <div className="space-y-4">
-                            <div className="flex gap-2">
+                            <div className="flex flex-col gap-2 sm:flex-row">
                                 <Input
                                     value={novoRamo}
                                     onChange={(e) =>
@@ -268,8 +298,26 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
                                     }
                                     onKeyDown={handleKeyDown}
                                     placeholder="Ex: Automóvel, Vida, Residencial..."
-                                    className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                    className="h-10 flex-1 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                 />
+                                <Select
+                                    value={novaCategoria}
+                                    onValueChange={setNovaCategoria}
+                                >
+                                    <SelectTrigger className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none sm:w-48">
+                                        <SelectValue placeholder="Categoria" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {CATEGORIAS_RAMO.map((categoria) => (
+                                            <SelectItem
+                                                key={categoria.value}
+                                                value={categoria.value}
+                                            >
+                                                {categoria.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -292,9 +340,20 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
                                             key={index}
                                             className="flex items-center justify-between rounded-xl border border-border/70 bg-background px-3.5 py-2 shadow-sm"
                                         >
-                                            <span className="text-sm font-medium">
-                                                {ramo}
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-medium">
+                                                    {ramo.nome_ramo}
+                                                </span>
+                                                <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600">
+                                                    {
+                                                        CATEGORIAS_RAMO.find(
+                                                            (c) =>
+                                                                c.value ===
+                                                                ramo.categoria,
+                                                        )?.label
+                                                    }
+                                                </span>
+                                            </div>
                                             <button
                                                 type="button"
                                                 onClick={() =>
@@ -307,7 +366,7 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
                                         </div>
                                     ))}
                                 </div>
-                                
+
                             )}
 
                             {ramos.length === 0 && (

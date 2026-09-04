@@ -73,17 +73,11 @@ interface Estado {
     sigla: string;
 }
 
-export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
-    // Controla em qual modo o modal está no momento
-    // Sempre começa em 'visualizar' quando abre
-    const [modo, setModo] = useState<Modo>('visualizar');
-    const [estados, setEstados] = useState<Estado[]>([]);
-
-    // useForm do Inertia — gerencia os campos do formulário de edição
-    // Cada campo começa com o valor atual do segurado
-    // O ?. evita erro se segurado for null (ex: antes de carregar)
-    // O ?? '' garante que nunca fica undefined — usa string vazia como padrão
-    const { data, setData, put, processing, errors } = useForm({
+// Extraído para função própria (em vez de repetir os mesmos 14 campos em dois
+// lugares) porque a divergência entre cópias é exatamente o tipo de bug que
+// esse arquivo tinha antes: o formulário nunca era resincronizado com o prop.
+function mapSeguradoParaFormulario(segurado: any) {
+    return {
         nome_completo: segurado?.nome_completo ?? '',
         cpf_cnpj: segurado?.cpf_cnpj ?? '',
         tipo_pessoa: segurado?.tipo_pessoa ?? '',
@@ -98,7 +92,40 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
         cep: segurado?.cep ?? '',
         status: segurado?.status ?? '',
         observacoes: segurado?.observacoes ?? '',
-    });
+    };
+}
+
+export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
+    // Controla em qual modo o modal está no momento
+    // Sempre começa em 'visualizar' quando abre
+    const [modo, setModo] = useState<Modo>('visualizar');
+    const [estados, setEstados] = useState<Estado[]>([]);
+
+    // useForm do Inertia só lê esses valores iniciais uma vez, no primeiro
+    // mount do componente — por isso guardamos o último `segurado` visto e
+    // resincronizamos os campos abaixo sempre que ele mudar (ver abrirPerfil
+    // em clientes.tsx, que não força um remount deste modal).
+    const [ultimoSeguradoSincronizado, setUltimoSeguradoSincronizado] =
+        useState(segurado);
+
+    const { data, setData, put, processing, errors } = useForm(
+        mapSeguradoParaFormulario(segurado),
+    );
+
+    // Ajuste de estado durante a renderização (não dentro de um useEffect):
+    // padrão recomendado pelo próprio React para "resetar estado quando uma
+    // prop muda" — evita o round-trip extra de um efeito. Sem isso, trocar
+    // de cliente (ou reabrir o mesmo após editar) mantinha os dados do
+    // cliente exibido anteriormente no formulário de edição — risco real de
+    // salvar por cima os dados errados.
+    if (segurado !== ultimoSeguradoSincronizado) {
+        setUltimoSeguradoSincronizado(segurado);
+
+        if (segurado) {
+            setData(mapSeguradoParaFormulario(segurado));
+            setModo('visualizar');
+        }
+    }
 
     const isPF = segurado?.tipo_pessoa === 'pf';
     const labelDocumento = isPF ? 'CPF' : 'CNPJ';

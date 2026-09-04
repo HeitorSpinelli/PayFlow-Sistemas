@@ -15,6 +15,10 @@ use App\Http\Controllers\SeguradoraController;
 use App\Http\Controllers\SeguradoController;
 use App\Http\Controllers\TipoNotificacoesController;
 use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Schedule;
+use App\Console\Commands\AtualizarIndicadoresEconomicos;
+
+Schedule::command(AtualizarIndicadoresEconomicos::class)->daily();
 
 /* ------------------------------------------------------------------ */
 /* Rota Inicial                                                        */
@@ -123,7 +127,7 @@ Route::middleware(['auth', 'can:is-admin'])->group(function () {
         Route::delete('/{id}', [AutomacoesController::class, 'destroy']);
     });
 
-    
+
     // Administração
     Route::prefix('/administracao')->group(function () {
         Route::get('/usuarios', [UserController::class, 'index'])->name('users');

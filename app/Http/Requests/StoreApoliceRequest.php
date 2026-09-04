@@ -2,11 +2,14 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\ValidaDadosPorCategoriaDeRamo;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreApoliceRequest extends FormRequest
 {
+    use ValidaDadosPorCategoriaDeRamo;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -22,7 +25,7 @@ class StoreApoliceRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'numero_apolice' => 'required|string|max:100|unique:apolices',
             'cliente_id' => 'required|exists:segurados,id',
             'seguradora_id' => 'required|exists:seguradoras,id',
@@ -33,8 +36,13 @@ class StoreApoliceRequest extends FormRequest
             'forma_pagamento' => 'required|string|max:50',
             'inicio_vigencia' => 'required|date',
             'fim_vigencia' => 'required|date|after:inicio_vigencia',
-            'observacoes' => 'nullable|string'
+            'observacoes' => 'nullable|string',
         ];
+
+        // A categoria do ramo escolhido decide quais dados extras são
+        // obrigatórios — mesmo padrão de risco que uma seguradora real exige
+        // na cotação (dados do veículo ou do imóvel segurado).
+        return $rules + $this->regrasPorCategoriaDoRamo($this->input('ramo_id'));
     }
 
     /**
@@ -93,7 +101,7 @@ class StoreApoliceRequest extends FormRequest
             'status.in' => 'O status selecionado deve ser Ativa ou Inativa.',
 
             // Observações
-            'observacoes.string' => 'As observações devem estar em formato de texto.'
+            'observacoes.string' => 'As observações devem estar em formato de texto.',
         ];
     }
 }

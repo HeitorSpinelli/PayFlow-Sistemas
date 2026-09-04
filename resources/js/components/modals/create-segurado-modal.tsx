@@ -34,8 +34,8 @@ import 'react-toastify/dist/ReactToastify.css';
 
 function Section({ icon, title, description, children }: any) {
     return (
-        <section className="rounded-2xl border border-border/70 bg-muted/[0.18] p-4 sm:p-5">
-            <div className="mb-5 flex items-center gap-3">
+        <section className="rounded-2xl border border-border/70 bg-muted/[0.18] p-4">
+            <div className="mb-4 flex items-center gap-3">
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
                     {icon}
                 </span>
@@ -163,7 +163,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                 setOpen(isOpen); // Atualiza o estado no componente pai
             }}
         >
-            <DialogContent className="!flex max-h-[92vh] max-w-3xl flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 shadow-2xl">
+            <DialogContent className="!flex max-h-[92vh] flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 shadow-2xl sm:max-w-3xl">
                 <DialogHeader className="relative shrink-0 overflow-hidden border-b border-border/70 bg-gradient-to-br from-emerald-500/[0.12] via-background to-background px-6 py-6 pr-12 sm:px-8">
                     <div className="absolute -top-12 -right-10 h-36 w-36 rounded-full bg-emerald-500/10 blur-2xl" />
                     <div className="relative flex items-center gap-3">
@@ -188,48 +188,50 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                     </p>
                 </DialogHeader>
 
-                <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6 sm:px-8">
-                    <Section
-                        icon={<UserRound className="h-4 w-4" />}
-                        title="Dados principais"
-                        description="Identificação do segurado"
-                    >
-                        <div className="space-y-4">
-                            <div className="space-y-2">
-                                <label className="text-sm leading-none font-medium">
-                                    Tipo de pessoa *
-                                </label>
-                                <Select
-                                    value={tipoPessoa}
-                                    onValueChange={(valor) => {
-                                        setTipoPessoa(valor);
-                                        setData((prev) => ({
-                                            ...prev,
-                                            tipo_pessoa: valor,
-                                            cpf_cnpj: '',
-                                        }));
-                                    }}
-                                >
-                                    <SelectTrigger className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none">
-                                        <SelectValue placeholder="Selecione PF ou PJ" />
-                                    </SelectTrigger>
-                                    <SelectContent className="rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-md">
-                                        <SelectItem
-                                            value="pf"
-                                            className="cursor-pointer rounded-lg"
-                                        >
-                                            Pessoa física
-                                        </SelectItem>
-                                        <SelectItem
-                                            value="pj"
-                                            className="cursor-pointer rounded-lg"
-                                        >
-                                            Pessoa jurídica
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="grid gap-4 sm:grid-cols-2">
+                <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5 sm:px-8">
+                    {/* Dados principais + Contato lado a lado a partir de telas médias */}
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <Section
+                            icon={<UserRound className="h-4 w-4" />}
+                            title="Dados principais"
+                            description="Identificação do segurado"
+                        >
+                            <div className="space-y-3">
+                                <div className="space-y-2">
+                                    <label className="text-sm leading-none font-medium">
+                                        Tipo de pessoa *
+                                    </label>
+                                    <Select
+                                        value={tipoPessoa}
+                                        onValueChange={(valor) => {
+                                            setTipoPessoa(valor);
+                                            setData((prev) => ({
+                                                ...prev,
+                                                tipo_pessoa: valor,
+                                                cpf_cnpj: '',
+                                            }));
+                                        }}
+                                    >
+                                        <SelectTrigger className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none">
+                                            <SelectValue placeholder="Selecione PF ou PJ" />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-md">
+                                            <SelectItem
+                                                value="pf"
+                                                className="cursor-pointer rounded-lg"
+                                            >
+                                                Pessoa física
+                                            </SelectItem>
+                                            <SelectItem
+                                                value="pj"
+                                                className="cursor-pointer rounded-lg"
+                                            >
+                                                Pessoa jurídica
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
                                 <div className="space-y-2">
                                     <label className="text-sm leading-none font-medium">
                                         {labelNome} *
@@ -255,65 +257,72 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                         </span>
                                     )}
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm leading-none font-medium">
-                                        {labelDocumento} *
-                                    </label>
-                                    <Input
-                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
-                                        type="text"
-                                        value={data.cpf_cnpj}
-                                        onChange={(e) =>
-                                            setData(
-                                                'cpf_cnpj',
-                                                formataCpfCnpj(e.target.value),
-                                            )
-                                        }
-                                        placeholder={
-                                            isPF
-                                                ? '000.000.000-00'
-                                                : '00.000.000/0000-00'
-                                        }
-                                        maxLength={isPF ? 14 : 18}
-                                    />
-                                    {errors.cpf_cnpj && (
-                                        <span className="text-xs font-medium text-rose-500">
-                                            {errors.cpf_cnpj}
-                                        </span>
-                                    )}
+
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <label className="text-sm leading-none font-medium">
+                                            {labelDocumento} *
+                                        </label>
+                                        <Input
+                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                            type="text"
+                                            value={data.cpf_cnpj}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'cpf_cnpj',
+                                                    formataCpfCnpj(
+                                                        e.target.value,
+                                                    ),
+                                                )
+                                            }
+                                            placeholder={
+                                                isPF
+                                                    ? '000.000.000-00'
+                                                    : '00.000.000/0000-00'
+                                            }
+                                            maxLength={isPF ? 14 : 18}
+                                        />
+                                        {errors.cpf_cnpj && (
+                                            <span className="text-xs font-medium text-rose-500">
+                                                {errors.cpf_cnpj}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm leading-none font-medium">
+                                            {labelData} *
+                                        </label>
+                                        <Input
+                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                            type="date"
+                                            value={
+                                                data.data_nascimento_fundacao
+                                            }
+                                            onChange={(e) =>
+                                                setData(
+                                                    'data_nascimento_fundacao',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                        {errors.data_nascimento_fundacao && (
+                                            <span className="text-xs font-medium text-rose-500">
+                                                {
+                                                    errors.data_nascimento_fundacao
+                                                }
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm leading-none font-medium">
-                                    {labelData} *
-                                </label>
-                                <Input
-                                    className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
-                                    type="date"
-                                    value={data.data_nascimento_fundacao}
-                                    onChange={(e) =>
-                                        setData(
-                                            'data_nascimento_fundacao',
-                                            e.target.value,
-                                        )
-                                    }
-                                />
-                                {errors.data_nascimento_fundacao && (
-                                    <span className="text-xs font-medium text-rose-500">
-                                        {errors.data_nascimento_fundacao}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                    </Section>
+                        </Section>
 
-                    <Section
-                        icon={<Phone className="h-4 w-4" />}
-                        title="Contato"
-                        description="Canais para comunicação"
-                    >
-                        <div className="space-y-4">
-                            <div className="grid gap-4 sm:grid-cols-2">
+                        <Section
+                            icon={<Phone className="h-4 w-4" />}
+                            title="Contato"
+                            description="Canais para comunicação"
+                        >
+                            <div className="space-y-3">
                                 <div className="space-y-2">
                                     <label className="text-sm leading-none font-medium">
                                         E-mail *
@@ -333,6 +342,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                         </span>
                                     )}
                                 </div>
+
                                 <div className="space-y-2">
                                     <label className="text-sm leading-none font-medium">
                                         Celular / WhatsApp *
@@ -357,71 +367,74 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                         </span>
                                     )}
                                 </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-sm leading-none font-medium">
+                                        Telefone fixo
+                                    </label>
+                                    <Input
+                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                        type="tel"
+                                        placeholder="(11) 3333-3333"
+                                        value={data.telefone_fixo}
+                                        onChange={(e) =>
+                                            setData(
+                                                'telefone_fixo',
+                                                formatarTelefone(
+                                                    e.target.value,
+                                                ),
+                                            )
+                                        }
+                                    />
+                                    {errors.telefone_fixo && (
+                                        <span className="text-xs font-medium text-rose-500">
+                                            {errors.telefone_fixo}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm leading-none font-medium">
-                                    Telefone fixo
-                                </label>
-                                <Input
-                                    className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
-                                    type="tel"
-                                    placeholder="(11) 3333-3333"
-                                    value={data.telefone_fixo}
-                                    onChange={(e) =>
-                                        setData(
-                                            'telefone_fixo',
-                                            formatarTelefone(e.target.value),
-                                        )
-                                    }
-                                />
-                                {errors.telefone_fixo && (
-                                    <span className="text-xs font-medium text-rose-500">
-                                        {errors.telefone_fixo}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                    </Section>
+                        </Section>
+                    </div>
 
                     <Section
                         icon={<MapPin className="h-4 w-4" />}
                         title="Localização"
                         description="Endereço principal"
                     >
-                        <div className="space-y-4">
-                            <div className="space-y-2">
-                                <label className="text-sm leading-none font-medium">
-                                    Estado *
-                                </label>
-                                <Select
-                                    value={data.estado}
-                                    onValueChange={(valor) =>
-                                        setData('estado', valor)
-                                    }
-                                >
-                                    <SelectTrigger className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none">
-                                        <SelectValue placeholder="Selecione o estado" />
-                                    </SelectTrigger>
-                                    <SelectContent className="rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-md">
-                                        {estados.map((estado) => (
-                                            <SelectItem
-                                                key={estado.id}
-                                                value={estado.sigla}
-                                                className="cursor-pointer rounded-lg"
-                                            >
-                                                {estado.nome}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {errors.estado && (
-                                    <span className="text-xs font-medium text-rose-500">
-                                        {errors.estado}
-                                    </span>
-                                )}
-                            </div>
+                        <div className="space-y-3">
+                            <div className="grid gap-3 sm:grid-cols-3">
+                                <div className="space-y-2">
+                                    <label className="text-sm leading-none font-medium">
+                                        Estado *
+                                    </label>
+                                    <Select
+                                        value={data.estado}
+                                        onValueChange={(valor) =>
+                                            setData('estado', valor)
+                                        }
+                                    >
+                                        <SelectTrigger className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none">
+                                            <SelectValue placeholder="Selecione o estado" />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-md">
+                                            {estados.map((estado) => (
+                                                <SelectItem
+                                                    key={estado.id}
+                                                    value={estado.sigla}
+                                                    className="cursor-pointer rounded-lg"
+                                                >
+                                                    {estado.nome}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {errors.estado && (
+                                        <span className="text-xs font-medium text-rose-500">
+                                            {errors.estado}
+                                        </span>
+                                    )}
+                                </div>
 
-                            <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="space-y-2">
                                     <label className="text-sm leading-none font-medium">
                                         Cidade *
@@ -440,6 +453,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                         </span>
                                     )}
                                 </div>
+
                                 <div className="space-y-2">
                                     <label className="text-sm leading-none font-medium">
                                         CEP *
@@ -468,42 +482,45 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-sm leading-none font-medium">
-                                    Endereço *
-                                </label>
-                                <Input
-                                    className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
-                                    placeholder="Avenida Bernardino de Campos"
-                                    value={data.endereco}
-                                    onChange={(e) =>
-                                        setData('endereco', e.target.value)
-                                    }
-                                />
-                                {errors.endereco && (
-                                    <span className="text-xs font-medium text-rose-500">
-                                        {errors.endereco}
-                                    </span>
-                                )}
-                            </div>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                    <label className="text-sm leading-none font-medium">
+                                        Endereço *
+                                    </label>
+                                    <Input
+                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                        placeholder="Avenida Bernardino de Campos"
+                                        value={data.endereco}
+                                        onChange={(e) =>
+                                            setData('endereco', e.target.value)
+                                        }
+                                    />
+                                    {errors.endereco && (
+                                        <span className="text-xs font-medium text-rose-500">
+                                            {errors.endereco}
+                                        </span>
+                                    )}
+                                </div>
 
-                            <div className="space-y-2">
-                                <label className="text-sm leading-none font-medium">
-                                    Bairro
-                                </label>
-                                <Input
-                                    className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
-                                    placeholder="Centro"
-                                    value={data.bairro}
-                                    onChange={(e) =>
-                                        setData('bairro', e.target.value)
-                                    }
-                                />
-                                {errors.bairro && (
-                                    <span className="text-xs font-medium text-rose-500">
-                                        {errors.bairro}
-                                    </span>
-                                )}
+                                <div className="space-y-2">
+                                    <label className="text-sm leading-none font-medium">
+                                        Bairro
+                                    </label>
+                                    <Input
+                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                        placeholder="Centro"
+                                        maxLength={100}
+                                        value={data.bairro}
+                                        onChange={(e) =>
+                                            setData('bairro', e.target.value)
+                                        }
+                                    />
+                                    {errors.bairro && (
+                                        <span className="text-xs font-medium text-rose-500">
+                                            {errors.bairro}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </Section>
@@ -518,15 +535,15 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                             onChange={(e) =>
                                 setData('observacoes', e.target.value)
                             }
-                            className="min-h-24 w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-3 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                            className="min-h-20 w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-3 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                             placeholder="Adicione observações relevantes..."
                         />
+                        {errors.observacoes && (
+                            <span className="mt-2 block text-xs font-medium text-rose-500">
+                                {errors.observacoes}
+                            </span>
+                        )}
                     </Section>
-                    {errors.observacoes && (
-                        <span className="text-xs font-medium text-rose-500">
-                            {errors.observacoes}
-                        </span>
-                    )}
                 </div>
 
                 <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-border/70 bg-background px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">

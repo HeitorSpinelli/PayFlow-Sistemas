@@ -2,11 +2,15 @@
 
 namespace App\Services\Apolice;
 
-use App\Models\Seguradora;
-use App\Models\Segurado;
-use App\Models\Ramo;
-use App\Models\Pagamento;
 use App\Models\Apolice;
+use App\Models\DadosResidenciaApolice;
+use App\Models\DadosVeiculoApolice;
+use App\Models\Pagamento;
+use App\Models\Parcelas;
+use App\Models\Ramo;
+use App\Models\Segurado;
+use App\Models\Seguradora;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class ApoliceService
@@ -16,52 +20,72 @@ class ApoliceService
     public function store(array $data)
     {
         try {
-            // Cria a apólice
-            $apolice = Apolice::create($data);
+            // DB::transaction: se a criação de alguma parcela (ou dos dados
+            // extras de veículo/residência) falhar no meio do loop, a apólice
+            // criada no início não fica "órfã" sem as parcelas esperadas.
+            DB::transaction(function () use ($data) {
+                // Cria a apólice
+                $apolice = Apolice::create($data);
 
-            // Calcula o valor de cada parcela
-            $valorParcela = round($data['valor_premio_total'] / $data['quantidade_parcelas'], 2);
+                // Calcula o valor de cada parcela
+                $valorParcela = round($data['valor_premio_total'] / $data['quantidade_parcelas'], 2);
 
-            // Data base para calcular vencimentos (30 dias após início da vigência)
-            $dataBase = \Carbon\Carbon::parse($data['inicio_vigencia']);
+                // Data base para calcular vencimentos (30 dias após início da vigência)
+                $dataBase = Carbon::parse($data['inicio_vigencia']);
 
-            // Cria cada parcela automaticamente
-            for ($i = 1; $i <= $data['quantidade_parcelas']; $i++) {
-                \App\Models\Parcelas::create([
-                    'apolice_id'      => $apolice->id,
-                    'numero_parcela'  => $i,
-                    'valor_parcela'   => $valorParcela,
-                    'data_vencimento' => $dataBase->copy()->addMonths($i),
-                    'status_pagamento' => 'em_aberto',
-                ]);
-            }
+                // Cria cada parcela automaticamente
+                for ($i = 1; $i <= $data['quantidade_parcelas']; $i++) {
+                    Parcelas::create([
+                        'apolice_id' => $apolice->id,
+                        'numero_parcela' => $i,
+                        'valor_parcela' => $valorParcela,
+                        'data_vencimento' => $dataBase->copy()->addMonthsNoOverflow($i),
+                        'status_pagamento' => 'em_aberto',
+                    ]);
+                }
+
+                // Dados extras exigidos conforme a categoria do ramo. Decide pela
+                // categoria real do ramo (não só pela chave existir no payload):
+                // o frontend sempre manda os dois blocos, então isset() sozinho
+                // criaria um registro de veículo vazio numa apólice residencial.
+                $ramo = Ramo::find($data['ramo_id']);
+
+                if ($ramo?->categoria === Ramo::CATEGORIA_VEICULO && isset($data['veiculo'])) {
+                    DadosVeiculoApolice::create([...$data['veiculo'], 'apolice_id' => $apolice->id]);
+                } elseif ($ramo?->categoria === Ramo::CATEGORIA_RESIDENCIAL && isset($data['residencia'])) {
+                    DadosResidenciaApolice::create([...$data['residencia'], 'apolice_id' => $apolice->id]);
+                }
+            });
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao cadastrar apólice: ' . $e->getMessage());
+            throw new \Exception('Erro ao cadastrar apólice: '.$e->getMessage());
         }
     }
-    //Função para buscar os segurados cadastrados no banco, selecionando apenas os campos id, nome_completo e cpf_cnpj
+
+    // Função para buscar os segurados cadastrados no banco, selecionando apenas os campos id, nome_completo e cpf_cnpj
     public function buscar()
     {
         try {
             return Segurado::select('id', 'nome_completo', 'cpf_cnpj')->get();
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao buscar segurados: ' . $e->getMessage());
+            throw new \Exception('Erro ao buscar segurados: '.$e->getMessage());
         }
     }
+
     public function buscarSeguradoras()
     {
         try {
             return Seguradora::select('id', 'nome_fantasia')->get();
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao buscar seguradoras: ' . $e->getMessage());
+            throw new \Exception('Erro ao buscar seguradoras: '.$e->getMessage());
         }
     }
+
     public function buscarRamos()
     {
         try {
-            return Ramo::select('id', 'nome_ramo', 'seguradora_id')->get();
+            return Ramo::select('id', 'nome_ramo', 'categoria', 'seguradora_id')->get();
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao buscar ramos: ' . $e->getMessage());
+            throw new \Exception('Erro ao buscar ramos: '.$e->getMessage());
         }
     }
 
@@ -69,8 +93,9 @@ class ApoliceService
     {
         try {
             $query = Apolice::query()
-                ->join('segurados',   'apolices.cliente_id',    '=', 'segurados.id')
-                ->join('ramos',       'apolices.ramo_id',       '=', 'ramos.id')
+                ->with(['dadosVeiculo', 'dadosResidencia'])
+                ->join('segurados', 'apolices.cliente_id', '=', 'segurados.id')
+                ->join('ramos', 'apolices.ramo_id', '=', 'ramos.id')
                 ->join('seguradoras', 'apolices.seguradora_id', '=', 'seguradoras.id')
                 ->select(
                     'apolices.id',
@@ -84,13 +109,14 @@ class ApoliceService
                     'segurados.nome_completo',
                     'segurados.cpf_cnpj',
                     'ramos.nome_ramo',
+                    'ramos.categoria as ramo_categoria',
                     'segurados.id as cliente_id',
                     'ramos.id as ramo_id',
                     'seguradoras.id as seguradora_id',
                     'seguradoras.nome_fantasia'
                 );
 
-            if (!empty($filters['busca'])) {
+            if (! empty($filters['busca'])) {
                 $termo = $filters['busca'];
 
                 $query->where(function ($q) use ($termo) {
@@ -107,7 +133,7 @@ class ApoliceService
                 });
             }
 
-            if (!empty($filters['status']) && $filters['status'] !== 'Todos') {
+            if (! empty($filters['status']) && $filters['status'] !== 'Todos') {
                 $status = $filters['status'];
 
                 if ($status === 'Vigente') {
@@ -122,9 +148,10 @@ class ApoliceService
 
             return $query->paginate(10)->withQueryString();
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao buscar apólices: ' . $e->getMessage());
+            throw new \Exception('Erro ao buscar apólices: '.$e->getMessage());
         }
     }
+
     public function destroy(int $id)
     {
         try {
@@ -139,27 +166,49 @@ class ApoliceService
                 $apolice->delete();
             });
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao excluir apólice: ' . $e->getMessage());
+            throw new \Exception('Erro ao excluir apólice: '.$e->getMessage());
         }
     }
+
     public function update(int $id, array $data)
     {
         try {
-            $apolice = Apolice::findOrFail($id);
-            $apolice->update($data);
+            DB::transaction(function () use ($id, $data) {
+                $apolice = Apolice::findOrFail($id);
+                $apolice->update($data);
+
+                // Mesma decisão pela categoria real do ramo usada em store(). Se o
+                // ramo da apólice mudou de categoria na edição (ex: veículo ->
+                // residencial), o registro extra do tipo antigo é removido para
+                // não ficar um dado de veículo órfão numa apólice residencial.
+                $ramo = Ramo::find($apolice->ramo_id);
+
+                if ($ramo?->categoria === Ramo::CATEGORIA_VEICULO && isset($data['veiculo'])) {
+                    DadosVeiculoApolice::updateOrCreate(['apolice_id' => $apolice->id], $data['veiculo']);
+                    DadosResidenciaApolice::where('apolice_id', $apolice->id)->delete();
+                } elseif ($ramo?->categoria === Ramo::CATEGORIA_RESIDENCIAL && isset($data['residencia'])) {
+                    DadosResidenciaApolice::updateOrCreate(['apolice_id' => $apolice->id], $data['residencia']);
+                    DadosVeiculoApolice::where('apolice_id', $apolice->id)->delete();
+                } else {
+                    DadosVeiculoApolice::where('apolice_id', $apolice->id)->delete();
+                    DadosResidenciaApolice::where('apolice_id', $apolice->id)->delete();
+                }
+            });
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao atualizar apólice: ' . $e->getMessage());
+            throw new \Exception('Erro ao atualizar apólice: '.$e->getMessage());
         }
     }
-    //Função para contar o total de apolices cadastradas no banco
+
+    // Função para contar o total de apolices cadastradas no banco
     public function count()
     {
         try {
             return Apolice::count();
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao contar apólices: ' . $e->getMessage());
+            throw new \Exception('Erro ao contar apólices: '.$e->getMessage());
         }
     }
+
     public function AlterarRamo(int $apoliceId, int $novoRamoId)
     {
         try {
@@ -167,17 +216,17 @@ class ApoliceService
             $apolice->ramo_id = $novoRamoId;
             $apolice->save();
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao alterar o ramo da apólice: ' . $e->getMessage());
+            throw new \Exception('Erro ao alterar o ramo da apólice: '.$e->getMessage());
         }
     }
 
-    //Listando apenas clientes que estão com deleted at 
+    // Listando apenas clientes que estão com deleted at
     public function listarInativos()
     {
         return Apolice::onlyTrashed()->get();
     }
 
-    //Restaura o segurado pelo id
+    // Restaura o segurado pelo id
     public function restore(int $id)
     {
         try {
@@ -194,16 +243,18 @@ class ApoliceService
                 }
             });
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao restaurar segurado: ' . $e->getMessage());
+            throw new \Exception('Erro ao restaurar segurado: '.$e->getMessage());
         }
     }
 
     public function contarClientesDevedores()
     {
         return Segurado::whereHas('apolices.parcelas', function ($query) {
-            $query->where('status_pagamento', 'vencida');
+            $query->where('status_pagamento', 'em_aberto')
+                ->where('data_vencimento', '<', now());
         })->count();
     }
+
     public function receitaDoMes()
     {
         return Pagamento::where('status', 'confirmado')
@@ -228,15 +279,15 @@ class ApoliceService
         $hoje = now()->startOfDay();
         $dataLimite = $hoje->copy()->addDays($diasLimite);
 
-        $parcelas = \App\Models\Parcelas::with(['apolice.cliente'])
-            ->where('status_pagamento', '!=', 'pago')
+        $parcelas = Parcelas::with(['apolice.cliente'])
+            ->where('status_pagamento', '!=', 'paga')
             ->where('data_vencimento', '<=', $dataLimite)
             ->orderBy('data_vencimento')
             ->limit($limite)
             ->get();
 
         return $parcelas->map(function ($parcela) use ($hoje) {
-            $vencimento = \Carbon\Carbon::parse($parcela->data_vencimento)->startOfDay();
+            $vencimento = Carbon::parse($parcela->data_vencimento)->startOfDay();
             $dias = $hoje->diffInDays($vencimento, false);
 
             return [
@@ -257,27 +308,27 @@ class ApoliceService
      */
     public function receitaUltimosMeses(int $meses = 6): array
     {
-        //copy() evita que a variável original seja alterada se ela for reaproveitada mais adiante,
-        //hábito defensivo, já que Carbon é mutável
-        //$months - 1 é para contar incluindo o mes atual, como serão 6, é 6 - 1 = 5,
-        //se hoje é junho aparece junho - 5 meses janeiro
-        //zera o primeiro dia do mês as 00:00.
+        // copy() evita que a variável original seja alterada se ela for reaproveitada mais adiante,
+        // hábito defensivo, já que Carbon é mutável
+        // $months - 1 é para contar incluindo o mes atual, como serão 6, é 6 - 1 = 5,
+        // se hoje é junho aparece junho - 5 meses janeiro
+        // zera o primeiro dia do mês as 00:00.
         $inicio = now()->copy()->subMonths($meses - 1)->startOfMonth();
 
-        //Consulta para trazer pagamentos confirmado, com data de pagamento,
-        //maior ou igual a $inicio ou seja dentro dos 6 meses 
-        //TO_CHAR usado para transformar data em texto no formato que quiser
-        //soma o valor como total e agrupa por chave, pluck devolve uma coleção e nn array,
+        // Consulta para trazer pagamentos confirmado, com data de pagamento,
+        // maior ou igual a $inicio ou seja dentro dos 6 meses
+        // TO_CHAR usado para transformar data em texto no formato que quiser
+        // soma o valor como total e agrupa por chave, pluck devolve uma coleção e nn array,
         $porMes = Pagamento::where('status', 'confirmado')
             ->where('data_pagamento', '>=', $inicio)
             ->selectRaw("TO_CHAR(data_pagamento, 'YYYY-MM') as chave, SUM(valor) as total")
             ->groupBy('chave')
             ->pluck('total', 'chave');
 
-        //resultado array vazio
-        //para cada mês da janela, incluindo o atual (quando $i = 0), cria $data e $chave,
-        //e busca o valor correspondente em $porMes
-        //resultado onde era array vazio passa a receber array de mes e valor abreviados
+        // resultado array vazio
+        // para cada mês da janela, incluindo o atual (quando $i = 0), cria $data e $chave,
+        // e busca o valor correspondente em $porMes
+        // resultado onde era array vazio passa a receber array de mes e valor abreviados
         $resultado = [];
         for ($i = $meses - 1; $i >= 0; $i--) {
             $data = now()->copy()->startOfMonth()->subMonths($i);

@@ -2,11 +2,14 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\ValidaDadosPorCategoriaDeRamo;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateApoliceRequest extends FormRequest
 {
+    use ValidaDadosPorCategoriaDeRamo;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -22,8 +25,8 @@ class UpdateApoliceRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'numero_apolice' => 'required|string|max:100|unique:apolices,numero_apolice,' . $this->route('id'),
+        $rules = [
+            'numero_apolice' => 'required|string|max:100|unique:apolices,numero_apolice,'.$this->route('id'),
             'cliente_id' => 'required|exists:segurados,id',
             'seguradora_id' => 'required|exists:seguradoras,id',
             'ramo_id' => 'required|exists:ramos,id',
@@ -33,13 +36,16 @@ class UpdateApoliceRequest extends FormRequest
             'forma_pagamento' => 'required|string|max:50',
             'inicio_vigencia' => 'required|date',
             'fim_vigencia' => 'required|date|after:inicio_vigencia',
-            'observacoes' => 'nullable|string'
+            'observacoes' => 'nullable|string',
         ];
+
+        return $rules + $this->regrasPorCategoriaDoRamo($this->input('ramo_id'));
     }
+
     public function messages(): array
     {
         return [
-            'quantidade_parcelas.max' => 'O máximo de parcelas é 12'
+            'quantidade_parcelas.max' => 'O máximo de parcelas é 12',
         ];
     }
 }

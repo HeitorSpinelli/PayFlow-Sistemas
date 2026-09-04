@@ -4,29 +4,33 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreSeguradoRequest;
 use App\Http\Requests\UpdateSeguradoRequest;
-use Illuminate\Http\Request;
 use App\Models\Segurado;
 use App\Services\Cliente\SeguradoService;
 use App\Services\Exportacoes\ExportacaoSeguradosService;
+use Illuminate\Http\Request;
 
 class SeguradoController extends Controller
 {
-    //1. Declaração do service como propriedade
+    // 1. Declaração do service como propriedade
     protected SeguradoService $seguradoService;
 
-    //2. Injeta pelo construtor
+    // 2. Injeta pelo construtor
     public function __construct(SeguradoService $seguradoService)
     {
         $this->seguradoService = $seguradoService;
     }
 
-    //3. Usa no store
+    // 3. Usa no store
     public function store(StoreSeguradoRequest $request)
     {
+        try {
+            $data = $request->validated();
+            $this->seguradoService->store($data);
 
-        $data = $request->validated();
-        $this->seguradoService->store($data);
-        return redirect()->back()->with('success', 'Segurado cadastrado com sucesso!');
+            return redirect()->back()->with('success', 'Segurado cadastrado com sucesso!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erro ao cadastrar segurado: '.$e->getMessage());
+        }
     }
 
     public function show(Request $request)
@@ -58,19 +62,22 @@ class SeguradoController extends Controller
     {
         try {
             $this->seguradoService->destroy($id);
+
             return redirect()->back()->with('success', 'Segurado excluído com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao excluir segurado: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erro ao excluir segurado: '.$e->getMessage());
         }
     }
+
     public function update(UpdateSeguradoRequest $request, int $id)
     {
         try {
             $data = $request->validated();
             $this->seguradoService->update($id, $data);
+
             return redirect()->back()->with('success', 'Segurado atualizado com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao atualizar segurado: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erro ao atualizar segurado: '.$e->getMessage());
         }
     }
 
@@ -87,6 +94,7 @@ class SeguradoController extends Controller
     {
         try {
             $this->seguradoService->restore($id);
+
             return redirect()->back()->with('success', 'Segurado Reativado Com Sucesso');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Não foi possivel reativar o segurado');

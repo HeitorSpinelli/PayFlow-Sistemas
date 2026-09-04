@@ -23,7 +23,8 @@ class StoreRamoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nome_ramo' => 'required|string|unique:ramos,nome_ramo'
+            'nome_ramo' => 'required|string|unique:ramos,nome_ramo',
+            'categoria' => 'required|string|in:veiculo,residencial,outro',
         ];
     }
 }
