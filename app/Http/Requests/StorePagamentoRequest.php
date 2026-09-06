@@ -25,7 +25,8 @@ class StorePagamentoRequest extends FormRequest
                 'integer',
                 'min:1',
                 Rule::unique('pagamentos', 'parcela')
-                    ->where('apolice_id', $this->apolice_id),
+                    ->where('apolice_id', $this->apolice_id)
+                    ->withoutTrashed(),
             ],
             'valor' => 'required|numeric|min:0.01',
             'data_pagamento' => 'required|date|before_or_equal:today',

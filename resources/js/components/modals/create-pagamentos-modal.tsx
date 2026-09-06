@@ -253,7 +253,7 @@ export default function CreatePagamentoModal({
                 setOpen(isOpen);
             }}
         >
-            <DialogContent className="!flex max-h-[92vh] max-w-2xl flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 shadow-2xl">
+            <DialogContent className="!flex max-h-[92vh] flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 shadow-2xl sm:max-w-4xl">
                 <DialogHeader className="relative shrink-0 overflow-hidden border-b border-border/70 bg-gradient-to-br from-emerald-500/[0.12] via-background to-background px-6 py-6 pr-12 sm:px-8">
                     <div className="absolute -top-12 -right-10 h-36 w-36 rounded-full bg-emerald-500/10 blur-2xl" />
                     <div className="relative flex items-center gap-3">
@@ -278,321 +278,357 @@ export default function CreatePagamentoModal({
                     </p>
                 </DialogHeader>
 
-                <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6 sm:px-8">
-                    <Section
-                        icon={<UserRound className="h-4 w-4" />}
-                        title="Segurado"
-                        description="Cliente responsável pelo pagamento"
-                    >
-                        <div className="space-y-2" ref={wrapperRef}>
-                            <label className="text-sm leading-none font-medium">
-                                Segurado *
-                            </label>
-                            <div className="relative">
-                                <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/60" />
-                                <Input
-                                    placeholder="Digite o nome, CPF ou CNPJ do segurado"
-                                    className={`${inputClass} pl-9`}
-                                    value={buscaSegurado}
-                                    onChange={(e) => {
-                                        setBuscaSegurado(e.target.value);
-                                        setSugestoesAbertas(true);
-                                        // se o usuário editar o texto, invalida a seleção anterior
-                                        if (data.segurado_id) {
-                                            setData('segurado_id', '');
-                                            setData('apolice_id', '');
-                                            setData('parcela', '');
-                                            setData('valor', '');
-                                        }
-                                    }}
-                                    onFocus={() =>
-                                        setSugestoesAbertas(
-                                            buscaSegurado.trim().length > 0,
-                                        )
-                                    }
-                                />
-
-                                {/* Lista de sugestões — só aparece com texto digitado e sem segurado já escolhido */}
-                                {sugestoesAbertas &&
-                                    sugestoes.length > 0 &&
-                                    !data.segurado_id && (
-                                        <div className="absolute right-0 left-0 z-50 mt-1 max-h-56 overflow-hidden overflow-y-auto rounded-xl border border-border/70 bg-popover py-1.5 shadow-xl">
-                                            {sugestoes.map((s: any) => (
-                                                <button
-                                                    key={s.id}
-                                                    type="button"
-                                                    onClick={() =>
-                                                        selecionarSegurado(s)
-                                                    }
-                                                    className="flex w-full flex-col items-start px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
-                                                >
-                                                    <span className="font-medium text-popover-foreground">
-                                                        {s.nome_completo}
-                                                    </span>
-                                                    <span className="text-xs text-muted-foreground">
-                                                        {formataCpfCnpj(
-                                                            s.cpf_cnpj ?? '',
-                                                        )}
-                                                    </span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                {/* Mensagem quando não encontra nada */}
-                                {sugestoesAbertas &&
-                                    buscaSegurado.trim() &&
-                                    sugestoes.length === 0 &&
-                                    !data.segurado_id && (
-                                        <div className="absolute right-0 left-0 z-50 mt-1 rounded-xl border border-border/70 bg-popover px-3 py-2 text-sm text-muted-foreground shadow-xl">
-                                            Nenhum segurado encontrado
-                                        </div>
-                                    )}
-                            </div>
-
-                            {data.segurado_id && (
-                                <p className="flex items-center gap-1 text-xs font-medium text-emerald-600">
-                                    <Check className="size-3.5" />
-                                    Segurado selecionado
-                                </p>
-                            )}
-                            {(errors as any).segurado_id && (
-                                <span className="text-xs font-medium text-rose-500">
-                                    {(errors as any).segurado_id}
-                                </span>
-                            )}
-                        </div>
-                    </Section>
-
-                    <Section
-                        icon={<CreditCard className="h-4 w-4" />}
-                        title="Apólice e parcela"
-                        description="Referência do pagamento"
-                    >
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="space-y-2">
-                                <label className="text-sm leading-none font-medium">
-                                    Apólice *
-                                </label>
-                                <Select
-                                    value={data.apolice_id}
-                                    onValueChange={(v) =>
-                                        setData('apolice_id', v)
-                                    }
-                                    disabled={!data.segurado_id}
-                                >
-                                    <SelectTrigger
-                                        className={selectTriggerClass}
-                                    >
-                                        <SelectValue
-                                            placeholder={
-                                                data.segurado_id
-                                                    ? 'Selecione'
-                                                    : 'Escolha um segurado'
+                <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8">
+                    <div className="grid gap-6 sm:grid-cols-2">
+                        <div className="space-y-6">
+                            <Section
+                                icon={<UserRound className="h-4 w-4" />}
+                                title="Segurado"
+                                description="Cliente responsável pelo pagamento"
+                            >
+                                <div className="space-y-2" ref={wrapperRef}>
+                                    <label className="text-sm leading-none font-medium">
+                                        Segurado *
+                                    </label>
+                                    <div className="relative">
+                                        <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/60" />
+                                        <Input
+                                            placeholder="Digite o nome, CPF ou CNPJ do segurado"
+                                            className={`${inputClass} pl-9`}
+                                            value={buscaSegurado}
+                                            onChange={(e) => {
+                                                setBuscaSegurado(
+                                                    e.target.value,
+                                                );
+                                                setSugestoesAbertas(true);
+                                                // se o usuário editar o texto, invalida a seleção anterior
+                                                if (data.segurado_id) {
+                                                    setData('segurado_id', '');
+                                                    setData('apolice_id', '');
+                                                    setData('parcela', '');
+                                                    setData('valor', '');
+                                                }
+                                            }}
+                                            onFocus={() =>
+                                                setSugestoesAbertas(
+                                                    buscaSegurado.trim()
+                                                        .length > 0,
+                                                )
                                             }
                                         />
-                                    </SelectTrigger>
-                                    <SelectContent className="rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-md">
-                                        {apolicesDoSegurado.length === 0 && (
-                                            <div className="px-3 py-2 text-sm text-muted-foreground">
-                                                Nenhuma apólice para esse
-                                                segurado
-                                            </div>
-                                        )}
-                                        {apolicesDoSegurado.map((a: any) => (
-                                            <SelectItem
-                                                key={a.id}
-                                                value={String(a.id)}
-                                                className="cursor-pointer rounded-lg"
+
+                                        {/* Lista de sugestões — só aparece com texto digitado e sem segurado já escolhido */}
+                                        {sugestoesAbertas &&
+                                            sugestoes.length > 0 &&
+                                            !data.segurado_id && (
+                                                <div className="absolute right-0 left-0 z-50 mt-1 max-h-56 overflow-hidden overflow-y-auto rounded-xl border border-border/70 bg-popover py-1.5 shadow-xl">
+                                                    {sugestoes.map((s: any) => (
+                                                        <button
+                                                            key={s.id}
+                                                            type="button"
+                                                            onClick={() =>
+                                                                selecionarSegurado(
+                                                                    s,
+                                                                )
+                                                            }
+                                                            className="flex w-full flex-col items-start px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
+                                                        >
+                                                            <span className="font-medium text-popover-foreground">
+                                                                {
+                                                                    s.nome_completo
+                                                                }
+                                                            </span>
+                                                            <span className="text-xs text-muted-foreground">
+                                                                {formataCpfCnpj(
+                                                                    s.cpf_cnpj ??
+                                                                        '',
+                                                                )}
+                                                            </span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                        {/* Mensagem quando não encontra nada */}
+                                        {sugestoesAbertas &&
+                                            buscaSegurado.trim() &&
+                                            sugestoes.length === 0 &&
+                                            !data.segurado_id && (
+                                                <div className="absolute right-0 left-0 z-50 mt-1 rounded-xl border border-border/70 bg-popover px-3 py-2 text-sm text-muted-foreground shadow-xl">
+                                                    Nenhum segurado encontrado
+                                                </div>
+                                            )}
+                                    </div>
+
+                                    {data.segurado_id && (
+                                        <p className="flex items-center gap-1 text-xs font-medium text-emerald-600">
+                                            <Check className="size-3.5" />
+                                            Segurado selecionado
+                                        </p>
+                                    )}
+                                    {(errors as any).segurado_id && (
+                                        <span className="text-xs font-medium text-rose-500">
+                                            {(errors as any).segurado_id}
+                                        </span>
+                                    )}
+                                </div>
+                            </Section>
+
+                            <Section
+                                icon={<CreditCard className="h-4 w-4" />}
+                                title="Apólice e parcela"
+                                description="Referência do pagamento"
+                            >
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <label className="text-sm leading-none font-medium">
+                                            Apólice *
+                                        </label>
+                                        <Select
+                                            value={data.apolice_id}
+                                            onValueChange={(v) =>
+                                                setData('apolice_id', v)
+                                            }
+                                            disabled={!data.segurado_id}
+                                        >
+                                            <SelectTrigger
+                                                className={selectTriggerClass}
                                             >
-                                                {a.numero_apolice}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {(errors as any).apolice_id && (
-                                    <span className="text-xs font-medium text-rose-500">
-                                        {(errors as any).apolice_id}
-                                    </span>
-                                )}
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm leading-none font-medium">
-                                    Parcela *
-                                </label>
-                                <Select
-                                    value={data.parcela}
-                                    onValueChange={(v) => setData('parcela', v)}
-                                    disabled={!data.apolice_id}
-                                >
-                                    <SelectTrigger
-                                        className={selectTriggerClass}
-                                    >
-                                        <SelectValue placeholder="Selecione" />
-                                    </SelectTrigger>
-                                    <SelectContent className="rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-md">
-                                        {Array.from(
-                                            { length: totalParcelasApolice },
-                                            (_, i) => i + 1,
-                                        ).map((n) => {
-                                            const jaRegistrada =
-                                                parcelasJaRegistradas.includes(
-                                                    n,
-                                                );
-                                            return (
-                                                <SelectItem
-                                                    key={n}
-                                                    value={String(n)}
-                                                    disabled={jaRegistrada}
-                                                    className="cursor-pointer rounded-lg data-[disabled]:cursor-not-allowed data-[disabled]:opacity-40"
-                                                >
-                                                    {n}ª Parcela
-                                                    {jaRegistrada &&
-                                                        ' — já paga'}
-                                                </SelectItem>
-                                            );
-                                        })}
-                                    </SelectContent>
-                                </Select>
-                                {(errors as any).parcela && (
-                                    <span className="text-xs font-medium text-rose-500">
-                                        {(errors as any).parcela}
-                                    </span>
-                                )}
-                                {data.apolice_id && (
-                                    <p className="text-xs text-muted-foreground">
-                                        Parcela e valor preenchidos
-                                        automaticamente — ajuste se necessário.
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                    </Section>
-
-                    <Section
-                        icon={<CreditCard className="h-4 w-4" />}
-                        title="Valores e pagamento"
-                        description="Valor pago e forma utilizada"
-                    >
-                        <div className="space-y-4">
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <div className="space-y-2">
-                                    <label className="text-sm leading-none font-medium">
-                                        Valor (R$) *
-                                    </label>
-                                    <Input
-                                        type="text"
-                                        inputMode="numeric"
-                                        placeholder="0,00"
-                                        className={inputClass}
-                                        value={
-                                            data.valor && Number(data.valor) > 0
-                                                ? formatarMoeda(
-                                                      Number(data.valor),
-                                                  )
-                                                : ''
-                                        }
-                                        onChange={(e) =>
-                                            setData(
-                                                'valor',
-                                                valorDigitadoParaNumero(
-                                                    e.target.value,
-                                                ).toFixed(2),
-                                            )
-                                        }
-                                    />
-                                    {(errors as any).valor && (
-                                        <span className="text-xs font-medium text-rose-500">
-                                            {(errors as any).valor}
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm leading-none font-medium">
-                                        Data do pagamento *
-                                    </label>
-                                    <Input
-                                        type="date"
-                                        max={
-                                            new Date()
-                                                .toISOString()
-                                                .split('T')[0]
-                                        }
-                                        className={inputClass}
-                                        value={data.data_pagamento}
-                                        onChange={(e) =>
-                                            setData(
-                                                'data_pagamento',
-                                                e.target.value,
-                                            )
-                                        }
-                                    />
-                                    {(errors as any).data_pagamento && (
-                                        <span className="text-xs font-medium text-rose-500">
-                                            {(errors as any).data_pagamento}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-sm leading-none font-medium">
-                                    Forma de pagamento *
-                                </label>
-                                <div className="flex flex-wrap gap-2">
-                                    {['Boleto', 'Pix', 'Cartão', 'Débito'].map(
-                                        (forma) => {
-                                            const Icone =
-                                                iconesFormaPagamento[forma];
-                                            const ativo =
-                                                data.forma_pagamento ===
-                                                forma.toLowerCase();
-                                            return (
-                                                <button
-                                                    key={forma}
-                                                    type="button"
-                                                    onClick={() =>
-                                                        setData(
-                                                            'forma_pagamento',
-                                                            forma.toLowerCase(),
-                                                        )
+                                                <SelectValue
+                                                    placeholder={
+                                                        data.segurado_id
+                                                            ? 'Selecione'
+                                                            : 'Escolha um segurado'
                                                     }
-                                                    className={btnClass}
-                                                >
-                                                    <Icone className="size-4" />
-                                                    {forma}
-                                                    {ativo && (
-                                                        <Check className="size-3.5" />
-                                                    )}
-                                                </button>
-                                            );
-                                        },
-                                    )}
+                                                />
+                                            </SelectTrigger>
+                                            <SelectContent className="rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-md">
+                                                {apolicesDoSegurado.length ===
+                                                    0 && (
+                                                    <div className="px-3 py-2 text-sm text-muted-foreground">
+                                                        Nenhuma apólice para
+                                                        esse segurado
+                                                    </div>
+                                                )}
+                                                {apolicesDoSegurado.map(
+                                                    (a: any) => (
+                                                        <SelectItem
+                                                            key={a.id}
+                                                            value={String(a.id)}
+                                                            className="cursor-pointer rounded-lg"
+                                                        >
+                                                            {a.numero_apolice}
+                                                        </SelectItem>
+                                                    ),
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                        {(errors as any).apolice_id && (
+                                            <span className="text-xs font-medium text-rose-500">
+                                                {(errors as any).apolice_id}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm leading-none font-medium">
+                                            Parcela *
+                                        </label>
+                                        <Select
+                                            value={data.parcela}
+                                            onValueChange={(v) =>
+                                                setData('parcela', v)
+                                            }
+                                            disabled={!data.apolice_id}
+                                        >
+                                            <SelectTrigger
+                                                className={selectTriggerClass}
+                                            >
+                                                <SelectValue placeholder="Selecione" />
+                                            </SelectTrigger>
+                                            <SelectContent className="rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-md">
+                                                {Array.from(
+                                                    {
+                                                        length: totalParcelasApolice,
+                                                    },
+                                                    (_, i) => i + 1,
+                                                ).map((n) => {
+                                                    const jaRegistrada =
+                                                        parcelasJaRegistradas.includes(
+                                                            n,
+                                                        );
+                                                    return (
+                                                        <SelectItem
+                                                            key={n}
+                                                            value={String(n)}
+                                                            disabled={
+                                                                jaRegistrada
+                                                            }
+                                                            className="cursor-pointer rounded-lg data-[disabled]:cursor-not-allowed data-[disabled]:opacity-40"
+                                                        >
+                                                            {n}ª Parcela
+                                                            {jaRegistrada &&
+                                                                ' — já paga'}
+                                                        </SelectItem>
+                                                    );
+                                                })}
+                                            </SelectContent>
+                                        </Select>
+                                        {(errors as any).parcela && (
+                                            <span className="text-xs font-medium text-rose-500">
+                                                {(errors as any).parcela}
+                                            </span>
+                                        )}
+                                        {data.apolice_id && (
+                                            <p className="text-xs text-muted-foreground">
+                                                Parcela e valor preenchidos
+                                                automaticamente — ajuste se
+                                                necessário.
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
-                                {(errors as any).forma_pagamento && (
-                                    <span className="text-xs font-medium text-rose-500">
-                                        {(errors as any).forma_pagamento}
-                                    </span>
-                                )}
-                            </div>
+                            </Section>
                         </div>
-                    </Section>
 
-                    <Section
-                        icon={<FileText className="h-4 w-4" />}
-                        title="Observações"
-                        description="Anotações adicionais sobre o pagamento"
-                    >
-                        <textarea
-                            rows={3}
-                            placeholder="Informações adicionais..."
-                            value={data.observacoes}
-                            onChange={(e) =>
-                                setData('observacoes', e.target.value)
-                            }
-                            className={`${inputClass} h-auto resize-none`}
-                        />
-                    </Section>
+                        <div className="space-y-6">
+                            <Section
+                                icon={<CreditCard className="h-4 w-4" />}
+                                title="Valores e pagamento"
+                                description="Valor pago e forma utilizada"
+                            >
+                                <div className="space-y-4">
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        <div className="space-y-2">
+                                            <label className="text-sm leading-none font-medium">
+                                                Valor (R$) *
+                                            </label>
+                                            <Input
+                                                type="text"
+                                                inputMode="numeric"
+                                                placeholder="0,00"
+                                                className={inputClass}
+                                                value={
+                                                    data.valor &&
+                                                    Number(data.valor) > 0
+                                                        ? formatarMoeda(
+                                                              Number(
+                                                                  data.valor,
+                                                              ),
+                                                          )
+                                                        : ''
+                                                }
+                                                onChange={(e) =>
+                                                    setData(
+                                                        'valor',
+                                                        valorDigitadoParaNumero(
+                                                            e.target.value,
+                                                        ).toFixed(2),
+                                                    )
+                                                }
+                                            />
+                                            {(errors as any).valor && (
+                                                <span className="text-xs font-medium text-rose-500">
+                                                    {(errors as any).valor}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm leading-none font-medium">
+                                                Data do pagamento *
+                                            </label>
+                                            <Input
+                                                type="date"
+                                                max={
+                                                    new Date()
+                                                        .toISOString()
+                                                        .split('T')[0]
+                                                }
+                                                className={inputClass}
+                                                value={data.data_pagamento}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        'data_pagamento',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                            />
+                                            {(errors as any).data_pagamento && (
+                                                <span className="text-xs font-medium text-rose-500">
+                                                    {
+                                                        (errors as any)
+                                                            .data_pagamento
+                                                    }
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-sm leading-none font-medium">
+                                            Forma de pagamento *
+                                        </label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {[
+                                                'Boleto',
+                                                'Pix',
+                                                'Cartão',
+                                                'Débito',
+                                            ].map((forma) => {
+                                                const Icone =
+                                                    iconesFormaPagamento[forma];
+                                                const ativo =
+                                                    data.forma_pagamento ===
+                                                    forma.toLowerCase();
+                                                return (
+                                                    <button
+                                                        key={forma}
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setData(
+                                                                'forma_pagamento',
+                                                                forma.toLowerCase(),
+                                                            )
+                                                        }
+                                                        className={btnClass}
+                                                    >
+                                                        <Icone className="size-4" />
+                                                        {forma}
+                                                        {ativo && (
+                                                            <Check className="size-3.5" />
+                                                        )}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                        {(errors as any).forma_pagamento && (
+                                            <span className="text-xs font-medium text-rose-500">
+                                                {
+                                                    (errors as any)
+                                                        .forma_pagamento
+                                                }
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </Section>
+
+                            <Section
+                                icon={<FileText className="h-4 w-4" />}
+                                title="Observações"
+                                description="Anotações adicionais sobre o pagamento"
+                            >
+                                <textarea
+                                    rows={3}
+                                    placeholder="Informações adicionais..."
+                                    value={data.observacoes}
+                                    onChange={(e) =>
+                                        setData('observacoes', e.target.value)
+                                    }
+                                    className={`${inputClass} h-auto resize-none`}
+                                />
+                            </Section>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border/70 bg-background px-6 py-4 sm:px-8">

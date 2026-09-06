@@ -5,6 +5,7 @@ use Laravel\Fortify\Features;
 use App\Models\Segurado;
 use App\Models\TipoNotificacao;
 use App\Models\Automacao;
+use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\ApolicesController;
 use App\Http\Controllers\AutomacoesController;
 use App\Http\Controllers\DashboardController;
@@ -69,8 +70,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/cliente/{clienteId}', [pagamentoController::class, 'porCliente']);
     });
 
+    // Módulo: Agenda
+    Route::get('/agenda', [AgendaController::class, 'index'])->name('agenda');
+
     // Páginas Estáticas
-    Route::get('/agenda', fn() => inertia('FunctionsApp/agenda'))->name('agenda');
     Route::get('/importar', fn() => inertia('FunctionsApp/importar', [
         'importResumo' => session('importResumo'),
     ]))->name('importar');

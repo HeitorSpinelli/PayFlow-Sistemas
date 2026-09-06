@@ -16,7 +16,7 @@ class CancelarApolicesPorAtrasoDaPrimeiraParcela extends Command
     {
         $parcelasAtrasadas = Parcelas::where('numero_parcela', 1)
             ->where('status_pagamento', 'em_aberto')
-            ->where('data_vencimento', '<', now())
+            ->where('data_vencimento', '<', now()->startOfDay())
             ->get();
 
         $canceladas = 0;

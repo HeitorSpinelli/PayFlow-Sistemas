@@ -205,6 +205,8 @@ class ApoliceService
                 $apolice = Apolice::findOrFail($id);
                 $apolice->update($data);
 
+                $this->sincronizarParcelas($apolice, $data);
+
                 // Mesma decisão pela categoria real do ramo usada em store(). Se o
                 // ramo da apólice mudou de categoria na edição (ex: veículo ->
                 // residencial), o registro extra do tipo antigo é removido para
@@ -235,6 +237,7 @@ class ApoliceService
         }
     }
 
+<<<<<<< HEAD
     /**
      * Remove o registro extra (veículo/residência/vida+beneficiários/
      * empresarial) que não corresponde mais à categoria válida informada.
@@ -258,6 +261,47 @@ class ApoliceService
 
         if ($categoriaValida !== Ramo::CATEGORIA_EMPRESARIAL) {
             DadosEmpresarialApolice::where('apolice_id', $apolice->id)->delete();
+=======
+    // As parcelas só são geradas uma vez em store(). Se quantidade_parcelas ou
+    // valor_premio_total mudam na edição, sincroniza a tabela parcelas com o
+    // novo cronograma — sem nunca apagar ou reescrever uma parcela já paga.
+    private function sincronizarParcelas(Apolice $apolice, array $data): void
+    {
+        $quantidadeParcelas = (int) $data['quantidade_parcelas'];
+        $valorParcela = round($data['valor_premio_total'] / $quantidadeParcelas, 2);
+        $dataBase = Carbon::parse($data['inicio_vigencia']);
+
+        $parcelasExistentes = Parcelas::where('apolice_id', $apolice->id)
+            ->orderBy('numero_parcela')
+            ->get();
+
+        foreach ($parcelasExistentes as $parcela) {
+            if ($parcela->numero_parcela > $quantidadeParcelas) {
+                // só remove parcela excedente se ela ainda não foi paga
+                if ($parcela->status_pagamento !== 'paga') {
+                    $parcela->delete();
+                }
+
+                continue;
+            }
+
+            // parcela paga mantém o valor histórico; só as pendentes acompanham o novo valor
+            if ($parcela->status_pagamento !== 'paga') {
+                $parcela->update(['valor_parcela' => $valorParcela]);
+            }
+        }
+
+        $maiorNumeroExistente = $parcelasExistentes->max('numero_parcela') ?? 0;
+
+        for ($i = $maiorNumeroExistente + 1; $i <= $quantidadeParcelas; $i++) {
+            Parcelas::create([
+                'apolice_id' => $apolice->id,
+                'numero_parcela' => $i,
+                'valor_parcela' => $valorParcela,
+                'data_vencimento' => $dataBase->copy()->addMonthsNoOverflow($i),
+                'status_pagamento' => 'em_aberto',
+            ]);
+>>>>>>> 752f4fa33ad62bfddfbe0932a085f0892f1df6e3
         }
     }
 
@@ -323,7 +367,7 @@ class ApoliceService
     {
         return Segurado::whereHas('apolices.parcelas', function ($query) {
             $query->where('status_pagamento', 'em_aberto')
-                ->where('data_vencimento', '<', now());
+                ->where('data_vencimento', '<', now()->startOfDay());
         })->count();
     }
 

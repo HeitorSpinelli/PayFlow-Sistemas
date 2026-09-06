@@ -21,46 +21,20 @@ type StatusCobranca = 'pago' | 'pendente' | 'atrasado';
 
 interface Cobranca {
     id: number;
-    cliente_id: number;
+    cliente_id: number | null;
     cliente_nome: string;
     apolice: string;
     ramo: string;
-    telefone?: string;
+    telefone?: string | null;
     valor: number;
     data_vencimento: string; // formato 'YYYY-MM-DD'
     status: StatusCobranca;
+    numero_parcela: number | null;
+    total_parcelas: number | null;
 }
 
 interface Props {
     cobrancas?: Cobranca[];
-}
-
-/* ------------------------------------------------------------------ */
-/* Dados de exemplo (remover quando vier via props do Inertia)        */
-/* ------------------------------------------------------------------ */
-
-function gerarMockDoMes(): Cobranca[] {
-    const hoje = new Date();
-    const y = hoje.getFullYear();
-    const m = hoje.getMonth();
-    const d = (dia: number) =>
-        `${y}-${String(m + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
-
-    return [
-        { id: 1, cliente_id: 101, cliente_nome: 'João Pereira', apolice: 'AP-30291', ramo: 'Auto', telefone: '(19) 99887-1122', valor: 342.5, data_vencimento: d(3), status: 'pago' },
-        { id: 2, cliente_id: 102, cliente_nome: 'Maria Souza', apolice: 'AP-30412', ramo: 'Residencial', telefone: '(19) 98123-4455', valor: 189.9, data_vencimento: d(5), status: 'atrasado' },
-        { id: 3, cliente_id: 103, cliente_nome: 'Carlos Lima', apolice: 'AP-30588', ramo: 'Vida', valor: 210.0, data_vencimento: d(5), status: 'pendente' },
-        { id: 4, cliente_id: 104, cliente_nome: 'Fernanda Alves', apolice: 'AP-30690', ramo: 'Auto', valor: 455.3, data_vencimento: d(8), status: 'pendente' },
-        { id: 5, cliente_id: 105, cliente_nome: 'Roberto Dias', apolice: 'AP-30733', ramo: 'Saúde', valor: 620.0, data_vencimento: d(8), status: 'atrasado' },
-        { id: 6, cliente_id: 106, cliente_nome: 'Patrícia Melo', apolice: 'AP-30810', ramo: 'Residencial', valor: 175.4, data_vencimento: d(8), status: 'pendente' },
-        { id: 7, cliente_id: 107, cliente_nome: 'Eduardo Nunes', apolice: 'AP-30902', ramo: 'Vida', valor: 298.0, data_vencimento: d(12), status: 'pago' },
-        { id: 8, cliente_id: 108, cliente_nome: 'Juliana Castro', apolice: 'AP-31005', ramo: 'Auto', valor: 512.75, data_vencimento: d(15), status: 'pendente' },
-        { id: 9, cliente_id: 109, cliente_nome: 'Marcos Rocha', apolice: 'AP-31090', ramo: 'Residencial', valor: 233.2, data_vencimento: d(15), status: 'atrasado' },
-        { id: 10, cliente_id: 110, cliente_nome: 'Beatriz Gomes', apolice: 'AP-31122', ramo: 'Saúde', valor: 340.0, data_vencimento: d(18), status: 'pendente' },
-        { id: 11, cliente_id: 111, cliente_nome: 'André Ferreira', apolice: 'AP-31210', ramo: 'Auto', valor: 398.9, data_vencimento: d(22), status: 'pendente' },
-        { id: 12, cliente_id: 112, cliente_nome: 'Camila Ribeiro', apolice: 'AP-31344', ramo: 'Vida', valor: 275.6, data_vencimento: d(22), status: 'pago' },
-        { id: 13, cliente_id: 113, cliente_nome: 'Diego Martins', apolice: 'AP-31401', ramo: 'Residencial', valor: 410.0, data_vencimento: d(27), status: 'atrasado' },
-    ];
 }
 
 /* ------------------------------------------------------------------ */
@@ -80,6 +54,16 @@ function toKey(y: number, m: number, day: number) {
 
 function formatMoeda(valor: number) {
     return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function labelParcela(c: Cobranca) {
+    if (!c.numero_parcela) {
+        return null;
+    }
+
+    return c.total_parcelas
+        ? `${c.numero_parcela}ª/${c.total_parcelas}ª Parcela`
+        : `${c.numero_parcela}ª Parcela`;
 }
 
 const STATUS_CONFIG: Record<
@@ -111,7 +95,7 @@ const STATUS_CONFIG: Record<
 /* ------------------------------------------------------------------ */
 
 export default function Agenda({ cobrancas }: Props) {
-    const dados = cobrancas && cobrancas.length > 0 ? cobrancas : gerarMockDoMes();
+    const dados = useMemo(() => cobrancas ?? [], [cobrancas]);
 
     const hoje = new Date();
     const [dataAtual, setDataAtual] = useState(new Date(hoje.getFullYear(), hoje.getMonth(), 1));
@@ -344,7 +328,7 @@ export default function Agenda({ cobrancas }: Props) {
                                             <span
                                                 key={c.id}
                                                 className={`flex items-center gap-1 truncate rounded-md px-1.5 py-0.5 text-[10px] font-semibold sm:text-[11px] ${STATUS_CONFIG[c.status].badge}`}
-                                                title={`${c.cliente_nome} — ${STATUS_CONFIG[c.status].label}`}
+                                                title={`${c.cliente_nome}${labelParcela(c) ? ` — ${labelParcela(c)}` : ''} — ${STATUS_CONFIG[c.status].label}`}
                                             >
                                                 <span
                                                     className={`size-1.5 shrink-0 rounded-full ${STATUS_CONFIG[c.status].dot}`}
@@ -352,6 +336,11 @@ export default function Agenda({ cobrancas }: Props) {
                                                 <span className="truncate">
                                                     {c.cliente_nome.split(' ')[0]}
                                                 </span>
+                                                {c.numero_parcela && (
+                                                    <span className="shrink-0 text-xs font-extrabold sm:text-sm">
+                                                        · {c.numero_parcela}ª
+                                                    </span>
+                                                )}
                                             </span>
                                         ))}
                                         {restante > 0 && (
@@ -435,6 +424,12 @@ export default function Agenda({ cobrancas }: Props) {
                                             {STATUS_CONFIG[c.status].label}
                                         </span>
                                     </div>
+
+                                    {labelParcela(c) && (
+                                        <span className="w-fit rounded-md bg-muted px-2.5 py-1 text-sm font-extrabold text-foreground">
+                                            {labelParcela(c)}
+                                        </span>
+                                    )}
 
                                     <div className="flex items-center justify-between text-xs">
                                         <span className="flex items-center gap-1 font-bold text-foreground">

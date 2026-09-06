@@ -39,8 +39,21 @@ class PagamentoService
     public function destroy(int $id)
     {
         try {
-            $pagamento = Pagamento::findOrFail($id);
-            $pagamento->delete();
+            DB::transaction(function () use ($id) {
+                $pagamento = Pagamento::findOrFail($id);
+
+                // Reabre a parcela — sem isso ela fica "paga" pra sempre mesmo
+                // sem nenhum pagamento associado, e a constraint de unicidade
+                // (apolice_id, parcela) impediria registrar outro pagamento nela
+                Parcelas::where('apolice_id', $pagamento->apolice_id)
+                    ->where('numero_parcela', $pagamento->parcela)
+                    ->update([
+                        'status_pagamento' => 'em_aberto',
+                        'data_pagamento' => null,
+                    ]);
+
+                $pagamento->delete();
+            });
         } catch (\Exception $e) {
             Log::error('Erro ao excluir pagamento', ['id' => $id, 'erro' => $e->getMessage()]);
             throw new \Exception('Não foi possível excluir o pagamento. Tente novamente ou contate o suporte.');

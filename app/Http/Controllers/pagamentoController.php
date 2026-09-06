@@ -75,8 +75,18 @@ class pagamentoController extends Controller
             'totalParcelas' => Parcelas::count(),
             'segurados' => Segurado::select('id', 'nome_completo', 'cpf_cnpj')->get(),
             'apolices' => Apolice::select('id', 'numero_apolice', 'cliente_id', 'valor_premio_total', 'quantidade_parcelas')
-                ->with(['pagamentos:id,apolice_id,parcela'])
-                ->get(),
+                ->with([
+                    'pagamentos:id,apolice_id,parcela',
+                    'parcelas:id,apolice_id,numero_parcela,valor_parcela,data_vencimento,data_pagamento,status_pagamento',
+                ])
+                ->get()
+                ->each(function ($apolice) {
+                    // dias_atraso vem do model (mesma regra usada em ApoliceService::vencimentosProximos)
+                    // pra distinguir parcela "a vencer" de parcela realmente atrasada
+                    $apolice->parcelas->each(function ($parcela) {
+                        $parcela->dias_atraso = $parcela->diasEmAtraso();
+                    });
+                }),
         ]);
     }
 
