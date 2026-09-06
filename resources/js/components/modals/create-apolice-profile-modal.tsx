@@ -1,14 +1,18 @@
 import { useForm, router } from '@inertiajs/react';
 import {
     AlertTriangle,
+    Building2,
     Car,
     ChevronRight,
     CreditCard,
     FileText,
+    HeartPulse,
     Home,
     Pencil,
+    Plus,
     ScrollText,
     Trash2,
+    X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -83,6 +87,68 @@ function mapDadosResidencia(apolice: any) {
     };
 }
 
+const DADOS_VIDA_INICIAL = {
+    profissao: '',
+    possui_atividade_profissional_risco: false,
+    fumante: false,
+    possui_doenca_preexistente: false,
+    descricao_doencas: '',
+    pratica_esporte_risco: false,
+    qual_esporte: '',
+    capital_segurado: '',
+};
+
+const BENEFICIARIO_INICIAL = {
+    nome_completo: '',
+    cpf: '',
+    data_nascimento: '',
+    parentesco: '',
+    percentual_indenizacao: '',
+};
+
+const DADOS_EMPRESARIAL_INICIAL = {
+    cnae_ou_atividade: '',
+    numero_funcionarios: '',
+    valor_patrimonio_segurado: '',
+    faturamento_anual: '',
+    possui_cobertura_incendio_basica: true,
+    coberturas_adicionais: '',
+    endereco_estabelecimento: '',
+    numero_estabelecimento: '',
+    bairro_estabelecimento: '',
+    cidade_estabelecimento: '',
+    estado_estabelecimento: '',
+    cep_estabelecimento: '',
+};
+
+const PARENTESCOS = [
+    { value: 'conjuge', label: 'Cônjuge' },
+    { value: 'filho', label: 'Filho(a)' },
+    { value: 'pai', label: 'Pai' },
+    { value: 'mae', label: 'Mãe' },
+    { value: 'irmao', label: 'Irmão(ã)' },
+    { value: 'outro', label: 'Outro' },
+];
+
+function mapDadosVida(apolice: any) {
+    return { ...DADOS_VIDA_INICIAL, ...(apolice?.dados_vida ?? {}) };
+}
+
+function mapBeneficiarios(apolice: any) {
+    const beneficiarios = apolice?.beneficiarios;
+
+    return beneficiarios && beneficiarios.length > 0
+        ? beneficiarios
+        : [BENEFICIARIO_INICIAL];
+}
+
+function mapDadosEmpresarial(apolice: any) {
+    return {
+        ...DADOS_EMPRESARIAL_INICIAL,
+        ...(apolice?.dados_empresarial ?? {}),
+    };
+}
+
 // Rótulos amigáveis para os valores brutos salvos no banco (modo visualizar)
 const LABEL_TIPO_VEICULO: Record<string, string> = {
     carro: 'Carro',
@@ -125,6 +191,15 @@ const LABEL_OCUPACAO: Record<string, string> = {
     veraneio: 'Casa de veraneio',
     alugado: 'Alugado a terceiros',
     desocupado: 'Desocupado',
+};
+
+const LABEL_PARENTESCO: Record<string, string> = {
+    conjuge: 'Cônjuge',
+    filho: 'Filho(a)',
+    pai: 'Pai',
+    mae: 'Mãe',
+    irmao: 'Irmão(ã)',
+    outro: 'Outro',
 };
 
 function Section({ icon, title, description, children }: any) {
@@ -182,6 +257,9 @@ export default function CreateApoliceProfileModal({
         observacoes: '',
         veiculo: DADOS_VEICULO_INICIAL,
         residencia: DADOS_RESIDENCIA_INICIAL,
+        vida: DADOS_VIDA_INICIAL,
+        beneficiarios: [BENEFICIARIO_INICIAL],
+        empresarial: DADOS_EMPRESARIAL_INICIAL,
     });
 
     // Categoria do ramo selecionado NO FORMULÁRIO (pode ter mudado desde que
@@ -195,6 +273,41 @@ export default function CreateApoliceProfileModal({
 
     const atualizarResidencia = (campo: string, valor: any) =>
         setData('residencia', { ...data.residencia, [campo]: valor });
+
+    const atualizarVida = (campo: string, valor: any) =>
+        setData('vida', { ...data.vida, [campo]: valor });
+
+    const atualizarEmpresarial = (campo: string, valor: any) =>
+        setData('empresarial', { ...data.empresarial, [campo]: valor });
+
+    const atualizarBeneficiario = (
+        index: number,
+        campo: string,
+        valor: any,
+    ) => {
+        const atualizados = data.beneficiarios.map(
+            (beneficiario: any, i: number) =>
+                i === index
+                    ? { ...beneficiario, [campo]: valor }
+                    : beneficiario,
+        );
+        setData('beneficiarios', atualizados);
+    };
+
+    const adicionarBeneficiario = () =>
+        setData('beneficiarios', [...data.beneficiarios, BENEFICIARIO_INICIAL]);
+
+    const removerBeneficiario = (index: number) =>
+        setData(
+            'beneficiarios',
+            data.beneficiarios.filter((_: any, i: number) => i !== index),
+        );
+
+    const somaPercentuaisBeneficiarios = data.beneficiarios.reduce(
+        (soma: number, b: any) =>
+            soma + (parseFloat(b.percentual_indenizacao) || 0),
+        0,
+    );
 
     // Erros de campos aninhados (ex: "veiculo.placa") chegam do Laravel como
     // chaves com ponto — não fazem parte do tipo do formulário, daí o cast.
@@ -222,6 +335,9 @@ export default function CreateApoliceProfileModal({
                 observacoes: apolice.observacoes ?? '',
                 veiculo: mapDadosVeiculo(apolice),
                 residencia: mapDadosResidencia(apolice),
+                vida: mapDadosVida(apolice),
+                beneficiarios: mapBeneficiarios(apolice),
+                empresarial: mapDadosEmpresarial(apolice),
             });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -539,6 +655,210 @@ export default function CreateApoliceProfileModal({
                                     </Section>
                                 )}
 
+                            {apolice.ramo_categoria === 'vida' &&
+                                apolice.dados_vida && (
+                                    <Section
+                                        icon={
+                                            <HeartPulse className="h-4 w-4" />
+                                        }
+                                        title="Dados do segurado (vida)"
+                                        description="Perfil de risco declarado"
+                                    >
+                                        <div className="grid gap-3 sm:grid-cols-3">
+                                            <InfoField
+                                                label="Profissão"
+                                                value={
+                                                    apolice.dados_vida.profissao
+                                                }
+                                            />
+                                            <InfoField
+                                                label="Capital segurado"
+                                                value={
+                                                    apolice.dados_vida
+                                                        .capital_segurado
+                                                        ? `R$ ${apolice.dados_vida.capital_segurado}`
+                                                        : ''
+                                                }
+                                            />
+                                            <InfoField
+                                                label="Fumante"
+                                                value={
+                                                    apolice.dados_vida.fumante
+                                                        ? 'Sim'
+                                                        : 'Não'
+                                                }
+                                            />
+                                            <InfoField
+                                                label="Atividade profissional de risco"
+                                                value={
+                                                    apolice.dados_vida
+                                                        .possui_atividade_profissional_risco
+                                                        ? 'Sim'
+                                                        : 'Não'
+                                                }
+                                            />
+                                            <InfoField
+                                                label="Doença preexistente"
+                                                value={
+                                                    apolice.dados_vida
+                                                        .possui_doenca_preexistente
+                                                        ? 'Sim'
+                                                        : 'Não'
+                                                }
+                                            />
+                                            <InfoField
+                                                label="Esporte de risco"
+                                                value={
+                                                    apolice.dados_vida
+                                                        .pratica_esporte_risco
+                                                        ? apolice.dados_vida
+                                                              .qual_esporte ||
+                                                          'Sim'
+                                                        : 'Não'
+                                                }
+                                            />
+                                            {apolice.dados_vida
+                                                .descricao_doencas && (
+                                                <div className="sm:col-span-3">
+                                                    <InfoField
+                                                        label="Descrição das doenças"
+                                                        value={
+                                                            apolice.dados_vida
+                                                                .descricao_doencas
+                                                        }
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </Section>
+                                )}
+
+                            {apolice.ramo_categoria === 'vida' &&
+                                apolice.beneficiarios?.length > 0 && (
+                                    <Section
+                                        icon={
+                                            <HeartPulse className="h-4 w-4" />
+                                        }
+                                        title="Beneficiários"
+                                        description="Quem recebe a indenização"
+                                    >
+                                        <div className="space-y-2">
+                                            {apolice.beneficiarios.map(
+                                                (
+                                                    beneficiario: any,
+                                                    index: number,
+                                                ) => (
+                                                    <div
+                                                        key={index}
+                                                        className="grid gap-3 rounded-xl border border-border/70 bg-background p-3 sm:grid-cols-4"
+                                                    >
+                                                        <InfoField
+                                                            label="Nome"
+                                                            value={
+                                                                beneficiario.nome_completo
+                                                            }
+                                                        />
+                                                        <InfoField
+                                                            label="Parentesco"
+                                                            value={
+                                                                LABEL_PARENTESCO[
+                                                                    beneficiario
+                                                                        .parentesco
+                                                                ]
+                                                            }
+                                                        />
+                                                        <InfoField
+                                                            label="CPF"
+                                                            value={
+                                                                beneficiario.cpf
+                                                            }
+                                                        />
+                                                        <InfoField
+                                                            label="% Indenização"
+                                                            value={`${beneficiario.percentual_indenizacao}%`}
+                                                        />
+                                                    </div>
+                                                ),
+                                            )}
+                                        </div>
+                                    </Section>
+                                )}
+
+                            {apolice.ramo_categoria === 'empresarial' &&
+                                apolice.dados_empresarial && (
+                                    <Section
+                                        icon={<Building2 className="h-4 w-4" />}
+                                        title="Dados da empresa"
+                                        description="Perfil de risco e estabelecimento segurado"
+                                    >
+                                        <div className="grid gap-3 sm:grid-cols-3">
+                                            <div className="sm:col-span-2">
+                                                <InfoField
+                                                    label="CNAE / Atividade"
+                                                    value={
+                                                        apolice
+                                                            .dados_empresarial
+                                                            .cnae_ou_atividade
+                                                    }
+                                                />
+                                            </div>
+                                            <InfoField
+                                                label="Funcionários"
+                                                value={
+                                                    apolice.dados_empresarial
+                                                        .numero_funcionarios
+                                                }
+                                            />
+                                            <InfoField
+                                                label="Patrimônio segurado"
+                                                value={
+                                                    apolice.dados_empresarial
+                                                        .valor_patrimonio_segurado
+                                                        ? `R$ ${apolice.dados_empresarial.valor_patrimonio_segurado}`
+                                                        : ''
+                                                }
+                                            />
+                                            <InfoField
+                                                label="Faturamento anual"
+                                                value={
+                                                    apolice.dados_empresarial
+                                                        .faturamento_anual
+                                                        ? `R$ ${apolice.dados_empresarial.faturamento_anual}`
+                                                        : ''
+                                                }
+                                            />
+                                            <InfoField
+                                                label="Cobertura de incêndio básica"
+                                                value={
+                                                    apolice.dados_empresarial
+                                                        .possui_cobertura_incendio_basica
+                                                        ? 'Sim'
+                                                        : 'Não'
+                                                }
+                                            />
+                                            <div className="sm:col-span-3">
+                                                <InfoField
+                                                    label="Endereço do estabelecimento"
+                                                    value={`${apolice.dados_empresarial.endereco_estabelecimento ?? ''}, ${apolice.dados_empresarial.numero_estabelecimento ?? ''} — ${apolice.dados_empresarial.bairro_estabelecimento ?? ''}, ${apolice.dados_empresarial.cidade_estabelecimento ?? ''}/${apolice.dados_empresarial.estado_estabelecimento ?? ''}`}
+                                                />
+                                            </div>
+                                            {apolice.dados_empresarial
+                                                .coberturas_adicionais && (
+                                                <div className="sm:col-span-3">
+                                                    <InfoField
+                                                        label="Coberturas adicionais"
+                                                        value={
+                                                            apolice
+                                                                .dados_empresarial
+                                                                .coberturas_adicionais
+                                                        }
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </Section>
+                                )}
+
                             {apolice.observacoes && (
                                 <Section
                                     icon={<FileText className="h-4 w-4" />}
@@ -594,14 +914,24 @@ export default function CreateApoliceProfileModal({
                                             <option value="">
                                                 Selecione um ramo
                                             </option>
-                                            {ramos?.map((ramo: any) => (
-                                                <option
-                                                    key={ramo.id}
-                                                    value={ramo.id}
-                                                >
-                                                    {ramo.nome_ramo}
-                                                </option>
-                                            ))}
+                                            {ramos
+                                                ?.filter(
+                                                    (ramo: any) =>
+                                                        String(
+                                                            ramo.seguradora_id,
+                                                        ) ===
+                                                        String(
+                                                            data.seguradora_id,
+                                                        ),
+                                                )
+                                                .map((ramo: any) => (
+                                                    <option
+                                                        key={ramo.id}
+                                                        value={ramo.id}
+                                                    >
+                                                        {ramo.nome_ramo}
+                                                    </option>
+                                                ))}
                                         </select>
                                     </div>
                                 </div>
@@ -668,16 +998,33 @@ export default function CreateApoliceProfileModal({
                                             <label className="text-sm leading-none font-medium">
                                                 Forma de pagamento
                                             </label>
-                                            <Input
+                                            <Select
                                                 value={data.forma_pagamento}
-                                                onChange={(e) =>
+                                                onValueChange={(v) =>
                                                     setData(
                                                         'forma_pagamento',
-                                                        e.target.value,
+                                                        v,
                                                     )
                                                 }
-                                                className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
-                                            />
+                                            >
+                                                <SelectTrigger className="h-10 w-full rounded-xl border border-border/70 bg-background">
+                                                    <SelectValue placeholder="Selecione" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="boleto">
+                                                        Boleto
+                                                    </SelectItem>
+                                                    <SelectItem value="cartao">
+                                                        Cartão
+                                                    </SelectItem>
+                                                    <SelectItem value="pix">
+                                                        Pix
+                                                    </SelectItem>
+                                                    <SelectItem value="debito">
+                                                        Débito Automático
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                     </div>
                                 </div>
@@ -1337,6 +1684,569 @@ export default function CreateApoliceProfileModal({
                                             />
                                             Imóvel possui sistema de segurança
                                         </label>
+                                    </div>
+                                </Section>
+                            )}
+
+                            {categoriaRamoEmEdicao === 'vida' && (
+                                <Section
+                                    icon={<HeartPulse className="h-4 w-4" />}
+                                    title="Dados do segurado (vida)"
+                                    description="Perfil de risco exigido pela seguradora"
+                                >
+                                    <div className="space-y-4">
+                                        <div className="grid gap-4 sm:grid-cols-2">
+                                            <div className="space-y-2">
+                                                <label className="text-sm leading-none font-medium">
+                                                    Profissão
+                                                </label>
+                                                <Input
+                                                    value={data.vida.profissao}
+                                                    onChange={(e) =>
+                                                        atualizarVida(
+                                                            'profissao',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    className="h-10 rounded-xl border border-border/70 bg-background"
+                                                />
+                                                {err['vida.profissao'] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {err['vida.profissao']}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm leading-none font-medium">
+                                                    Capital segurado
+                                                </label>
+                                                <Input
+                                                    type="number"
+                                                    value={
+                                                        data.vida
+                                                            .capital_segurado
+                                                    }
+                                                    onChange={(e) =>
+                                                        atualizarVida(
+                                                            'capital_segurado',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    className="h-10 rounded-xl border border-border/70 bg-background"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                                            <label className="flex items-center gap-2 text-sm font-medium">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={
+                                                        data.vida
+                                                            .possui_atividade_profissional_risco
+                                                    }
+                                                    onChange={(e) =>
+                                                        atualizarVida(
+                                                            'possui_atividade_profissional_risco',
+                                                            e.target.checked,
+                                                        )
+                                                    }
+                                                    className="h-4 w-4 rounded border-border/80"
+                                                />
+                                                Profissão de risco
+                                            </label>
+                                            <label className="flex items-center gap-2 text-sm font-medium">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={data.vida.fumante}
+                                                    onChange={(e) =>
+                                                        atualizarVida(
+                                                            'fumante',
+                                                            e.target.checked,
+                                                        )
+                                                    }
+                                                    className="h-4 w-4 rounded border-border/80"
+                                                />
+                                                Fumante
+                                            </label>
+                                            <label className="flex items-center gap-2 text-sm font-medium">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={
+                                                        data.vida
+                                                            .possui_doenca_preexistente
+                                                    }
+                                                    onChange={(e) =>
+                                                        atualizarVida(
+                                                            'possui_doenca_preexistente',
+                                                            e.target.checked,
+                                                        )
+                                                    }
+                                                    className="h-4 w-4 rounded border-border/80"
+                                                />
+                                                Doença preexistente
+                                            </label>
+                                            <label className="flex items-center gap-2 text-sm font-medium">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={
+                                                        data.vida
+                                                            .pratica_esporte_risco
+                                                    }
+                                                    onChange={(e) =>
+                                                        atualizarVida(
+                                                            'pratica_esporte_risco',
+                                                            e.target.checked,
+                                                        )
+                                                    }
+                                                    className="h-4 w-4 rounded border-border/80"
+                                                />
+                                                Esporte de risco
+                                            </label>
+                                        </div>
+
+                                        {data.vida
+                                            .possui_doenca_preexistente && (
+                                            <div className="space-y-2">
+                                                <label className="text-sm leading-none font-medium">
+                                                    Descreva a(s) doença(s)
+                                                </label>
+                                                <textarea
+                                                    value={
+                                                        data.vida
+                                                            .descricao_doencas
+                                                    }
+                                                    onChange={(e) =>
+                                                        atualizarVida(
+                                                            'descricao_doencas',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    className="min-h-20 w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-2 text-sm hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                                />
+                                            </div>
+                                        )}
+
+                                        {data.vida.pratica_esporte_risco && (
+                                            <div className="space-y-2">
+                                                <label className="text-sm leading-none font-medium">
+                                                    Qual esporte?
+                                                </label>
+                                                <Input
+                                                    value={
+                                                        data.vida.qual_esporte
+                                                    }
+                                                    onChange={(e) =>
+                                                        atualizarVida(
+                                                            'qual_esporte',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    className="h-10 rounded-xl border border-border/70 bg-background"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                </Section>
+                            )}
+
+                            {categoriaRamoEmEdicao === 'vida' && (
+                                <Section
+                                    icon={<HeartPulse className="h-4 w-4" />}
+                                    title="Beneficiários"
+                                    description="A soma dos percentuais precisa fechar em 100%"
+                                >
+                                    <div className="space-y-4">
+                                        {data.beneficiarios.map(
+                                            (
+                                                beneficiario: any,
+                                                index: number,
+                                            ) => (
+                                                <div
+                                                    key={index}
+                                                    className="space-y-3 rounded-xl border border-border/70 bg-background p-3"
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                                                            Beneficiário{' '}
+                                                            {index + 1}
+                                                        </span>
+                                                        {data.beneficiarios
+                                                            .length > 1 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    removerBeneficiario(
+                                                                        index,
+                                                                    )
+                                                                }
+                                                                className="text-muted-foreground transition-colors hover:text-rose-500"
+                                                            >
+                                                                <X className="h-4 w-4" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                                        <Input
+                                                            placeholder="Nome completo"
+                                                            value={
+                                                                beneficiario.nome_completo
+                                                            }
+                                                            onChange={(e) =>
+                                                                atualizarBeneficiario(
+                                                                    index,
+                                                                    'nome_completo',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="h-10 rounded-xl border border-border/70 bg-background"
+                                                        />
+                                                        <Input
+                                                            placeholder="CPF"
+                                                            value={
+                                                                beneficiario.cpf
+                                                            }
+                                                            onChange={(e) =>
+                                                                atualizarBeneficiario(
+                                                                    index,
+                                                                    'cpf',
+                                                                    formataCpfCnpj(
+                                                                        e.target
+                                                                            .value,
+                                                                    ),
+                                                                )
+                                                            }
+                                                            className="h-10 rounded-xl border border-border/70 bg-background"
+                                                        />
+                                                    </div>
+                                                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                                                        <Input
+                                                            type="date"
+                                                            value={
+                                                                beneficiario.data_nascimento
+                                                            }
+                                                            onChange={(e) =>
+                                                                atualizarBeneficiario(
+                                                                    index,
+                                                                    'data_nascimento',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="h-10 rounded-xl border border-border/70 bg-background"
+                                                        />
+                                                        <Select
+                                                            value={
+                                                                beneficiario.parentesco
+                                                            }
+                                                            onValueChange={(
+                                                                v,
+                                                            ) =>
+                                                                atualizarBeneficiario(
+                                                                    index,
+                                                                    'parentesco',
+                                                                    v,
+                                                                )
+                                                            }
+                                                        >
+                                                            <SelectTrigger className="h-10 w-full rounded-xl border border-border/70 bg-background">
+                                                                <SelectValue placeholder="Parentesco" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {PARENTESCOS.map(
+                                                                    (p) => (
+                                                                        <SelectItem
+                                                                            key={
+                                                                                p.value
+                                                                            }
+                                                                            value={
+                                                                                p.value
+                                                                            }
+                                                                        >
+                                                                            {
+                                                                                p.label
+                                                                            }
+                                                                        </SelectItem>
+                                                                    ),
+                                                                )}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="% Indenização"
+                                                            value={
+                                                                beneficiario.percentual_indenizacao
+                                                            }
+                                                            onChange={(e) =>
+                                                                atualizarBeneficiario(
+                                                                    index,
+                                                                    'percentual_indenizacao',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="h-10 rounded-xl border border-border/70 bg-background"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ),
+                                        )}
+
+                                        <div className="flex items-center justify-between">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={adicionarBeneficiario}
+                                                className="h-9 rounded-xl border-border/70 px-3 text-sm hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-600"
+                                            >
+                                                <Plus className="mr-1 h-4 w-4" />
+                                                Adicionar beneficiário
+                                            </Button>
+                                            <span
+                                                className={`text-xs font-semibold ${
+                                                    Math.abs(
+                                                        somaPercentuaisBeneficiarios -
+                                                            100,
+                                                    ) > 0.01
+                                                        ? 'text-rose-500'
+                                                        : 'text-emerald-600'
+                                                }`}
+                                            >
+                                                Soma:{' '}
+                                                {somaPercentuaisBeneficiarios}%
+                                            </span>
+                                        </div>
+                                        {err['beneficiarios'] && (
+                                            <span className="block text-xs font-medium text-rose-500">
+                                                {err['beneficiarios']}
+                                            </span>
+                                        )}
+                                    </div>
+                                </Section>
+                            )}
+
+                            {categoriaRamoEmEdicao === 'empresarial' && (
+                                <Section
+                                    icon={<Building2 className="h-4 w-4" />}
+                                    title="Dados da empresa"
+                                    description="Perfil de risco e endereço do estabelecimento segurado"
+                                >
+                                    <div className="space-y-4">
+                                        <div className="grid gap-4 sm:grid-cols-3">
+                                            <div className="space-y-2 sm:col-span-2">
+                                                <label className="text-sm leading-none font-medium">
+                                                    CNAE / Atividade
+                                                </label>
+                                                <Input
+                                                    value={
+                                                        data.empresarial
+                                                            .cnae_ou_atividade
+                                                    }
+                                                    onChange={(e) =>
+                                                        atualizarEmpresarial(
+                                                            'cnae_ou_atividade',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    className="h-10 rounded-xl border border-border/70 bg-background"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm leading-none font-medium">
+                                                    Nº Funcionários
+                                                </label>
+                                                <Input
+                                                    type="number"
+                                                    value={
+                                                        data.empresarial
+                                                            .numero_funcionarios
+                                                    }
+                                                    onChange={(e) =>
+                                                        atualizarEmpresarial(
+                                                            'numero_funcionarios',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    className="h-10 rounded-xl border border-border/70 bg-background"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid gap-4 sm:grid-cols-2">
+                                            <div className="space-y-2">
+                                                <label className="text-sm leading-none font-medium">
+                                                    Valor do patrimônio segurado
+                                                </label>
+                                                <Input
+                                                    type="number"
+                                                    value={
+                                                        data.empresarial
+                                                            .valor_patrimonio_segurado
+                                                    }
+                                                    onChange={(e) =>
+                                                        atualizarEmpresarial(
+                                                            'valor_patrimonio_segurado',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    className="h-10 rounded-xl border border-border/70 bg-background"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm leading-none font-medium">
+                                                    Faturamento anual
+                                                </label>
+                                                <Input
+                                                    type="number"
+                                                    value={
+                                                        data.empresarial
+                                                            .faturamento_anual
+                                                    }
+                                                    onChange={(e) =>
+                                                        atualizarEmpresarial(
+                                                            'faturamento_anual',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    className="h-10 rounded-xl border border-border/70 bg-background"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <label className="flex items-center gap-2 text-sm font-medium">
+                                            <input
+                                                type="checkbox"
+                                                checked={
+                                                    data.empresarial
+                                                        .possui_cobertura_incendio_basica
+                                                }
+                                                onChange={(e) =>
+                                                    atualizarEmpresarial(
+                                                        'possui_cobertura_incendio_basica',
+                                                        e.target.checked,
+                                                    )
+                                                }
+                                                className="h-4 w-4 rounded border-border/80"
+                                            />
+                                            Possui cobertura de incêndio básica
+                                        </label>
+
+                                        <div className="space-y-2">
+                                            <label className="text-sm leading-none font-medium">
+                                                Coberturas adicionais
+                                            </label>
+                                            <textarea
+                                                value={
+                                                    data.empresarial
+                                                        .coberturas_adicionais
+                                                }
+                                                onChange={(e) =>
+                                                    atualizarEmpresarial(
+                                                        'coberturas_adicionais',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="min-h-16 w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-2 text-sm hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-sm leading-none font-medium">
+                                                Endereço do estabelecimento
+                                            </label>
+                                            <Input
+                                                value={
+                                                    data.empresarial
+                                                        .endereco_estabelecimento
+                                                }
+                                                onChange={(e) =>
+                                                    atualizarEmpresarial(
+                                                        'endereco_estabelecimento',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="h-10 rounded-xl border border-border/70 bg-background"
+                                            />
+                                        </div>
+
+                                        <div className="grid gap-4 sm:grid-cols-4">
+                                            <Input
+                                                placeholder="Número"
+                                                value={
+                                                    data.empresarial
+                                                        .numero_estabelecimento
+                                                }
+                                                onChange={(e) =>
+                                                    atualizarEmpresarial(
+                                                        'numero_estabelecimento',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="h-10 rounded-xl border border-border/70 bg-background"
+                                            />
+                                            <Input
+                                                placeholder="Bairro"
+                                                value={
+                                                    data.empresarial
+                                                        .bairro_estabelecimento
+                                                }
+                                                onChange={(e) =>
+                                                    atualizarEmpresarial(
+                                                        'bairro_estabelecimento',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="h-10 rounded-xl border border-border/70 bg-background"
+                                            />
+                                            <Input
+                                                placeholder="Cidade"
+                                                value={
+                                                    data.empresarial
+                                                        .cidade_estabelecimento
+                                                }
+                                                onChange={(e) =>
+                                                    atualizarEmpresarial(
+                                                        'cidade_estabelecimento',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="h-10 rounded-xl border border-border/70 bg-background"
+                                            />
+                                            <Input
+                                                placeholder="UF"
+                                                maxLength={2}
+                                                value={
+                                                    data.empresarial
+                                                        .estado_estabelecimento
+                                                }
+                                                onChange={(e) =>
+                                                    atualizarEmpresarial(
+                                                        'estado_estabelecimento',
+                                                        e.target.value.toUpperCase(),
+                                                    )
+                                                }
+                                                className="h-10 rounded-xl border border-border/70 bg-background"
+                                            />
+                                        </div>
+                                        <div className="grid gap-4 sm:grid-cols-3">
+                                            <Input
+                                                placeholder="CEP"
+                                                value={
+                                                    data.empresarial
+                                                        .cep_estabelecimento
+                                                }
+                                                onChange={(e) =>
+                                                    atualizarEmpresarial(
+                                                        'cep_estabelecimento',
+                                                        aplicarMascaraCEP(
+                                                            e.target.value,
+                                                        ),
+                                                    )
+                                                }
+                                                className="h-10 rounded-xl border border-border/70 bg-background"
+                                            />
+                                        </div>
                                     </div>
                                 </Section>
                             )}

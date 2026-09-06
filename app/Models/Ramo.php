@@ -16,15 +16,19 @@ class Ramo extends Model
     ];
 
     // Categorias reconhecidas pelo sistema — controlam quais dados extras
-    // (veículo/residência) a apólice desse ramo vai exigir no cadastro.
+    // a apólice desse ramo vai exigir no cadastro.
     public const CATEGORIA_VEICULO = 'veiculo';
 
     public const CATEGORIA_RESIDENCIAL = 'residencial';
 
+    public const CATEGORIA_VIDA = 'vida';
+
+    public const CATEGORIA_EMPRESARIAL = 'empresarial';
+
     public const CATEGORIA_OUTRO = 'outro';
 
-    public function seguradoras()
+    public function seguradora()
     {
-        return $this->hasMany(Seguradora::class, 'seguradora_id');
+        return $this->belongsTo(Seguradora::class, 'seguradora_id');
     }
 }

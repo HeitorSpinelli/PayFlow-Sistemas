@@ -65,7 +65,7 @@ class ExportacaoApoliceService
                     $apolice->forma_pagamento,
                     $apolice->inicio_vigencia ? date('d/m/Y', strtotime($apolice->inicio_vigencia)) : '',
                     $apolice->fim_vigencia ? date('d/m/Y', strtotime($apolice->fim_vigencia)) : '',
-                    $apolice->status,
+                    $apolice->status_vigencia,
                     $apolice->observacoes,
                     $apolice->created_at ? $apolice->created_at->format('d/m/Y H:i') : ''
                 ]);

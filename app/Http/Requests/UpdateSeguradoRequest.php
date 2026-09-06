@@ -25,6 +25,7 @@ class UpdateSeguradoRequest extends FormRequest
     {
         return [
             'nome_completo' => 'required|string|max:255',
+            'razao_social' => 'nullable|string|max:255',
             'email' => ['required', 'email', new EmailSeguradoDisponivel((int) $this->route('id'))],
             'telefone_fixo' => 'nullable|string|max:20',
             'celular_whatsapp' => 'nullable|string|max:20',

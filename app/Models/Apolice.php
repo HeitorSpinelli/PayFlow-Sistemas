@@ -40,11 +40,7 @@ class Apolice extends Model
             return 'Vigente';
         }
 
-        if ($hoje->lt($inicioVigencia)) {
-            return 'A Iniciar';
-        }
-
-        return 'Pendente';
+        return 'A Iniciar';
     }
 
     public function scopeFilter($query, array $filters)
@@ -143,5 +139,20 @@ class Apolice extends Model
     public function dadosResidencia(): HasOne
     {
         return $this->hasOne(DadosResidenciaApolice::class, 'apolice_id');
+    }
+
+    public function dadosVida(): HasOne
+    {
+        return $this->hasOne(DadosVidaApolice::class, 'apolice_id');
+    }
+
+    public function beneficiarios(): HasMany
+    {
+        return $this->hasMany(BeneficiarioApolice::class, 'apolice_id');
+    }
+
+    public function dadosEmpresarial(): HasOne
+    {
+        return $this->hasOne(DadosEmpresarialApolice::class, 'apolice_id');
     }
 }

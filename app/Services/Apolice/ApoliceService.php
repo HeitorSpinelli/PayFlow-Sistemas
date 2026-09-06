@@ -3,8 +3,11 @@
 namespace App\Services\Apolice;
 
 use App\Models\Apolice;
+use App\Models\BeneficiarioApolice;
+use App\Models\DadosEmpresarialApolice;
 use App\Models\DadosResidenciaApolice;
 use App\Models\DadosVeiculoApolice;
+use App\Models\DadosVidaApolice;
 use App\Models\Pagamento;
 use App\Models\Parcelas;
 use App\Models\Ramo;
@@ -28,17 +31,25 @@ class ApoliceService
                 $apolice = Apolice::create($data);
 
                 // Calcula o valor de cada parcela
-                $valorParcela = round($data['valor_premio_total'] / $data['quantidade_parcelas'], 2);
+                $quantidadeParcelas = $data['quantidade_parcelas'];
+                $valorParcela = round($data['valor_premio_total'] / $quantidadeParcelas, 2);
 
                 // Data base para calcular vencimentos (30 dias após início da vigência)
                 $dataBase = Carbon::parse($data['inicio_vigencia']);
 
                 // Cria cada parcela automaticamente
-                for ($i = 1; $i <= $data['quantidade_parcelas']; $i++) {
+                for ($i = 1; $i <= $quantidadeParcelas; $i++) {
+                    // A última parcela absorve a diferença do arredondamento (ex:
+                    // R$1000 / 3 = R$333,33 x3 = R$999,99, faltando 1 centavo) —
+                    // sem isso, a soma das parcelas nunca bate com o prêmio total.
+                    $valorDestaParcela = $i === $quantidadeParcelas
+                        ? round($data['valor_premio_total'] - ($valorParcela * ($quantidadeParcelas - 1)), 2)
+                        : $valorParcela;
+
                     Parcelas::create([
                         'apolice_id' => $apolice->id,
                         'numero_parcela' => $i,
-                        'valor_parcela' => $valorParcela,
+                        'valor_parcela' => $valorDestaParcela,
                         'data_vencimento' => $dataBase->copy()->addMonthsNoOverflow($i),
                         'status_pagamento' => 'em_aberto',
                     ]);
@@ -46,18 +57,35 @@ class ApoliceService
 
                 // Dados extras exigidos conforme a categoria do ramo. Decide pela
                 // categoria real do ramo (não só pela chave existir no payload):
-                // o frontend sempre manda os dois blocos, então isset() sozinho
+                // o frontend sempre manda todos os blocos, então isset() sozinho
                 // criaria um registro de veículo vazio numa apólice residencial.
                 $ramo = Ramo::find($data['ramo_id']);
-
-                if ($ramo?->categoria === Ramo::CATEGORIA_VEICULO && isset($data['veiculo'])) {
-                    DadosVeiculoApolice::create([...$data['veiculo'], 'apolice_id' => $apolice->id]);
-                } elseif ($ramo?->categoria === Ramo::CATEGORIA_RESIDENCIAL && isset($data['residencia'])) {
-                    DadosResidenciaApolice::create([...$data['residencia'], 'apolice_id' => $apolice->id]);
-                }
+                $this->criarDadosExtras($apolice, $data, $ramo?->categoria);
             });
         } catch (\Exception $e) {
             throw new \Exception('Erro ao cadastrar apólice: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Cria o registro extra (veículo/residência/vida+beneficiários/
+     * empresarial) correspondente à categoria do ramo — usado só na criação,
+     * onde ainda não existe nenhum registro extra prévio pra essa apólice.
+     */
+    private function criarDadosExtras(Apolice $apolice, array $data, ?string $categoria): void
+    {
+        if ($categoria === Ramo::CATEGORIA_VEICULO && isset($data['veiculo'])) {
+            DadosVeiculoApolice::create([...$data['veiculo'], 'apolice_id' => $apolice->id]);
+        } elseif ($categoria === Ramo::CATEGORIA_RESIDENCIAL && isset($data['residencia'])) {
+            DadosResidenciaApolice::create([...$data['residencia'], 'apolice_id' => $apolice->id]);
+        } elseif ($categoria === Ramo::CATEGORIA_VIDA && isset($data['vida'])) {
+            DadosVidaApolice::create([...$data['vida'], 'apolice_id' => $apolice->id]);
+
+            foreach ($data['beneficiarios'] ?? [] as $beneficiario) {
+                BeneficiarioApolice::create([...$beneficiario, 'apolice_id' => $apolice->id]);
+            }
+        } elseif ($categoria === Ramo::CATEGORIA_EMPRESARIAL && isset($data['empresarial'])) {
+            DadosEmpresarialApolice::create([...$data['empresarial'], 'apolice_id' => $apolice->id]);
         }
     }
 
@@ -93,7 +121,7 @@ class ApoliceService
     {
         try {
             $query = Apolice::query()
-                ->with(['dadosVeiculo', 'dadosResidencia'])
+                ->with(['dadosVeiculo', 'dadosResidencia', 'dadosVida', 'beneficiarios', 'dadosEmpresarial'])
                 ->join('segurados', 'apolices.cliente_id', '=', 'segurados.id')
                 ->join('ramos', 'apolices.ramo_id', '=', 'ramos.id')
                 ->join('seguradoras', 'apolices.seguradora_id', '=', 'seguradoras.id')
@@ -185,17 +213,51 @@ class ApoliceService
 
                 if ($ramo?->categoria === Ramo::CATEGORIA_VEICULO && isset($data['veiculo'])) {
                     DadosVeiculoApolice::updateOrCreate(['apolice_id' => $apolice->id], $data['veiculo']);
-                    DadosResidenciaApolice::where('apolice_id', $apolice->id)->delete();
                 } elseif ($ramo?->categoria === Ramo::CATEGORIA_RESIDENCIAL && isset($data['residencia'])) {
                     DadosResidenciaApolice::updateOrCreate(['apolice_id' => $apolice->id], $data['residencia']);
-                    DadosVeiculoApolice::where('apolice_id', $apolice->id)->delete();
-                } else {
-                    DadosVeiculoApolice::where('apolice_id', $apolice->id)->delete();
-                    DadosResidenciaApolice::where('apolice_id', $apolice->id)->delete();
+                } elseif ($ramo?->categoria === Ramo::CATEGORIA_VIDA && isset($data['vida'])) {
+                    DadosVidaApolice::updateOrCreate(['apolice_id' => $apolice->id], $data['vida']);
+
+                    // Substitui a lista inteira de beneficiários pela enviada — mais
+                    // simples e seguro do que tentar casar quem mudou/entrou/saiu.
+                    BeneficiarioApolice::where('apolice_id', $apolice->id)->delete();
+                    foreach ($data['beneficiarios'] ?? [] as $beneficiario) {
+                        BeneficiarioApolice::create([...$beneficiario, 'apolice_id' => $apolice->id]);
+                    }
+                } elseif ($ramo?->categoria === Ramo::CATEGORIA_EMPRESARIAL && isset($data['empresarial'])) {
+                    DadosEmpresarialApolice::updateOrCreate(['apolice_id' => $apolice->id], $data['empresarial']);
                 }
+
+                $this->limparDadosDaCategoriaErrada($apolice, $ramo?->categoria);
             });
         } catch (\Exception $e) {
             throw new \Exception('Erro ao atualizar apólice: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Remove o registro extra (veículo/residência/vida+beneficiários/
+     * empresarial) que não corresponde mais à categoria válida informada.
+     * Usado tanto por update() quanto por AlterarRamo() — os dois pontos
+     * onde o ramo de uma apólice pode mudar.
+     */
+    private function limparDadosDaCategoriaErrada(Apolice $apolice, ?string $categoriaValida): void
+    {
+        if ($categoriaValida !== Ramo::CATEGORIA_VEICULO) {
+            DadosVeiculoApolice::where('apolice_id', $apolice->id)->delete();
+        }
+
+        if ($categoriaValida !== Ramo::CATEGORIA_RESIDENCIAL) {
+            DadosResidenciaApolice::where('apolice_id', $apolice->id)->delete();
+        }
+
+        if ($categoriaValida !== Ramo::CATEGORIA_VIDA) {
+            DadosVidaApolice::where('apolice_id', $apolice->id)->delete();
+            BeneficiarioApolice::where('apolice_id', $apolice->id)->delete();
+        }
+
+        if ($categoriaValida !== Ramo::CATEGORIA_EMPRESARIAL) {
+            DadosEmpresarialApolice::where('apolice_id', $apolice->id)->delete();
         }
     }
 
@@ -212,9 +274,19 @@ class ApoliceService
     public function AlterarRamo(int $apoliceId, int $novoRamoId)
     {
         try {
-            $apolice = Apolice::findOrFail($apoliceId);
-            $apolice->ramo_id = $novoRamoId;
-            $apolice->save();
+            DB::transaction(function () use ($apoliceId, $novoRamoId) {
+                $apolice = Apolice::findOrFail($apoliceId);
+                $apolice->ramo_id = $novoRamoId;
+                $apolice->save();
+
+                // Esse endpoint só recebe o novo ramo, sem dados de veículo/
+                // residência — não tem como "inventar" a placa ou o endereço do
+                // imóvel novo. Por isso só limpa o que não bate mais com a nova
+                // categoria; o usuário preenche os dados corretos depois, pela
+                // edição normal da apólice.
+                $novoRamo = Ramo::find($novoRamoId);
+                $this->limparDadosDaCategoriaErrada($apolice, $novoRamo?->categoria);
+            });
         } catch (\Exception $e) {
             throw new \Exception('Erro ao alterar o ramo da apólice: '.$e->getMessage());
         }

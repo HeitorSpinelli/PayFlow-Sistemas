@@ -27,6 +27,9 @@ class StoreSeguradoRequest extends FormRequest
         return [
             // Validação dos dados recebidos do form segurados
             'nome_completo' => 'required|string|max:255',
+            // Só faz sentido pra PJ, mas fica nullable — o próprio frontend só
+            // mostra esse campo quando tipo_pessoa é 'pj'.
+            'razao_social' => 'nullable|string|max:255',
             'tipo_pessoa' => 'required|in:pf,pj',
             'cpf_cnpj' => ['required', 'string', 'max:20', new CpfCnpjValido, new CpfCnpjDisponivel],
             'data_nascimento_fundacao' => 'required|date',

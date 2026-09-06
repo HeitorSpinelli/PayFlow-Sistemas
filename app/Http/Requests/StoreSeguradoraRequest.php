@@ -30,7 +30,7 @@ class StoreSeguradoraRequest extends FormRequest
             'email_suporte' => 'nullable|email|max:255',
             'ramos' => 'nullable|array',
             'ramos.*.nome_ramo' => 'required|string|max:100',
-            'ramos.*.categoria' => 'required|string|in:veiculo,residencial,outro',
+            'ramos.*.categoria' => 'required|string|in:veiculo,residencial,vida,empresarial,outro',
         ];
     }
 }

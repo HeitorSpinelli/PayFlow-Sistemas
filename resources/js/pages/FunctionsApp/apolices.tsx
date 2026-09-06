@@ -18,7 +18,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import CreateApoliceModal from '@/components/modals/create-apolice-modal';
 import CreateApoliceProfileModal from '@/components/modals/create-apolice-profile-modal';
-import seguradoProfile from '@/components/modals/create-profile-modal';
 
 import { formataInputBusca, removeMask } from '@/utils/Masks';
 
@@ -42,8 +41,6 @@ interface PageProps {
     totalAtivas?: number;
     totalInativas?: number;
 }
-
-type StatusVigencia = 'Vigente' | 'Para Renovar' | 'A Iniciar' | string;
 
 function formatarMoeda(valor: number | string) {
     const numero = typeof valor === 'string' ? parseFloat(valor) : valor;
@@ -74,9 +71,9 @@ export default function Apolices({
             case 'Vigente':
                 return 'bg-emerald-500/10 text-emerald-500';
             case 'Para Renovar':
-                return 'bg-red-500/10 text-red-500';
+                return 'bg-rose-500/10 text-rose-500';
             case 'A Iniciar':
-                return 'bg-blue-500/10 text-blue-500';
+                return 'bg-amber-500/10 text-amber-500';
             default:
                 return 'bg-rose-500/10 text-rose-500';
         }

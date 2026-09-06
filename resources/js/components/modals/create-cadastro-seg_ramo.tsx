@@ -32,6 +32,8 @@ import {
 const CATEGORIAS_RAMO = [
     { value: 'veiculo', label: 'Veículo (auto/moto)' },
     { value: 'residencial', label: 'Residencial' },
+    { value: 'vida', label: 'Vida' },
+    { value: 'empresarial', label: 'Empresarial' },
     { value: 'outro', label: 'Outro' },
 ];
 

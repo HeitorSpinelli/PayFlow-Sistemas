@@ -79,6 +79,7 @@ interface Estado {
 function mapSeguradoParaFormulario(segurado: any) {
     return {
         nome_completo: segurado?.nome_completo ?? '',
+        razao_social: segurado?.razao_social ?? '',
         cpf_cnpj: segurado?.cpf_cnpj ?? '',
         tipo_pessoa: segurado?.tipo_pessoa ?? '',
         data_nascimento_fundacao: segurado?.data_nascimento_fundacao ?? '',
@@ -268,6 +269,14 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                             segurado?.data_nascimento_fundacao
                                         }
                                     />
+                                    {!isPF && (
+                                        <div className="sm:col-span-2">
+                                            <InfoField
+                                                label="Razão social"
+                                                value={segurado?.razao_social}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </Section>
 
@@ -363,6 +372,24 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                             }
                                         />
                                     </div>
+
+                                    {!isPF && (
+                                        <div className="space-y-2">
+                                            <label className="text-sm leading-none font-medium">
+                                                Razão social
+                                            </label>
+                                            <Input
+                                                className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                                value={data.razao_social}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        'razao_social',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </Section>
 

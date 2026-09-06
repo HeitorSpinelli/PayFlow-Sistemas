@@ -23,7 +23,45 @@ trait ValidaDadosPorCategoriaDeRamo
             return $this->regrasResidencia();
         }
 
+        if ($categoria === Ramo::CATEGORIA_VIDA) {
+            return $this->regrasVida();
+        }
+
+        if ($categoria === Ramo::CATEGORIA_EMPRESARIAL) {
+            return $this->regrasEmpresarial();
+        }
+
         return [];
+    }
+
+    /**
+     * Depois que o Validator já rodou as regras "normais", confere a regra de
+     * negócio que não dá pra expressar como uma regra por campo: a soma dos
+     * percentuais de indenização de todos os beneficiários de uma apólice de
+     * vida precisa fechar em 100% — senão a indenização fica mal definida.
+     */
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $categoria = Ramo::find($this->input('ramo_id'))?->categoria;
+
+            if ($categoria !== Ramo::CATEGORIA_VIDA) {
+                return;
+            }
+
+            $beneficiarios = $this->input('beneficiarios', []);
+            $soma = round(
+                collect($beneficiarios)->sum(fn ($b) => (float) ($b['percentual_indenizacao'] ?? 0)),
+                2
+            );
+
+            if (abs($soma - 100.0) > 0.01) {
+                $validator->errors()->add(
+                    'beneficiarios',
+                    'A soma dos percentuais de indenização dos beneficiários precisa ser 100% (está em '.number_format($soma, 2, ',', '.').'%).'
+                );
+            }
+        });
     }
 
     private function regrasVeiculo(): array
@@ -69,9 +107,54 @@ trait ValidaDadosPorCategoriaDeRamo
         ];
     }
 
+    private function regrasVida(): array
+    {
+        return [
+            'vida' => 'required|array',
+            'vida.profissao' => 'required|string|max:150',
+            'vida.possui_atividade_profissional_risco' => 'nullable|boolean',
+            'vida.fumante' => 'nullable|boolean',
+            'vida.possui_doenca_preexistente' => 'nullable|boolean',
+            // Só exige a descrição se a pessoa marcou que tem doença preexistente
+            'vida.descricao_doencas' => 'required_if:vida.possui_doenca_preexistente,true|nullable|string',
+            'vida.pratica_esporte_risco' => 'nullable|boolean',
+            // Idem: só exige qual esporte se marcou que pratica esporte de risco
+            'vida.qual_esporte' => 'required_if:vida.pratica_esporte_risco,true|nullable|string|max:150',
+            'vida.capital_segurado' => 'required|numeric|min:0.01',
+
+            // Beneficiários: lista de pelo menos 1, cada um com seus próprios campos
+            'beneficiarios' => 'required|array|min:1',
+            'beneficiarios.*.nome_completo' => 'required|string|max:255',
+            'beneficiarios.*.cpf' => 'required|string|max:20',
+            'beneficiarios.*.data_nascimento' => 'required|date',
+            'beneficiarios.*.parentesco' => 'required|string|in:conjuge,filho,pai,mae,irmao,outro',
+            'beneficiarios.*.percentual_indenizacao' => 'required|numeric|min:0.01|max:100',
+        ];
+    }
+
+    private function regrasEmpresarial(): array
+    {
+        return [
+            'empresarial' => 'required|array',
+            'empresarial.cnae_ou_atividade' => 'required|string|max:255',
+            'empresarial.numero_funcionarios' => 'required|integer|min:0',
+            'empresarial.valor_patrimonio_segurado' => 'required|numeric|min:0',
+            'empresarial.faturamento_anual' => 'required|numeric|min:0',
+            'empresarial.possui_cobertura_incendio_basica' => 'nullable|boolean',
+            'empresarial.coberturas_adicionais' => 'nullable|string',
+            'empresarial.endereco_estabelecimento' => 'required|string',
+            'empresarial.numero_estabelecimento' => 'required|string|max:20',
+            'empresarial.bairro_estabelecimento' => 'required|string|max:100',
+            'empresarial.cidade_estabelecimento' => 'required|string|max:100',
+            'empresarial.estado_estabelecimento' => 'required|string|size:2',
+            'empresarial.cep_estabelecimento' => 'required|string|max:15',
+        ];
+    }
+
     /**
-     * Nomes amigáveis para os campos aninhados de veiculo/residencia — sem
-     * isso, a mensagem de erro mostraria o caminho cru ("veiculo.placa").
+     * Nomes amigáveis para os campos aninhados de veiculo/residencia/vida/
+     * empresarial — sem isso, a mensagem de erro mostraria o caminho cru
+     * ("veiculo.placa").
      *
      * @return array<string, string>
      */
@@ -101,6 +184,27 @@ trait ValidaDadosPorCategoriaDeRamo
             'residencia.cep_imovel' => 'CEP do imóvel',
             'residencia.area_construida_m2' => 'área construída',
             'residencia.ocupacao' => 'ocupação do imóvel',
+
+            'vida.profissao' => 'profissão',
+            'vida.descricao_doencas' => 'descrição das doenças preexistentes',
+            'vida.qual_esporte' => 'qual esporte de risco',
+            'vida.capital_segurado' => 'capital segurado',
+            'beneficiarios.*.nome_completo' => 'nome do beneficiário',
+            'beneficiarios.*.cpf' => 'CPF do beneficiário',
+            'beneficiarios.*.data_nascimento' => 'data de nascimento do beneficiário',
+            'beneficiarios.*.parentesco' => 'parentesco do beneficiário',
+            'beneficiarios.*.percentual_indenizacao' => 'percentual de indenização',
+
+            'empresarial.cnae_ou_atividade' => 'CNAE/atividade',
+            'empresarial.numero_funcionarios' => 'número de funcionários',
+            'empresarial.valor_patrimonio_segurado' => 'valor do patrimônio segurado',
+            'empresarial.faturamento_anual' => 'faturamento anual',
+            'empresarial.endereco_estabelecimento' => 'endereço do estabelecimento',
+            'empresarial.numero_estabelecimento' => 'número do estabelecimento',
+            'empresarial.bairro_estabelecimento' => 'bairro do estabelecimento',
+            'empresarial.cidade_estabelecimento' => 'cidade do estabelecimento',
+            'empresarial.estado_estabelecimento' => 'estado do estabelecimento',
+            'empresarial.cep_estabelecimento' => 'CEP do estabelecimento',
         ];
     }
 }

@@ -24,7 +24,7 @@ class StoreRamoRequest extends FormRequest
     {
         return [
             'nome_ramo' => 'required|string|unique:ramos,nome_ramo',
-            'categoria' => 'required|string|in:veiculo,residencial,outro',
+            'categoria' => 'required|string|in:veiculo,residencial,vida,empresarial,outro',
         ];
     }
 }

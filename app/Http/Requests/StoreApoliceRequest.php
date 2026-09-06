@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Http\Requests\Concerns\ValidaDadosPorCategoriaDeRamo;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreApoliceRequest extends FormRequest
 {
@@ -29,7 +30,12 @@ class StoreApoliceRequest extends FormRequest
             'numero_apolice' => 'required|string|max:100|unique:apolices',
             'cliente_id' => 'required|exists:segurados,id',
             'seguradora_id' => 'required|exists:seguradoras,id',
-            'ramo_id' => 'required|exists:ramos,id',
+            // O ramo precisa existir E pertencer à seguradora enviada — sem o
+            // ->where(), um ramo de outra seguradora passava tranquilamente.
+            'ramo_id' => [
+                'required',
+                Rule::exists('ramos', 'id')->where('seguradora_id', $this->input('seguradora_id')),
+            ],
             'valor_premio_total' => 'required|numeric|min:0',
             'valor_cobertura' => 'required|numeric|min:0',
             'quantidade_parcelas' => 'required|integer|min:1|max:12',

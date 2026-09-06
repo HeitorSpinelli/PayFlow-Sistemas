@@ -8,10 +8,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Segurado extends Model
 {
     protected $table = 'segurados';
+
     use SoftDeletes;
 
     protected $fillable = [
         'nome_completo',
+        'razao_social',
         'tipo_pessoa',
         'cpf_cnpj',
         'data_nascimento_fundacao',
@@ -23,7 +25,7 @@ class Segurado extends Model
         'bairro',
         'estado',
         'cep',
-        'observacoes'
+        'observacoes',
     ];
 
     public function apolices()
@@ -46,7 +48,7 @@ class Segurado extends Model
             $q->where(function ($subQuery) use ($busca, $buscaLimpa) {
                 $subQuery->where('nome_completo', 'iLike', "%{$busca}%");
 
-                if (!empty($buscaLimpa)) {
+                if (! empty($buscaLimpa)) {
                     $subQuery->orWhere('cpf_cnpj', 'iLike', "%{$busca}%")
                         ->orWhereRaw("REGEXP_REPLACE(cpf_cnpj, '[^0-9]', '', 'g') iLike ?", ["%{$buscaLimpa}%"]);
                 } else {

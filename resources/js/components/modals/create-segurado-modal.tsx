@@ -63,6 +63,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
         useForm({
             tipo_pessoa: 'pf',
             nome_completo: '',
+            razao_social: '',
             cpf_cnpj: '',
             data_nascimento_fundacao: '',
             email: '',
@@ -257,6 +258,32 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                         </span>
                                     )}
                                 </div>
+
+                                {/* Razão Social só se aplica a PJ — nome fantasia (acima) e
+                                    razão social são coisas juridicamente diferentes no Brasil */}
+                                {!isPF && (
+                                    <div className="space-y-2">
+                                        <label className="text-sm leading-none font-medium">
+                                            Razão social
+                                        </label>
+                                        <Input
+                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                            placeholder="Razão social da empresa"
+                                            value={data.razao_social}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'razao_social',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                        {errors.razao_social && (
+                                            <span className="text-xs font-medium text-rose-500">
+                                                {errors.razao_social}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
 
                                 <div className="grid gap-3 sm:grid-cols-2">
                                     <div className="space-y-2">
