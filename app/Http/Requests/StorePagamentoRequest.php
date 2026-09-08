@@ -19,19 +19,20 @@ class StorePagamentoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'apolice_id'       => 'required|integer|exists:apolices,id',
-            'parcela'          => [
+            'apolice_id' => 'required|integer|exists:apolices,id',
+            'parcela' => [
                 'required',
                 'integer',
                 'min:1',
                 Rule::unique('pagamentos', 'parcela')
-                    ->where('apolice_id', $this->apolice_id),
+                    ->where('apolice_id', $this->apolice_id)
+                    ->withoutTrashed(),
             ],
-            'valor'            => 'required|numeric|min:0.01',
-            'data_pagamento'   => 'required|date|before_or_equal:today',
-            'forma_pagamento'  => 'required|string|in:boleto,pix,cartão,débito',
-            'status'           => 'required|string|in:confirmado,pendente',
-            'observacoes'      => 'nullable|string',
+            'valor' => 'required|numeric|min:0.01',
+            'data_pagamento' => 'required|date|before_or_equal:today',
+            'forma_pagamento' => 'required|string|in:boleto,pix,cartão,débito',
+            'status' => 'required|string|in:confirmado',
+            'observacoes' => 'nullable|string',
         ];
     }
 

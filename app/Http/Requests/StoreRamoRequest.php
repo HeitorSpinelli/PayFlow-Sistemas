@@ -12,7 +12,7 @@ class StoreRamoRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -23,7 +23,8 @@ class StoreRamoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nome_ramo' => 'required|string|unique:ramos,nome_ramo'
+            'nome_ramo' => 'required|string|unique:ramos,nome_ramo',
+            'categoria' => 'required|string|in:veiculo,residencial,vida,empresarial,outro',
         ];
     }
 }

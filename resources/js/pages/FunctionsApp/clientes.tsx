@@ -142,7 +142,7 @@ export default function Clientes({
         setOpenProfile(true);
     };
 
-    // Tratamentos seguros para evitar NaN
+    // Tratamentos seguros para evitar NaN(Not a Number) caso os valores sejam undefined ou null
     const totalGeral = total ?? 0;
     const totalInativosSegurados = totalInativos ?? 0;
     const totalAtivosSegurados = totalAtivos ?? 0;
@@ -287,7 +287,7 @@ export default function Clientes({
                                 )}
                             </div>
                             <a
-                                href="/segurados/exportar"
+                                href="/clientes/exportar"
                                 className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border/70 bg-background px-4 text-sm font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
                             >
                                 <Download className="size-4 text-muted-foreground/60" />

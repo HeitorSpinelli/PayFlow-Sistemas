@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     Plus,
     ScrollText,
@@ -18,7 +18,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import CreateApoliceModal from '@/components/modals/create-apolice-modal';
 import CreateApoliceProfileModal from '@/components/modals/create-apolice-profile-modal';
-import seguradoProfile from '@/components/modals/create-profile-modal';
 
 import { formataInputBusca, removeMask } from '@/utils/Masks';
 
@@ -37,21 +36,28 @@ interface PageProps {
     segurados?: any[];
     seguradoras?: any[];
     ramos?: any[];
-    apolices?: any[];
+    apolices?: PaginatedApolices;
     total?: number;
     totalAtivas?: number;
     totalInativas?: number;
 }
 
-type StatusVigencia = 'Vigente' | 'Para Renovar' | 'A Iniciar' | string;
+function formatarMoeda(valor: number | string) {
+    const numero = typeof valor === 'string' ? parseFloat(valor) : valor;
+    if (isNaN(numero)) return 'R$ 0,00';
+    return numero.toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+    });
+}
 
 export default function Apolices({
     segurados,
     seguradoras,
     ramos,
-    apolices = [],
+    apolices,
     total = 0,
-    totalAtivas = 2,
+    totalAtivas = 0,
     totalInativas = 0,
 }: PageProps) {
     const [openModal, setOpenModal] = useState(false); // modal de criar
@@ -65,9 +71,9 @@ export default function Apolices({
             case 'Vigente':
                 return 'bg-emerald-500/10 text-emerald-500';
             case 'Para Renovar':
-                return 'bg-red-500/10 text-red-500';
+                return 'bg-rose-500/10 text-rose-500';
             case 'A Iniciar':
-                return 'bg-blue-500/10 text-blue-500';
+                return 'bg-amber-500/10 text-amber-500';
             default:
                 return 'bg-rose-500/10 text-rose-500';
         }
@@ -92,7 +98,7 @@ export default function Apolices({
 
     const [busca, setBusca] = useState(urlParams.get('busca') || '');
     const [filtroSelecionado, setFiltroSelecionado] = useState(
-        urlParams.get('status') || 'Todos',
+        urlParams.get('status') || 'Todas',
     );
 
     // Ref para controlar o debounce da busca
@@ -142,7 +148,7 @@ export default function Apolices({
 
         const params = new URLSearchParams(window.location.search);
 
-        if (opcao !== 'Todos') {
+        if (opcao !== 'Todas') {
             params.set('status', opcao);
         } else {
             params.delete('status');
@@ -161,7 +167,7 @@ export default function Apolices({
     };
 
     // Usamos diretamente o array de apólices que vem filtrado do backend
-    const apolicesFiltradas = apolices.data || [];
+    const apolicesFiltradas = apolices?.data || [];
 
     return (
         <>
@@ -247,8 +253,7 @@ export default function Apolices({
                                 Lista de Apólices
                             </h3>
                             <p className="text-xs text-muted-foreground">
-                                {apolicesFiltradas.length} apólice(s)
-                                encontrada(s)
+                                {apolices?.total ?? 0} apólice(s) encontrada(s)
                             </p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2.5">
@@ -351,7 +356,7 @@ export default function Apolices({
                                 {apolicesFiltradas.length === 0 ? (
                                     <tr>
                                         <td
-                                            colSpan={8}
+                                            colSpan={9}
                                             className="h-24 px-4 text-center text-muted-foreground"
                                         >
                                             Nenhuma apólice encontrada.
@@ -381,7 +386,9 @@ export default function Apolices({
                                                 {apolice.nome_fantasia}
                                             </td>
                                             <td className="px-4 py-3.5 text-muted-foreground">
-                                                R$ {apolice.valor_premio_total}
+                                                {formatarMoeda(
+                                                    apolice.valor_premio_total,
+                                                )}
                                             </td>
                                             <td className="px-4 py-3.5 text-muted-foreground">
                                                 {apolice.quantidade_parcelas}
@@ -427,23 +434,55 @@ export default function Apolices({
                             <div className="text-sm text-muted-foreground">
                                 Mostrando{' '}
                                 <span className="font-medium text-foreground">
-                                    1
+                                    {apolices?.from ?? 0}
+                                </span>{' '}
+                                até{' '}
+                                <span className="font-medium text-foreground">
+                                    {apolices?.to ?? 0}
                                 </span>{' '}
                                 de{' '}
                                 <span className="font-medium text-foreground">
-                                    1
+                                    {apolices?.total ?? 0}
                                 </span>{' '}
                                 resultados
                             </div>
                             <div className="flex items-center gap-2">
-                                <button className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50">
-                                    <ChevronLeft className="size-3" />
-                                    Anterior
-                                </button>
-                                <button className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50">
-                                    Próxima
-                                    <ChevronRight className="size-3" />
-                                </button>
+                                {apolices?.prev_page_url ? (
+                                    <Link
+                                        href={apolices.prev_page_url}
+                                        preserveScroll
+                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted"
+                                    >
+                                        <ChevronLeft className="size-3" />
+                                        Anterior
+                                    </Link>
+                                ) : (
+                                    <button
+                                        disabled
+                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3 text-xs font-medium shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        <ChevronLeft className="size-3" />
+                                        Anterior
+                                    </button>
+                                )}
+                                {apolices?.next_page_url ? (
+                                    <Link
+                                        href={apolices.next_page_url}
+                                        preserveScroll
+                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted"
+                                    >
+                                        Próxima
+                                        <ChevronRight className="size-3" />
+                                    </Link>
+                                ) : (
+                                    <button
+                                        disabled
+                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3 text-xs font-medium shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        Próxima
+                                        <ChevronRight className="size-3" />
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -453,12 +492,12 @@ export default function Apolices({
             {/* Modais da Aplicação */}
             <CreateApoliceModal
                 open={openModal}
+                key={openModal}
                 setOpen={setOpenModal}
                 segurados={segurados}
                 seguradoras={seguradoras}
                 ramos={ramos}
                 apolices={apolices}
-                Profile={seguradoProfile}
             />
             {apoliceSelecionada && (
                 <CreateApoliceProfileModal

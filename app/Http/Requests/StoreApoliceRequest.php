@@ -2,11 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\ValidaDadosPorCategoriaDeRamo;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreApoliceRequest extends FormRequest
 {
+    use ValidaDadosPorCategoriaDeRamo;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -22,20 +26,29 @@ class StoreApoliceRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'numero_apolice' => 'required|string|max:100|unique:apolices',
             'cliente_id' => 'required|exists:segurados,id',
             'seguradora_id' => 'required|exists:seguradoras,id',
-            'ramo_id' => 'required|exists:ramos,id',
+            // O ramo precisa existir E pertencer à seguradora enviada — sem o
+            // ->where(), um ramo de outra seguradora passava tranquilamente.
+            'ramo_id' => [
+                'required',
+                Rule::exists('ramos', 'id')->where('seguradora_id', $this->input('seguradora_id')),
+            ],
             'valor_premio_total' => 'required|numeric|min:0',
             'valor_cobertura' => 'required|numeric|min:0',
-            'quantidade_parcelas' => 'required|integer|min:1',
+            'quantidade_parcelas' => 'required|integer|min:1|max:12',
             'forma_pagamento' => 'required|string|max:50',
             'inicio_vigencia' => 'required|date',
             'fim_vigencia' => 'required|date|after:inicio_vigencia',
-            'status' => 'required|string|in:Ativa,Inativa',
-            'observacoes' => 'nullable|string'
+            'observacoes' => 'nullable|string',
         ];
+
+        // A categoria do ramo escolhido decide quais dados extras são
+        // obrigatórios — mesmo padrão de risco que uma seguradora real exige
+        // na cotação (dados do veículo ou do imóvel segurado).
+        return $rules + $this->regrasPorCategoriaDoRamo($this->input('ramo_id'));
     }
 
     /**
@@ -94,7 +107,7 @@ class StoreApoliceRequest extends FormRequest
             'status.in' => 'O status selecionado deve ser Ativa ou Inativa.',
 
             // Observações
-            'observacoes.string' => 'As observações devem estar em formato de texto.'
+            'observacoes.string' => 'As observações devem estar em formato de texto.',
         ];
     }
 }

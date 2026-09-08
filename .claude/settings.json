@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php -l app/Http/Requests/Concerns/ValidaDadosPorCategoriaDeRamo.php)",
+      "Bash(vendor/bin/pint app/Models/DadosVidaApolice.php app/Models/BeneficiarioApolice.php app/Models/DadosEmpresarialApolice.php app/Models/Apolice.php app/Models/Ramo.php app/Models/Segurado.php app/Http/Requests/Concerns/ValidaDadosPorCategoriaDeRamo.php app/Http/Requests/StoreRamoRequest.php app/Http/Requests/StoreSeguradoraRequest.php app/Http/Requests/StoreSeguradoRequest.php app/Http/Requests/UpdateSeguradoRequest.php app/Services/Apolice/ApoliceService.php database/migrations/2026_09_03_020000_add_razao_social_to_segurados_table.php database/migrations/2026_09_03_020100_create_dados_vida_apolice_table.php database/migrations/2026_09_03_020200_create_beneficiarios_apolice_table.php database/migrations/2026_09_03_020300_create_dados_empresarial_apolice_table.php)"
+    ]
+  }
+}

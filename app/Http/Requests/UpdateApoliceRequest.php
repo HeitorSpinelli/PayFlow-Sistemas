@@ -2,11 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\ValidaDadosPorCategoriaDeRamo;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateApoliceRequest extends FormRequest
 {
+    use ValidaDadosPorCategoriaDeRamo;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -22,18 +26,30 @@ class UpdateApoliceRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'numero_apolice' => 'required|string|max:100|unique:apolices,numero_apolice,' . $this->route('id'),
+        $rules = [
+            'numero_apolice' => 'required|string|max:100|unique:apolices,numero_apolice,'.$this->route('id'),
             'cliente_id' => 'required|exists:segurados,id',
             'seguradora_id' => 'required|exists:seguradoras,id',
-            'ramo_id' => 'required|exists:ramos,id',
-            'valor_premio_total' => 'required|numeric',
-            'valor_cobertura' => 'required|numeric',
-            'quantidade_parcelas' => 'required|integer',
+            'ramo_id' => [
+                'required',
+                Rule::exists('ramos', 'id')->where('seguradora_id', $this->input('seguradora_id')),
+            ],
+            'valor_premio_total' => 'required|numeric|min:0',
+            'valor_cobertura' => 'required|numeric|min:0',
+            'quantidade_parcelas' => 'required|integer|min:1|max:12',
             'forma_pagamento' => 'required|string|max:50',
             'inicio_vigencia' => 'required|date',
-            'fim_vigencia' => 'required|after:inicio_vigencia',
-            'observacoes' => 'nullable|string'
+            'fim_vigencia' => 'required|date|after:inicio_vigencia',
+            'observacoes' => 'nullable|string',
+        ];
+
+        return $rules + $this->regrasPorCategoriaDoRamo($this->input('ramo_id'));
+    }
+
+    public function messages(): array
+    {
+        return [
+            'quantidade_parcelas.max' => 'O máximo de parcelas é 12',
         ];
     }
 }

@@ -2,16 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Models\Parcelas;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Apolice extends Model
 {
     protected $table = 'apolices';
+
     use SoftDeletes;
 
     protected $appends = ['status_vigencia'];
@@ -23,7 +24,7 @@ class Apolice extends Model
 
     public function getStatusVigenciaAttribute(): string
     {
-        if (!$this->fim_vigencia || !$this->inicio_vigencia) {
+        if (! $this->fim_vigencia || ! $this->inicio_vigencia) {
             return 'N/A';
         }
 
@@ -39,11 +40,7 @@ class Apolice extends Model
             return 'Vigente';
         }
 
-        if ($hoje->lt($inicioVigencia)) {
-            return 'A Iniciar';
-        }
-
-        return 'Pendente';
+        return 'A Iniciar';
     }
 
     public function scopeFilter($query, array $filters)
@@ -57,7 +54,7 @@ class Apolice extends Model
                     ->orWhereHas('cliente', function ($sub) use ($busca, $buscaLimpa) {
                         $sub->where('nome_completo', 'iLike', "%{$busca}%")
                             ->orWhere('cpf_cnpj', 'iLike', "%{$busca}%");
-                        if (!empty($buscaLimpa)) {
+                        if (! empty($buscaLimpa)) {
                             $sub->orWhereRaw("REGEXP_REPLACE(cpf_cnpj, '[^0-9]', '', 'g') iLike ?", ["%{$buscaLimpa}%"]);
                         }
                     });
@@ -74,11 +71,21 @@ class Apolice extends Model
             }
         });
     }
-    public function scopeAtivas($query)
+
+    /**
+     * Apólices vigentes numa determinada data.
+     * Sem argumento, usa a data de hoje (comportamento original, preservado).
+     * Passando uma data, simula "quem estava vigente naquele dia" — usado
+     * pelos gráficos do dashboard para reconstruir vigência em meses passados.
+     */
+    public function scopeAtivas($query, $data = null)
     {
-        return $query->where('inicio_vigencia', '<=', now())
-            ->where('fim_vigencia', '>=', now());
+        $data = $data ?? now();
+
+        return $query->where('inicio_vigencia', '<=', $data)
+            ->where('fim_vigencia', '>=', $data);
     }
+
     public function scopeVencidasOuParaRenovar($query)
     {
         return $query->where('fim_vigencia', '<', now());
@@ -96,7 +103,7 @@ class Apolice extends Model
         'inicio_vigencia',
         'fim_vigencia',
         'status',
-        'observacoes'
+        'observacoes',
     ];
 
     public function cliente(): BelongsTo
@@ -113,12 +120,39 @@ class Apolice extends Model
     {
         return $this->belongsTo(Ramo::class, 'ramo_id');
     }
-    public function pagamentos():HasMany
+
+    public function pagamentos(): HasMany
     {
         return $this->hasMany(Pagamento::class, 'apolice_id');
     }
-    public function parcelas():HasMany
+
+    public function parcelas(): HasMany
     {
         return $this->hasMany(Parcelas::class, 'apolice_id');
+    }
+
+    public function dadosVeiculo(): HasOne
+    {
+        return $this->hasOne(DadosVeiculoApolice::class, 'apolice_id');
+    }
+
+    public function dadosResidencia(): HasOne
+    {
+        return $this->hasOne(DadosResidenciaApolice::class, 'apolice_id');
+    }
+
+    public function dadosVida(): HasOne
+    {
+        return $this->hasOne(DadosVidaApolice::class, 'apolice_id');
+    }
+
+    public function beneficiarios(): HasMany
+    {
+        return $this->hasMany(BeneficiarioApolice::class, 'apolice_id');
+    }
+
+    public function dadosEmpresarial(): HasOne
+    {
+        return $this->hasOne(DadosEmpresarialApolice::class, 'apolice_id');
     }
 }

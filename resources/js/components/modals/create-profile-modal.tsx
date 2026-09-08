@@ -73,18 +73,13 @@ interface Estado {
     sigla: string;
 }
 
-export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
-    // Controla em qual modo o modal está no momento
-    // Sempre começa em 'visualizar' quando abre
-    const [modo, setModo] = useState<Modo>('visualizar');
-    const [estados, setEstados] = useState<Estado[]>([]);
-
-    // useForm do Inertia — gerencia os campos do formulário de edição
-    // Cada campo começa com o valor atual do segurado
-    // O ?. evita erro se segurado for null (ex: antes de carregar)
-    // O ?? '' garante que nunca fica undefined — usa string vazia como padrão
-    const { data, setData, put, processing, errors } = useForm({
+// Extraído para função própria (em vez de repetir os mesmos 14 campos em dois
+// lugares) porque a divergência entre cópias é exatamente o tipo de bug que
+// esse arquivo tinha antes: o formulário nunca era resincronizado com o prop.
+function mapSeguradoParaFormulario(segurado: any) {
+    return {
         nome_completo: segurado?.nome_completo ?? '',
+        razao_social: segurado?.razao_social ?? '',
         cpf_cnpj: segurado?.cpf_cnpj ?? '',
         tipo_pessoa: segurado?.tipo_pessoa ?? '',
         data_nascimento_fundacao: segurado?.data_nascimento_fundacao ?? '',
@@ -92,12 +87,46 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
         telefone_fixo: segurado?.telefone_fixo ?? '',
         celular_whatsapp: segurado?.celular_whatsapp ?? '',
         endereco: segurado?.endereco ?? '',
+        bairro: segurado?.bairro ?? '',
         cidade: segurado?.cidade ?? '',
         estado: segurado?.estado ?? '',
         cep: segurado?.cep ?? '',
         status: segurado?.status ?? '',
         observacoes: segurado?.observacoes ?? '',
-    });
+    };
+}
+
+export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
+    // Controla em qual modo o modal está no momento
+    // Sempre começa em 'visualizar' quando abre
+    const [modo, setModo] = useState<Modo>('visualizar');
+    const [estados, setEstados] = useState<Estado[]>([]);
+
+    // useForm do Inertia só lê esses valores iniciais uma vez, no primeiro
+    // mount do componente — por isso guardamos o último `segurado` visto e
+    // resincronizamos os campos abaixo sempre que ele mudar (ver abrirPerfil
+    // em clientes.tsx, que não força um remount deste modal).
+    const [ultimoSeguradoSincronizado, setUltimoSeguradoSincronizado] =
+        useState(segurado);
+
+    const { data, setData, put, processing, errors } = useForm(
+        mapSeguradoParaFormulario(segurado),
+    );
+
+    // Ajuste de estado durante a renderização (não dentro de um useEffect):
+    // padrão recomendado pelo próprio React para "resetar estado quando uma
+    // prop muda" — evita o round-trip extra de um efeito. Sem isso, trocar
+    // de cliente (ou reabrir o mesmo após editar) mantinha os dados do
+    // cliente exibido anteriormente no formulário de edição — risco real de
+    // salvar por cima os dados errados.
+    if (segurado !== ultimoSeguradoSincronizado) {
+        setUltimoSeguradoSincronizado(segurado);
+
+        if (segurado) {
+            setData(mapSeguradoParaFormulario(segurado));
+            setModo('visualizar');
+        }
+    }
 
     const isPF = segurado?.tipo_pessoa === 'pf';
     const labelDocumento = isPF ? 'CPF' : 'CNPJ';
@@ -175,8 +204,8 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
         modo === 'editar'
             ? 'Editar'
             : modo === 'excluir'
-            ? 'Excluir'
-            : 'Detalhes';
+              ? 'Excluir'
+              : 'Detalhes';
 
     return (
         <Dialog open={open} onOpenChange={fechar}>
@@ -240,6 +269,14 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                             segurado?.data_nascimento_fundacao
                                         }
                                     />
+                                    {!isPF && (
+                                        <div className="sm:col-span-2">
+                                            <InfoField
+                                                label="Razão social"
+                                                value={segurado?.razao_social}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </Section>
 
@@ -278,6 +315,10 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                             value={segurado?.endereco}
                                         />
                                     </div>
+                                    <InfoField
+                                        label="Bairro"
+                                        value={segurado?.bairro}
+                                    />
                                     <InfoField
                                         label="Cidade / Estado"
                                         value={
@@ -331,6 +372,24 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                             }
                                         />
                                     </div>
+
+                                    {!isPF && (
+                                        <div className="space-y-2">
+                                            <label className="text-sm leading-none font-medium">
+                                                Razão social
+                                            </label>
+                                            <Input
+                                                className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                                value={data.razao_social}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        'razao_social',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </Section>
 
@@ -414,6 +473,28 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                             }
                                         />
                                     </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-sm leading-none font-medium">
+                                            Bairro
+                                        </label>
+                                        <Input
+                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                            value={data.bairro}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'bairro',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                        {errors.bairro && (
+                                            <span className="text-xs font-medium text-rose-500">
+                                                {errors.bairro}
+                                            </span>
+                                        )}
+                                    </div>
+
                                     <div className="grid gap-4 sm:grid-cols-3">
                                         <div className="space-y-2">
                                             <label className="text-sm leading-none font-medium">

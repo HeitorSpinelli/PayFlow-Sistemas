@@ -2,10 +2,8 @@
 
 namespace App\Services\Cliente;
 
-use App\Models\Seguradora;
 use App\Models\Ramo;
-use App\Models\Segurado;
-use Illuminate\Http\Request;
+use App\Models\Seguradora;
 
 class SeguradorasService
 {
@@ -24,22 +22,25 @@ class SeguradorasService
         $seguradora = Seguradora::create($data);
 
         // 4. Para cada ramo da lista, cria um registro na tabela ramos
-        // Usa o id da seguradora recém criada como chave estrangeira
-        foreach ($ramo as $nomeRamo) {
+        // Usa o id da seguradora recém criada como chave estrangeira.
+        // Cada item agora traz também a categoria (veiculo/residencial/outro),
+        // que decide quais dados extras a apólice desse ramo vai exigir.
+        foreach ($ramo as $itemRamo) {
             Ramo::create([
-                'nome_ramo' => $nomeRamo,
-                'seguradora_id' => $seguradora->id
+                'nome_ramo' => $itemRamo['nome_ramo'],
+                'categoria' => $itemRamo['categoria'],
+                'seguradora_id' => $seguradora->id,
             ]);
         }
     }
 
-    //Contagem total de seguradoras
+    // Contagem total de seguradoras
     public function count()
     {
         return Seguradora::count();
     }
 
-    // Atualiza a seguradora 
+    // Atualiza a seguradora
     public function updateSeguradora(int $id, array $data): void
     {
         try {
@@ -48,27 +49,27 @@ class SeguradorasService
             // Se houver lógica de ramos no update também, você pode tratá-la aqui igual no create.
             $seguradora->update($data);
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao atualizar seguradora: ' . $e->getMessage());
+            throw new \Exception('Erro ao atualizar seguradora: '.$e->getMessage());
         }
     }
 
-    //Exclui a seguradora apenas se não tiver ramos associados
+    // Exclui a seguradora apenas se não tiver ramos associados
     public function deleteSeguradora(int $id)
     {
         try {
             $seguradora = Seguradora::findOrFail($id);
             $seguradora->delete();
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao excluir seguradora: ' . $e->getMessage());
+            throw new \Exception('Erro ao excluir seguradora: '.$e->getMessage());
         }
     }
 
-    //Verifica se a seguradora tem ramos associados antes de ativar/inativar
+    // Verifica se a seguradora tem ramos associados antes de ativar/inativar
     public function activeInative(int $id)
     {
         if (Seguradora::has('ramos')->where('id', $id)->exists()) {
             $seguradora = Seguradora::findOrFail($id);
-            $seguradora->ativo = !$seguradora->ativo;
+            $seguradora->ativo = ! $seguradora->ativo;
         }
     }
 

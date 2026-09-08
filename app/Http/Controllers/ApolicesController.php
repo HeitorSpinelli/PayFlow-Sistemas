@@ -59,9 +59,16 @@ class ApolicesController extends Controller
 
     public function updateRamo(Request $request, int $id)
     {
+        $request->validate([
+            'novo_ramo_id' => 'required|integer|exists:ramos,id',
+        ]);
         $ramoId = $request->input('novo_ramo_id');
-        $this->apoliceService->AlterarRamo($id, $ramoId);
-        return redirect()->back()->with('success', 'Ramo da apólice atualizado com sucesso!');
+        try {
+            $this->apoliceService->AlterarRamo($id, $ramoId);
+            return redirect()->back()->with('success', 'Ramo da apólice atualizado com sucesso!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erro ao atualizar ramo da apólice: ' . $e->getMessage());
+        }
     }
 
     public function index(Request $request)
@@ -69,6 +76,12 @@ class ApolicesController extends Controller
         // Passa a request inteira ou os filtros para o service
         $segurados = $this->apoliceService->buscar();
         $total = $this->apoliceService->count();
+
+        // Ativa = apólice com vigência cobrindo hoje (mesmo scopeAtivas
+        // já usado no dashboard). Inativa = todo o resto (a iniciar ou vencida).
+        $totalAtivas = $this->apoliceService->contarAtivas();
+        $totalInativas = $total - $totalAtivas;
+
         $seguradoras = $this->apoliceService->buscarSeguradoras();
         $ramos = $this->apoliceService->buscarRamos();
 
@@ -78,19 +91,21 @@ class ApolicesController extends Controller
         return inertia('FunctionsApp/apolices', [
             'segurados' => $segurados,
             'total' => $total,
+            'totalAtivas' => $totalAtivas,
+            'totalInativas' => $totalInativas,
             'seguradoras' => $seguradoras,
             'ramos' => $ramos,
             'apolices' => $apolices,
-            'filters' => $request->only(['search', 'status']),
+            'filters' => $request->only(['busca', 'status']),
         ]);
     }
 
     public function inativos()
     {
-        $segurados = $this->apoliceService->listarInativos();
+        $apolices = $this->apoliceService->listarInativos();
 
         return inertia('FunctionsApp/administracao', [
-            'segurados' => $segurados,
+            'apolicesInativas' => $apolices,
         ]);
     }
 
@@ -98,14 +113,14 @@ class ApolicesController extends Controller
     {
         try {
             $this->apoliceService->restore($id);
-            return redirect()->back()->with('success', 'Segurado Reativado Com Sucesso');
+            return redirect()->back()->with('success', 'Apólice reativada com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Não foi possivel reativar o segurado');
+            return redirect()->back()->with('error', 'Não foi possível reativar a apólice.');
         }
     }
 
     public function exportar(ExportacaoApoliceService $exportacaoService)
-    {   
+    {
         return $exportacaoService->exportarApolicesCsv();
     }
 }

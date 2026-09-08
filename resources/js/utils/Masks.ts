@@ -108,6 +108,17 @@ export const formatarMoeda = (valor: number) =>
         maximumFractionDigits: 2,
     }).format(valor ?? 0);
 
+/**
+ * Converte o texto bruto digitado num campo de dinheiro (máscara de
+ * centavos: os dígitos entram da direita pra esquerda, como em apps
+ * de banco) pro valor numérico decimal que o backend espera.
+ * Ex: digitar "2", "20", "200"... até "200000" produz 2000.
+ */
+export const valorDigitadoParaNumero = (valor: string): number => {
+    const digitos = valor.replace(/\D/g, '');
+    return digitos ? Number(digitos) / 100 : 0;
+};
+
 {
     /*  USAR ESSES IMPORTS NOS MODAIS OU QUALQUER PAGINA QUE REQUERIR FORMATAÇÃO (CASO ADICIONE NOVA FUNÇÃO ADICIONE A MESMA AQUI)
     

@@ -5,6 +5,7 @@ use Laravel\Fortify\Features;
 use App\Models\Segurado;
 use App\Models\TipoNotificacao;
 use App\Models\Automacao;
+use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\ApolicesController;
 use App\Http\Controllers\AutomacoesController;
 use App\Http\Controllers\DashboardController;
@@ -15,6 +16,10 @@ use App\Http\Controllers\SeguradoraController;
 use App\Http\Controllers\SeguradoController;
 use App\Http\Controllers\TipoNotificacoesController;
 use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Schedule;
+use App\Console\Commands\AtualizarIndicadoresEconomicos;
+
+Schedule::command(AtualizarIndicadoresEconomicos::class)->daily();
 
 /* ------------------------------------------------------------------ */
 /* Rota Inicial                                                        */
@@ -50,7 +55,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/', [ApolicesController::class, 'store']);
         Route::put('/{id}', [ApolicesController::class, 'update'])->name('apolices.update');
         Route::delete('/{id}', [ApolicesController::class, 'destroy'])->name('apolices.destroy');
-        Route::patch('/{id}/alterar-ramo', [ApolicesController::class, 'atualizarRamo']);
+        Route::patch('/{id}/alterar-ramo', [ApolicesController::class, 'updateRamo']);
+        Route::get('/inativos', [ApolicesController::class, 'inativos'])->name('apolices.inativos');
+        Route::patch('/restaurar/{id}', [ApolicesController::class, 'restaurar'])->name('apolices.restore');
         Route::get('/exportar', [ApolicesController::class, 'exportar']);
     });
 
@@ -60,10 +67,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/', [pagamentoController::class, 'store']);
         Route::delete('/{id}', [pagamentoController::class, 'destroy'])->name('pagamentos.destroy');
         Route::get('/exportar', [pagamentoController::class, 'exportar']);
+        Route::get('/cliente/{clienteId}', [pagamentoController::class, 'porCliente']);
     });
 
+    // Módulo: Agenda
+    Route::get('/agenda', [AgendaController::class, 'index'])->name('agenda');
+
     // Páginas Estáticas
-    Route::get('/agenda', fn() => inertia('FunctionsApp/agenda'))->name('agenda');
     Route::get('/importar', fn() => inertia('FunctionsApp/importar', [
         'importResumo' => session('importResumo'),
     ]))->name('importar');
@@ -120,8 +130,12 @@ Route::middleware(['auth', 'can:is-admin'])->group(function () {
         Route::delete('/{id}', [AutomacoesController::class, 'destroy']);
     });
 
+
     // Administração
-    Route::get('/administracao/usuarios', [UserController::class, 'index'])->name('users');
+    Route::prefix('/administracao')->group(function () {
+        Route::get('/usuarios', [UserController::class, 'index'])->name('users');
+        Route::put('/usuarios/{id}', [UserController::class, 'update']);
+    });
 });
 
 require __DIR__ . '/settings.php';

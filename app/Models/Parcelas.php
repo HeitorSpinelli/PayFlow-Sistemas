@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Apolice;
+use Carbon\Carbon;
 
 class Parcelas extends Model
 {
@@ -26,5 +27,21 @@ class Parcelas extends Model
     public function apolice(): BelongsTo
     {
         return $this->belongsTo(Apolice::class, 'apolice_id');
+    }
+
+    public function diasEmAtraso(): int
+    {
+        if ($this->status_pagamento === 'paga') {
+            return 0;
+        }
+
+        $vencimento = Carbon::parse($this->data_vencimento)->startOfDay();
+        $hoje = now()->startOfDay();
+
+        if ($hoje->lte($vencimento)) {
+            return 0;
+        }
+
+        return abs($hoje->diffInDays($vencimento));
     }
 }

@@ -5,6 +5,7 @@ namespace App\Services\Notificacao;
 use App\Models\Notificacoes;
 use App\Models\Segurado;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use App\Models\TipoNotificacao;
 use App\Mail\NotificacaoMail;
 
@@ -35,6 +36,7 @@ class NotificacaoService
                     'data_envio' => now(),
                 ]);
             } catch (\Exception $e) {
+                Log::error('Falha ao enviar notificação para segurado #' . $seguradoId . ': ' . $e->getMessage());
                 $notificacao->update(['status' => 'Falha']);
             }
         }
