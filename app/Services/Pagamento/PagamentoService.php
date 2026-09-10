@@ -2,13 +2,19 @@
 
 namespace App\Services\Pagamento;
 
+use App\Models\Apolice;
 use App\Models\Pagamento;
 use App\Models\Parcelas;
+use App\Services\Financeiro\ParcelaFinanceiroService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class PagamentoService
 {
+    public function __construct(
+        private readonly ParcelaFinanceiroService $parcelaFinanceiroService,
+    ) {}
+
     public function store(array $data)
     {
         return DB::transaction(function () use ($data) {
@@ -20,15 +26,50 @@ class PagamentoService
                 throw new \Exception('Não existe a parcela informada para esta apólice.');
             }
 
-            $pagamento = Pagamento::create($data);
+            // Recalcula o valor de verdade (original + multa + juros se estiver
+            // atrasada) em vez de confiar no que foi digitado no formulário —
+            // reaproveita a mesma regra usada em toda a cobrança de inadimplência,
+            // não duplica esse cálculo aqui.
+            $calculo = $this->parcelaFinanceiroService->calcular($parcela);
+
+            $pagamento = Pagamento::create([
+                ...$data,
+                'valor' => $calculo['valor_total'],
+            ]);
 
             $parcela->update([
                 'status_pagamento' => 'paga',
                 'data_pagamento' => $data['data_pagamento'],
+                'forma_pagamento_efetiva' => $data['forma_pagamento'],
             ]);
+
+            $this->reavaliarSuspensaoApolice($parcela->apolice);
 
             return $pagamento;
         });
+    }
+
+    /**
+     * Se a apólice estava suspensa por atraso, só restabelece a garantia
+     * quando NENHUMA parcela (2ª em diante) continuar em atraso — uma
+     * apólice pode ter mais de uma parcela atrasada ao mesmo tempo, e pagar
+     * só uma delas não deveria reabrir a cobertura antes da hora.
+     */
+    private function reavaliarSuspensaoApolice(Apolice $apolice): void
+    {
+        if ($apolice->suspensa_em === null) {
+            return;
+        }
+
+        $aindaTemParcelaAtrasada = $apolice->parcelas()
+            ->where('numero_parcela', '>=', 2)
+            ->where('status_pagamento', 'em_aberto')
+            ->where('data_vencimento', '<', now())
+            ->exists();
+
+        if (! $aindaTemParcelaAtrasada) {
+            $apolice->update(['suspensa_em' => null]);
+        }
     }
 
     public function count()

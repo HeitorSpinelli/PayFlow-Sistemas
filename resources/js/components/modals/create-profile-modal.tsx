@@ -12,6 +12,7 @@ import {
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Section, InfoField } from '@/components/ui/detail-section';
 import {
     Dialog,
     DialogContent,
@@ -19,6 +20,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { aplicarMascaraCEP } from '@/utils/Masks';
 import {
     Select,
     SelectContent,
@@ -27,45 +29,11 @@ import {
     SelectValue,
 } from '../ui/select';
 
-import { aplicarMascaraCEP } from '@/utils/Masks';
-
 // ─────────────────────────────────────────────────────────────
 // Define os 3 estados possíveis do modal
 // O modal só pode estar em um desses três modos por vez
 // ─────────────────────────────────────────────────────────────
 type Modo = 'visualizar' | 'editar' | 'excluir';
-
-function Section({ icon, title, description, children }: any) {
-    return (
-        <section className="rounded-2xl border border-border/70 bg-muted/[0.18] p-4 sm:p-5">
-            <div className="mb-5 flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
-                    {icon}
-                </span>
-                <div>
-                    <h3 className="text-sm font-bold">{title}</h3>
-                    <p className="text-xs text-muted-foreground">
-                        {description}
-                    </p>
-                </div>
-            </div>
-            {children}
-        </section>
-    );
-}
-
-function InfoField({ label, value }: { label: string; value?: string }) {
-    return (
-        <div className="rounded-xl border border-border/70 bg-background px-3 py-2.5 shadow-sm">
-            <p className="mb-1 text-[10px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
-                {label}
-            </p>
-            <p className="text-sm font-semibold text-foreground">
-                {value || 'Não informado'}
-            </p>
-        </div>
-    );
-}
 
 interface Estado {
     id: number;
@@ -209,24 +177,23 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
 
     return (
         <Dialog open={open} onOpenChange={fechar}>
-            <DialogContent className="!flex max-h-[92vh] max-w-3xl flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 shadow-2xl">
-                <DialogHeader className="relative shrink-0 overflow-hidden border-b border-border/70 bg-gradient-to-br from-emerald-500/[0.12] via-background to-background px-6 py-6 pr-12 sm:px-8">
-                    <div className="absolute -top-12 -right-10 h-36 w-36 rounded-full bg-emerald-500/10 blur-2xl" />
-                    <div className="relative flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25">
-                            <span className="text-lg font-bold">
+            <DialogContent className="!flex max-h-[92vh] max-w-3xl flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0">
+                <DialogHeader className="shrink-0 border-b border-border/70 px-6 py-6 pr-12 sm:px-8">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+                            <span className="text-lg font-semibold">
                                 {segurado?.nome_completo
                                     ?.charAt(0)
                                     ?.toUpperCase() || 'C'}
                             </span>
                         </div>
                         <div>
-                            <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-[0.16em] text-emerald-600 uppercase">
+                            <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.16em] text-emerald-600 uppercase">
                                 <span>Segurados</span>
                                 <ChevronRight className="h-3 w-3" />
                                 <span>{tituloBreadcrumb}</span>
                             </div>
-                            <DialogTitle className="text-xl font-bold tracking-tight sm:text-2xl">
+                            <DialogTitle className="text-xl font-semibold tracking-tight sm:text-2xl">
                                 {modo === 'visualizar' &&
                                     segurado?.nome_completo}
                                 {modo === 'editar' &&
@@ -236,7 +203,7 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                             </DialogTitle>
                         </div>
                     </div>
-                    <div className="relative mt-3 flex items-center gap-2">
+                    <div className="mt-3 flex items-center gap-2">
                         <span
                             className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold tracking-wide ${
                                 segurado?.status === 'Ativo'
@@ -362,7 +329,7 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                             Nome completo
                                         </label>
                                         <Input
-                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none"
                                             value={data.nome_completo}
                                             onChange={(e) =>
                                                 setData(
@@ -379,7 +346,7 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                                 Razão social
                                             </label>
                                             <Input
-                                                className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                                className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none"
                                                 value={data.razao_social}
                                                 onChange={(e) =>
                                                     setData(
@@ -405,7 +372,7 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                                 Email
                                             </label>
                                             <Input
-                                                className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                                className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none"
                                                 type="email"
                                                 value={data.email}
                                                 onChange={(e) =>
@@ -421,7 +388,7 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                                 Celular / WhatsApp
                                             </label>
                                             <Input
-                                                className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                                className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none"
                                                 type="tel"
                                                 value={data.celular_whatsapp}
                                                 onChange={(e) =>
@@ -438,7 +405,7 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                             Telefone fixo
                                         </label>
                                         <Input
-                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none"
                                             type="tel"
                                             value={data.telefone_fixo}
                                             onChange={(e) =>
@@ -463,7 +430,7 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                             Endereço
                                         </label>
                                         <Input
-                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none"
                                             value={data.endereco}
                                             onChange={(e) =>
                                                 setData(
@@ -479,7 +446,7 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                             Bairro
                                         </label>
                                         <Input
-                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none"
                                             value={data.bairro}
                                             onChange={(e) =>
                                                 setData(
@@ -501,7 +468,7 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                                 Cidade
                                             </label>
                                             <Input
-                                                className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                                className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none"
                                                 value={data.cidade}
                                                 onChange={(e) =>
                                                     setData(
@@ -516,7 +483,7 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                                 CEP *
                                             </label>
                                             <Input
-                                                className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                                className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none"
                                                 type="text"
                                                 placeholder="00000-000"
                                                 value={data.cep}
@@ -550,7 +517,7 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                                     setData('estado', valor)
                                                 }
                                             >
-                                                <SelectTrigger className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none">
+                                                <SelectTrigger className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors hover:border-emerald-500/40 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none">
                                                     <SelectValue placeholder="Selecione o estado" />
                                                 </SelectTrigger>
                                                 <SelectContent className="rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-md">
@@ -581,7 +548,7 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                 description="Anotações sobre o segurado"
                             >
                                 <textarea
-                                    className="min-h-24 w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                    className="min-h-24 w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none"
                                     value={data.observacoes}
                                     onChange={(e) =>
                                         setData('observacoes', e.target.value)
@@ -616,7 +583,7 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                     {modo === 'visualizar' && (
                         <>
                             <Button
-                                className="rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-600"
+                                className="rounded-xl bg-emerald-500 text-white transition-colors hover:bg-emerald-600"
                                 onClick={() => setModo('editar')}
                             >
                                 <Pencil className="mr-2 h-4 w-4" />
@@ -636,7 +603,7 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                     {modo === 'editar' && (
                         <>
                             <Button
-                                className="rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-600"
+                                className="rounded-xl bg-emerald-500 text-white transition-colors hover:bg-emerald-600"
                                 onClick={salvarEdicao}
                                 disabled={processing}
                             >
@@ -655,7 +622,7 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                     {modo === 'excluir' && (
                         <>
                             <Button
-                                className="rounded-xl bg-rose-500 text-white shadow-lg shadow-rose-500/25 hover:bg-rose-600"
+                                className="rounded-xl bg-rose-500 text-white transition-colors hover:bg-rose-600"
                                 onClick={confirmarExclusao}
                             >
                                 <Trash2 className="mr-2 h-4 w-4" />

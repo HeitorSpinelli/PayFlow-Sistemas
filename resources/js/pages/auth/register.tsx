@@ -1,4 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
+import AuthHeader from '@/components/auth-header';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
@@ -12,28 +13,13 @@ import { store } from '@/routes/register';
 export default function Register() {
     return (
         <>
-            <Head title="Register" />
+            <Head title="Criar conta" />
 
             <div className="mx-auto w-full max-w-sm lg:max-w-none">
-
-                {/* Header */}
-                <div className="mb-10">
-                    <div className="flex items-center gap-2 mb-6">
-                        <div className="h-8 w-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                            <div className="h-4 w-4 border-2 border-white rounded-sm rotate-45"></div>
-                        </div>
-                        <span className="text-sm font-black tracking-tighter text-emerald-600 uppercase italic">
-                            PayFlow-Sistemas
-                        </span>
-                    </div>
-
-                    <h1 className="text-3xl font-bold tracking-tight text-[#1b1b18] dark:text-white">
-                        Criar conta
-                    </h1>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                        Preencha os dados para criar sua conta.
-                    </p>
-                </div>
+                <AuthHeader
+                    title="Criar conta"
+                    description="Preencha os dados para criar sua conta."
+                />
 
                 <Form
                     {...store.form()}
@@ -44,12 +30,12 @@ export default function Register() {
                         <>
                             {/* Nome */}
                             <div className="space-y-2">
-                                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                     Nome
                                 </Label>
                                 <Input
                                     name="name"
-                                    className="h-12 border-muted-foreground/20 focus:ring-emerald-500 rounded-xl"
+                                    className="h-12 rounded-xl border-muted-foreground/20 focus:ring-emerald-500"
                                     required
                                     placeholder="Seu nome completo"
                                 />
@@ -58,13 +44,13 @@ export default function Register() {
 
                             {/* Email */}
                             <div className="space-y-2">
-                                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                     E-mail
                                 </Label>
                                 <Input
                                     type="email"
                                     name="email"
-                                    className="h-12 border-muted-foreground/20 focus:ring-emerald-500 rounded-xl"
+                                    className="h-12 rounded-xl border-muted-foreground/20 focus:ring-emerald-500"
                                     required
                                     placeholder="exemplo@payflow.com"
                                 />
@@ -73,12 +59,12 @@ export default function Register() {
 
                             {/* Senha */}
                             <div className="space-y-2">
-                                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                     Senha
                                 </Label>
                                 <PasswordInput
                                     name="password"
-                                    className="h-12 border-muted-foreground/20 focus:ring-emerald-500 rounded-xl"
+                                    className="h-12 rounded-xl border-muted-foreground/20 focus:ring-emerald-500"
                                     required
                                     placeholder="••••••••"
                                 />
@@ -87,25 +73,29 @@ export default function Register() {
 
                             {/* Confirmar senha */}
                             <div className="space-y-2">
-                                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                     Confirmar senha
                                 </Label>
                                 <PasswordInput
                                     name="password_confirmation"
-                                    className="h-12 border-muted-foreground/20 focus:ring-emerald-500 rounded-xl"
+                                    className="h-12 rounded-xl border-muted-foreground/20 focus:ring-emerald-500"
                                     required
                                     placeholder="••••••••"
                                 />
-                                <InputError message={errors.password_confirmation} />
+                                <InputError
+                                    message={errors.password_confirmation}
+                                />
                             </div>
 
                             {/* Botão */}
                             <Button
                                 type="submit"
-                                className="h-12 w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98]"
+                                className="h-12 w-full rounded-xl bg-emerald-500 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
                                 disabled={processing}
                             >
-                                {processing && <Spinner className="mr-2 h-4 w-4" />}
+                                {processing && (
+                                    <Spinner className="mr-2 h-4 w-4" />
+                                )}
                                 Criar conta
                             </Button>
 

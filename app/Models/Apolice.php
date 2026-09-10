@@ -20,6 +20,7 @@ class Apolice extends Model
     protected $casts = [
         'inicio_vigencia' => 'date',
         'fim_vigencia' => 'date',
+        'suspensa_em' => 'datetime',
     ];
 
     public function getStatusVigenciaAttribute(): string
@@ -102,6 +103,7 @@ class Apolice extends Model
         'forma_pagamento',
         'inicio_vigencia',
         'fim_vigencia',
+        'suspensa_em',
         'status',
         'observacoes',
     ];

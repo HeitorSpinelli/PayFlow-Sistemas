@@ -237,6 +237,51 @@ class ApoliceService
         }
     }
 
+    /**
+     * Recalcula data de vencimento e valor das parcelas AINDA NÃO PAGAS,
+     * quando início da vigência ou valor do prêmio mudam na edição.
+     *
+     * Não mexe em parcelas já pagas (nunca reescreve histórico), e NÃO
+     * adiciona/remove linhas de parcela se quantidade_parcelas mudar —
+     * isso é um caso mais complexo (o que fazer se já existem parcelas
+     * pagas além da nova quantidade?) e fica fora desta correção rápida.
+     */
+    private function sincronizarParcelas(Apolice $apolice, array $data): void
+    {
+        $parcelasNaoPagas = $apolice->parcelas()
+            ->where('status_pagamento', '!=', 'paga')
+            ->orderBy('numero_parcela')
+            ->get();
+
+        if ($parcelasNaoPagas->isEmpty()) {
+            return;
+        }
+
+        $novoValorParcela = isset($data['valor_premio_total'], $data['quantidade_parcelas'])
+            ? round($data['valor_premio_total'] / $data['quantidade_parcelas'], 2)
+            : null;
+
+        $novaDataBase = isset($data['inicio_vigencia'])
+            ? Carbon::parse($data['inicio_vigencia'])
+            : null;
+
+        foreach ($parcelasNaoPagas as $parcela) {
+            $atualizacao = [];
+
+            if ($novaDataBase !== null) {
+                $atualizacao['data_vencimento'] = $novaDataBase->copy()->addMonthsNoOverflow($parcela->numero_parcela);
+            }
+
+            if ($novoValorParcela !== null) {
+                $atualizacao['valor_parcela'] = $novoValorParcela;
+            }
+
+            if (! empty($atualizacao)) {
+                $parcela->update($atualizacao);
+            }
+        }
+    }
+
     /*
      * Remove o registro extra (veículo/residência/vida+beneficiários/
      * empresarial) que não corresponde mais à categoria válida informada.

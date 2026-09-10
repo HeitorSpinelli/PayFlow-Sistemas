@@ -24,6 +24,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Section } from '@/components/ui/detail-section';
 
 import {
     aplicarMascaraCEP,
@@ -31,25 +32,6 @@ import {
     formatarTelefone,
 } from '@/utils/Masks'; // Ajuste o caminho conforme a pasta onde você salvou o arquivo
 import 'react-toastify/dist/ReactToastify.css';
-
-function Section({ icon, title, description, children }: any) {
-    return (
-        <section className="rounded-2xl border border-border/70 bg-muted/[0.18] p-4">
-            <div className="mb-4 flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
-                    {icon}
-                </span>
-                <div>
-                    <h3 className="text-sm font-bold">{title}</h3>
-                    <p className="text-xs text-muted-foreground">
-                        {description}
-                    </p>
-                </div>
-            </div>
-            {children}
-        </section>
-    );
-}
 
 export default function CreateSeguradoModal({ open, setOpen }: any) {
     const [tipoPessoa, setTipoPessoa] = useState('pf');
@@ -164,28 +146,30 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                 setOpen(isOpen); // Atualiza o estado no componente pai
             }}
         >
-            <DialogContent className="!flex max-h-[92vh] flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 shadow-2xl sm:max-w-3xl">
-                <DialogHeader className="relative shrink-0 overflow-hidden border-b border-border/70 bg-gradient-to-br from-emerald-500/[0.12] via-background to-background px-6 py-6 pr-12 sm:px-8">
-                    <div className="absolute -top-12 -right-10 h-36 w-36 rounded-full bg-emerald-500/10 blur-2xl" />
-                    <div className="relative flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25">
+            <DialogContent className="!flex max-h-[92vh] flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 sm:max-w-3xl">
+                <DialogHeader className="shrink-0 border-b border-border/70 px-6 py-6 pr-12 sm:px-8">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
                             <UserRound className="h-5 w-5" />
                         </div>
                         <div>
-                            <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-[0.16em] text-emerald-600 uppercase">
+                            <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.16em] text-emerald-600 uppercase">
                                 <span>Segurados</span>
                                 <ChevronRight className="h-3 w-3" />
                                 <span>Novo cadastro</span>
                             </div>
-                            <DialogTitle className="text-xl font-bold tracking-tight sm:text-2xl">
+                            <DialogTitle className="text-xl font-semibold tracking-tight sm:text-2xl">
                                 Cadastrar segurado
                             </DialogTitle>
                         </div>
                     </div>
-                    <p className="relative mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
+                    <p className="mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
                         Informe os dados abaixo para cadastrar um novo segurado.
                         Campos obrigatórios estão marcados com{' '}
-                        <span className="font-bold text-emerald-600">*</span>.
+                        <span className="font-semibold text-emerald-600">
+                            *
+                        </span>
+                        .
                     </p>
                 </DialogHeader>
 
@@ -213,7 +197,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                             }));
                                         }}
                                     >
-                                        <SelectTrigger className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none">
+                                        <SelectTrigger className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors hover:border-emerald-500/40 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none">
                                             <SelectValue placeholder="Selecione PF ou PJ" />
                                         </SelectTrigger>
                                         <SelectContent className="rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-md">
@@ -238,7 +222,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                         {labelNome} *
                                     </label>
                                     <Input
-                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none"
                                         placeholder={
                                             isPF
                                                 ? 'Nome do segurado'
@@ -267,7 +251,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                             Razão social
                                         </label>
                                         <Input
-                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none"
                                             placeholder="Razão social da empresa"
                                             value={data.razao_social}
                                             onChange={(e) =>
@@ -291,7 +275,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                             {labelDocumento} *
                                         </label>
                                         <Input
-                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none"
                                             type="text"
                                             value={data.cpf_cnpj}
                                             onChange={(e) =>
@@ -320,7 +304,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                             {labelData} *
                                         </label>
                                         <Input
-                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none"
                                             type="date"
                                             value={
                                                 data.data_nascimento_fundacao
@@ -355,7 +339,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                         E-mail *
                                     </label>
                                     <Input
-                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none"
                                         type="email"
                                         placeholder="exemplo@payflow.com"
                                         value={data.email}
@@ -375,7 +359,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                         Celular / WhatsApp *
                                     </label>
                                     <Input
-                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none"
                                         type="tel"
                                         placeholder="(11) 99999-9999"
                                         value={data.celular_whatsapp}
@@ -400,7 +384,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                         Telefone fixo
                                     </label>
                                     <Input
-                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none"
                                         type="tel"
                                         placeholder="(11) 3333-3333"
                                         value={data.telefone_fixo}
@@ -440,7 +424,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                             setData('estado', valor)
                                         }
                                     >
-                                        <SelectTrigger className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none">
+                                        <SelectTrigger className="h-10 w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors hover:border-emerald-500/40 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none">
                                             <SelectValue placeholder="Selecione o estado" />
                                         </SelectTrigger>
                                         <SelectContent className="rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-md">
@@ -467,7 +451,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                         Cidade *
                                     </label>
                                     <Input
-                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none"
                                         placeholder="São Paulo"
                                         value={data.cidade}
                                         onChange={(e) =>
@@ -486,7 +470,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                         CEP *
                                     </label>
                                     <Input
-                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none"
                                         type="text"
                                         placeholder="00000-000"
                                         value={data.cep}
@@ -515,7 +499,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                         Endereço *
                                     </label>
                                     <Input
-                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none"
                                         placeholder="Avenida Bernardino de Campos"
                                         value={data.endereco}
                                         onChange={(e) =>
@@ -534,7 +518,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                         Bairro
                                     </label>
                                     <Input
-                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none"
                                         placeholder="Centro"
                                         maxLength={100}
                                         value={data.bairro}
@@ -562,7 +546,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                             onChange={(e) =>
                                 setData('observacoes', e.target.value)
                             }
-                            className="min-h-20 w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-3 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                            className="min-h-20 w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-3 text-sm transition-colors placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none"
                             placeholder="Adicione observações relevantes..."
                         />
                         {errors.observacoes && (
@@ -576,7 +560,9 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                 <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-border/70 bg-background px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
                     <p className="text-xs text-muted-foreground">
                         Campos com{' '}
-                        <span className="font-bold text-emerald-600">*</span>{' '}
+                        <span className="font-semibold text-emerald-600">
+                            *
+                        </span>{' '}
                         são obrigatórios.
                     </p>
                     <div className="flex gap-3">
@@ -590,7 +576,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                         <Button
                             onClick={salvarClientes}
                             disabled={processing}
-                            className="h-11 rounded-xl bg-emerald-500 px-5 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
+                            className="h-11 rounded-xl bg-emerald-500 px-5 font-semibold text-white transition-colors hover:bg-emerald-600 active:scale-[0.98]"
                         >
                             {processing ? (
                                 'Salvando...'

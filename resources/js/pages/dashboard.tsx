@@ -80,14 +80,30 @@ const NOTIFICACOES_RECENTES = [
 ];
 
 const AÇÕES_RAPIDAS = [
-    { titulo: 'Nova Seguradora', href: '/seguradoras', icon: Building2 },
+    // adminOnly: mesmo sinalizador usado em app-sidebar.tsx — essas duas
+    // rotas exigem Gate::is-admin no backend; sem esse filtro, um usuário
+    // comum via um botão que só ia jogar ele de volta pro dashboard com
+    // "seu nível de acesso foi alterado" (mensagem do handler de 403).
+    {
+        titulo: 'Nova Seguradora',
+        href: '/seguradoras',
+        icon: Building2,
+        adminOnly: true,
+    },
     { titulo: 'Agenda de Pagamentos', href: '/agenda', icon: Calendar },
     {
+        // /importar-dados é só POST (recebe o formulário de importação) —
+        // a página de verdade é /importar.
         titulo: 'Importar Dados',
-        href: '/importar-dados',
+        href: '/importar',
         icon: FileSpreadsheet,
     },
-    { titulo: 'Enviar Notificação', href: '/notificacoes', icon: Send },
+    {
+        titulo: 'Enviar Notificação',
+        href: '/notificacoes',
+        icon: Send,
+        adminOnly: true,
+    },
 ];
 
 // Paleta das fatias da pizza — ancorada nas 3 cores que o resto do sistema
@@ -272,10 +288,17 @@ export default function Dashboard({
     distribuicaoPorRamo = [],
 }: Props) {
     const { auth } = usePage().props as unknown as {
-        auth: { user: { name: string } };
+        auth: { user: { name: string; role: string } };
     };
 
     const primeiroNome = auth?.user?.name?.split(' ')[0] ?? 'por aqui';
+    const isAdmin = auth?.user?.role === 'admin';
+
+    // Mesmo filtro do app-sidebar.tsx: esconde ações que o usuário não tem
+    // permissão de usar, em vez de deixar clicar e cair num redirecionamento.
+    const acoesRapidasVisiveis = AÇÕES_RAPIDAS.filter(
+        (acao) => !acao.adminOnly || isAdmin,
+    );
     const dataHoje = new Date().toLocaleDateString('pt-BR', {
         weekday: 'long',
         day: '2-digit',
@@ -511,7 +534,7 @@ export default function Dashboard({
                                 Ações rápidas
                             </h2>
                             <div className="flex flex-col gap-2">
-                                {AÇÕES_RAPIDAS.map((acao) => {
+                                {acoesRapidasVisiveis.map((acao) => {
                                     const Icon = acao.icon;
                                     return (
                                         <Link
@@ -539,12 +562,14 @@ export default function Dashboard({
                                     <Bell className="size-4 text-emerald-600" />
                                     Notificações
                                 </h2>
-                                <Link
-                                    href="/notificacoes"
-                                    className="text-xs font-bold text-emerald-600 hover:text-emerald-700"
-                                >
-                                    Ver todas
-                                </Link>
+                                {isAdmin && (
+                                    <Link
+                                        href="/notificacoes"
+                                        className="text-xs font-bold text-emerald-600 hover:text-emerald-700"
+                                    >
+                                        Ver todas
+                                    </Link>
+                                )}
                             </div>
 
                             <div className="flex flex-col gap-4">

@@ -1,6 +1,7 @@
-import { Form, Head, setLayoutProps } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { useMemo, useState } from 'react';
+import AuthHeader from '@/components/auth-header';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +10,7 @@ import {
     InputOTPGroup,
     InputOTPSlot,
 } from '@/components/ui/input-otp';
+import { Spinner } from '@/components/ui/spinner';
 import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
 import { store } from '@/routes/two-factor/login';
 
@@ -23,25 +25,20 @@ export default function TwoFactorChallenge() {
     }>(() => {
         if (showRecoveryInput) {
             return {
-                title: 'Recovery code',
+                title: 'Código de recuperação',
                 description:
-                    'Please confirm access to your account by entering one of your emergency recovery codes.',
-                toggleText: 'login using an authentication code',
+                    'Confirme o acesso à sua conta informando um dos seus códigos de recuperação de emergência.',
+                toggleText: 'usar um código do aplicativo autenticador',
             };
         }
 
         return {
-            title: 'Authentication code',
+            title: 'Código de autenticação',
             description:
-                'Enter the authentication code provided by your authenticator application.',
-            toggleText: 'login using a recovery code',
+                'Informe o código gerado pelo seu aplicativo autenticador.',
+            toggleText: 'usar um código de recuperação',
         };
     }, [showRecoveryInput]);
-
-    setLayoutProps({
-        title: authConfigContent.title,
-        description: authConfigContent.description,
-    });
 
     const toggleRecoveryMode = (clearErrors: () => void): void => {
         setShowRecoveryInput(!showRecoveryInput);
@@ -51,30 +48,35 @@ export default function TwoFactorChallenge() {
 
     return (
         <>
-            <Head title="Two-factor authentication" />
+            <Head title="Verificação em duas etapas" />
+            <div className="mx-auto w-full max-w-sm lg:max-w-none">
+                <AuthHeader
+                    title={authConfigContent.title}
+                    description={authConfigContent.description}
+                />
 
-            <div className="space-y-6">
                 <Form
                     {...store.form()}
-                    className="space-y-4"
+                    className="space-y-5"
                     resetOnError
                     resetOnSuccess={!showRecoveryInput}
                 >
                     {({ errors, processing, clearErrors }) => (
                         <>
                             {showRecoveryInput ? (
-                                <>
+                                <div className="space-y-2">
                                     <Input
                                         name="recovery_code"
                                         type="text"
-                                        placeholder="Enter recovery code"
+                                        placeholder="Digite o código de recuperação"
                                         autoFocus={showRecoveryInput}
                                         required
+                                        className="h-12 rounded-xl border-muted-foreground/20 focus:ring-emerald-500"
                                     />
                                     <InputError
                                         message={errors.recovery_code}
                                     />
-                                </>
+                                </div>
                             ) : (
                                 <div className="flex flex-col items-center justify-center space-y-3 text-center">
                                     <div className="flex w-full items-center justify-center">
@@ -105,17 +107,20 @@ export default function TwoFactorChallenge() {
 
                             <Button
                                 type="submit"
-                                className="w-full"
+                                className="h-12 w-full rounded-xl bg-emerald-500 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
                                 disabled={processing}
                             >
-                                Continue
+                                {processing && (
+                                    <Spinner className="mr-2 h-4 w-4" />
+                                )}
+                                Continuar
                             </Button>
 
                             <div className="text-center text-sm text-muted-foreground">
-                                <span>or you can </span>
+                                <span>ou </span>
                                 <button
                                     type="button"
-                                    className="cursor-pointer text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
+                                    className="cursor-pointer font-bold text-emerald-600 hover:text-emerald-500"
                                     onClick={() =>
                                         toggleRecoveryMode(clearErrors)
                                     }

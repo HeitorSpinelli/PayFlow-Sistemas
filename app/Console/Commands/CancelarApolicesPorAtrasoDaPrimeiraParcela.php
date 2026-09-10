@@ -14,6 +14,12 @@ class CancelarApolicesPorAtrasoDaPrimeiraParcela extends Command
 
     public function handle(ApoliceService $apoliceService): void
     {
+        if (! config('automacoes.financeiras_ativas')) {
+            $this->warn('Automações financeiras desativadas (AUTOMACOES_FINANCEIRAS_ATIVAS=false no .env). Nada foi executado.');
+
+            return;
+        }
+
         $parcelasAtrasadas = Parcelas::where('numero_parcela', 1)
             ->where('status_pagamento', 'em_aberto')
             ->where('data_vencimento', '<', now()->startOfDay())
@@ -24,7 +30,7 @@ class CancelarApolicesPorAtrasoDaPrimeiraParcela extends Command
         foreach ($parcelasAtrasadas as $parcela) {
             $apolice = $parcela->apolice()->withTrashed()->first();
 
-            if (!$apolice || $apolice->trashed()) {
+            if (! $apolice || $apolice->trashed()) {
                 continue; // já foi cancelada antes, ou não existe mais
             }
 
@@ -33,7 +39,7 @@ class CancelarApolicesPorAtrasoDaPrimeiraParcela extends Command
                 $canceladas++;
                 $this->info("Apólice #{$apolice->numero_apolice} cancelada — 1ª parcela em atraso.");
             } catch (\Exception $e) {
-                $this->error("Falha ao cancelar apólice #{$apolice->id}: " . $e->getMessage());
+                $this->error("Falha ao cancelar apólice #{$apolice->id}: ".$e->getMessage());
             }
         }
 
