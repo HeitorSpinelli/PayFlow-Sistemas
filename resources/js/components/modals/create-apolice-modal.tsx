@@ -2181,7 +2181,13 @@ export default function CreateApoliceModal({
                         </Button>
                         <Button
                             onClick={salvarApolice}
-                            disabled={processing}
+                            disabled={
+                                processing ||
+                                (categoriaRamo === 'vida' &&
+                                    Math.abs(
+                                        somaPercentuaisBeneficiarios - 100,
+                                    ) > 0.01)
+                            }
                             className="h-11 rounded-xl bg-emerald-500 px-5 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
                         >
                             {processing ? (

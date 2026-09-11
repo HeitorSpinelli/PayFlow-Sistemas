@@ -31,19 +31,20 @@ class SeguradoService
         return Segurado::count();
     }
 
+    // Sem try/catch próprio: ApoliceService::destroy() já lança uma exceção
+    // com mensagem descritiva quando o cancelamento de alguma apólice falha,
+    // e o controller (SeguradoController::destroy) já embrulha qualquer
+    // exceção com "Erro ao excluir segurado: ...". Capturar e reembrulhar
+    // aqui de novo só duplicava esse mesmo prefixo na mensagem exibida.
     public function destroy(int $id)
     {
-        try {
-            DB::transaction(function () use ($id) {
-                $segurado = Segurado::findOrFail($id);
-                foreach ($segurado->apolices as $apolice) {
-                    $this->apolice_service->destroy($apolice->id);
-                }
-                $segurado->delete();
-            });
-        } catch (\Exception $e) {
-            throw new \Exception('Erro ao excluir segurado: '.$e->getMessage());
-        }
+        DB::transaction(function () use ($id) {
+            $segurado = Segurado::findOrFail($id);
+            foreach ($segurado->apolices as $apolice) {
+                $this->apolice_service->destroy($apolice->id);
+            }
+            $segurado->delete();
+        });
     }
 
     public function update(int $id, array $data)

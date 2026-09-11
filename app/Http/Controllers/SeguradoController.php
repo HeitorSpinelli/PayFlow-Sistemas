@@ -81,15 +81,6 @@ class SeguradoController extends Controller
         }
     }
 
-    public function inativos()
-    {
-        $segurados = $this->seguradoService->listarInativos();
-
-        return inertia('FunctionsApp/administracao', [
-            'segurados' => $segurados,
-        ]);
-    }
-
     public function restaurar(int $id)
     {
         try {

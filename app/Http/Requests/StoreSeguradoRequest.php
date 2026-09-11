@@ -41,7 +41,6 @@ class StoreSeguradoRequest extends FormRequest
             'cidade' => 'required|string|max:100',
             'estado' => 'required|string|size:2',
             'cep' => 'required|string|max:15',
-            'status' => 'nullable|string|in:Ativo,Inativo,Pendente',
             'observacoes' => 'nullable|string',
         ];
     }

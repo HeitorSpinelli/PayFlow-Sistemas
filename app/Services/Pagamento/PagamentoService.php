@@ -61,9 +61,13 @@ class PagamentoService
             return;
         }
 
+        // != 'paga' (não só 'em_aberto') porque o job AtualizarParcelasVencidas
+        // reclassifica parcela vencida em aberto para 'vencida' às 07h — com
+        // 'em_aberto' aqui, essa checagem nunca achava a parcela atrasada
+        // depois desse horário e reativava a apólice indevidamente.
         $aindaTemParcelaAtrasada = $apolice->parcelas()
             ->where('numero_parcela', '>=', 2)
-            ->where('status_pagamento', 'em_aberto')
+            ->where('status_pagamento', '!=', 'paga')
             ->where('data_vencimento', '<', now())
             ->exists();
 

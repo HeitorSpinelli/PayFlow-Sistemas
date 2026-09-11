@@ -149,6 +149,36 @@ function mapDadosEmpresarial(apolice: any) {
     };
 }
 
+// Extraído para função própria — reaproveitada tanto pelo efeito que
+// sincroniza o formulário quando a apólice selecionada muda quanto pelo
+// botão "Cancelar" do modo de edição, que precisa descartar edições não
+// salvas e voltar aos valores originais da apólice.
+function mapApoliceParaFormulario(apolice: any) {
+    return {
+        numero_apolice: apolice?.numero_apolice ?? '',
+        cliente_id: apolice?.cliente_id ?? '',
+        seguradora_id: apolice?.seguradora_id ?? '',
+        ramo_id: apolice?.ramo_id ?? '',
+        valor_premio_total: apolice?.valor_premio_total ?? '',
+        valor_cobertura: apolice?.valor_cobertura ?? '',
+        quantidade_parcelas: apolice?.quantidade_parcelas ?? '',
+        forma_pagamento: apolice?.forma_pagamento ?? '',
+        inicio_vigencia: apolice?.inicio_vigencia
+            ? apolice.inicio_vigencia.split('T')[0]
+            : '',
+        fim_vigencia: apolice?.fim_vigencia
+            ? apolice.fim_vigencia.split('T')[0]
+            : '',
+        status: apolice?.status ?? '',
+        observacoes: apolice?.observacoes ?? '',
+        veiculo: mapDadosVeiculo(apolice),
+        residencia: mapDadosResidencia(apolice),
+        vida: mapDadosVida(apolice),
+        beneficiarios: mapBeneficiarios(apolice),
+        empresarial: mapDadosEmpresarial(apolice),
+    };
+}
+
 // Rótulos amigáveis para os valores brutos salvos no banco (modo visualizar)
 const LABEL_TIPO_VEICULO: Record<string, string> = {
     carro: 'Carro',
@@ -268,6 +298,21 @@ export default function CreateApoliceProfileModal({
         (ramo: any) => String(ramo.id) === String(data.ramo_id),
     )?.categoria;
 
+    // Troca de ramo limpa os dados extras do ramo anterior (ex: sair de um
+    // ramo de veículo pra um residencial não deve arrastar placa/chassi) —
+    // mesmo comportamento do modal de criação (handleRamoChange).
+    const handleRamoChange = (v: string) => {
+        setData((prev: any) => ({
+            ...prev,
+            ramo_id: v,
+            veiculo: DADOS_VEICULO_INICIAL,
+            residencia: DADOS_RESIDENCIA_INICIAL,
+            vida: DADOS_VIDA_INICIAL,
+            beneficiarios: [BENEFICIARIO_INICIAL],
+            empresarial: DADOS_EMPRESARIAL_INICIAL,
+        }));
+    };
+
     const atualizarVeiculo = (campo: string, valor: any) =>
         setData('veiculo', { ...data.veiculo, [campo]: valor });
 
@@ -316,29 +361,7 @@ export default function CreateApoliceProfileModal({
     // Atualiza o formulário sempre que uma nova apólice for selecionada ou o modal abrir
     useEffect(() => {
         if (apolice) {
-            setData({
-                numero_apolice: apolice.numero_apolice ?? '',
-                cliente_id: apolice.cliente_id ?? '',
-                seguradora_id: apolice.seguradora_id ?? '',
-                ramo_id: apolice.ramo_id ?? '',
-                valor_premio_total: apolice.valor_premio_total ?? '',
-                valor_cobertura: apolice.valor_cobertura ?? '',
-                quantidade_parcelas: apolice.quantidade_parcelas ?? '',
-                forma_pagamento: apolice.forma_pagamento ?? '',
-                inicio_vigencia: apolice.inicio_vigencia
-                    ? apolice.inicio_vigencia.split('T')[0]
-                    : '',
-                fim_vigencia: apolice.fim_vigencia
-                    ? apolice.fim_vigencia.split('T')[0]
-                    : '',
-                status: apolice.status ?? '',
-                observacoes: apolice.observacoes ?? '',
-                veiculo: mapDadosVeiculo(apolice),
-                residencia: mapDadosResidencia(apolice),
-                vida: mapDadosVida(apolice),
-                beneficiarios: mapBeneficiarios(apolice),
-                empresarial: mapDadosEmpresarial(apolice),
-            });
+            setData(mapApoliceParaFormulario(apolice));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [apolice, open]);
@@ -346,6 +369,17 @@ export default function CreateApoliceProfileModal({
     const fechar = () => {
         setModo('visualizar');
         setOpen(false);
+    };
+
+    // Descarta as edições feitas e volta pro modo visualizar — sem isso, o
+    // botão "Cancelar" só trocava o modo de volta sem reverter os campos:
+    // reabrir a edição sem fechar o diálogo mostrava as edições descartadas
+    // em vez dos valores realmente salvos.
+    const cancelarEdicao = () => {
+        if (apolice) {
+            setData(mapApoliceParaFormulario(apolice));
+        }
+        setModo('visualizar');
     };
 
     const salvarEdicao = () => {
@@ -896,6 +930,11 @@ export default function CreateApoliceProfileModal({
                                             }
                                             className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                         />
+                                        {errors.numero_apolice && (
+                                            <span className="text-xs font-medium text-rose-500">
+                                                {errors.numero_apolice}
+                                            </span>
+                                        )}
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-sm leading-none font-medium">
@@ -904,8 +943,7 @@ export default function CreateApoliceProfileModal({
                                         <select
                                             value={data.ramo_id}
                                             onChange={(e) =>
-                                                setData(
-                                                    'ramo_id',
+                                                handleRamoChange(
                                                     e.target.value,
                                                 )
                                             }
@@ -933,6 +971,11 @@ export default function CreateApoliceProfileModal({
                                                     </option>
                                                 ))}
                                         </select>
+                                        {errors.ramo_id && (
+                                            <span className="text-xs font-medium text-rose-500">
+                                                {errors.ramo_id}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </Section>
@@ -959,6 +1002,11 @@ export default function CreateApoliceProfileModal({
                                                 type="number"
                                                 className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                             />
+                                            {errors.valor_premio_total && (
+                                                <span className="text-xs font-medium text-rose-500">
+                                                    {errors.valor_premio_total}
+                                                </span>
+                                            )}
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-sm leading-none font-medium">
@@ -975,6 +1023,11 @@ export default function CreateApoliceProfileModal({
                                                 type="number"
                                                 className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                             />
+                                            {errors.valor_cobertura && (
+                                                <span className="text-xs font-medium text-rose-500">
+                                                    {errors.valor_cobertura}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="grid gap-4 sm:grid-cols-2">
@@ -991,8 +1044,17 @@ export default function CreateApoliceProfileModal({
                                                     )
                                                 }
                                                 type="number"
+                                                min="1"
+                                                max="12"
                                                 className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                             />
+                                            {errors.quantidade_parcelas && (
+                                                <span className="text-xs font-medium text-rose-500">
+                                                    {
+                                                        errors.quantidade_parcelas
+                                                    }
+                                                </span>
+                                            )}
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-sm leading-none font-medium">
@@ -1025,6 +1087,11 @@ export default function CreateApoliceProfileModal({
                                                     </SelectItem>
                                                 </SelectContent>
                                             </Select>
+                                            {errors.forma_pagamento && (
+                                                <span className="text-xs font-medium text-rose-500">
+                                                    {errors.forma_pagamento}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -1051,6 +1118,11 @@ export default function CreateApoliceProfileModal({
                                             type="date"
                                             className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                         />
+                                        {errors.inicio_vigencia && (
+                                            <span className="text-xs font-medium text-rose-500">
+                                                {errors.inicio_vigencia}
+                                            </span>
+                                        )}
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-sm leading-none font-medium">
@@ -1067,6 +1139,11 @@ export default function CreateApoliceProfileModal({
                                             type="date"
                                             className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                         />
+                                        {errors.fim_vigencia && (
+                                            <span className="text-xs font-medium text-rose-500">
+                                                {errors.fim_vigencia}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </Section>
@@ -1111,6 +1188,15 @@ export default function CreateApoliceProfileModal({
                                                         ))}
                                                     </SelectContent>
                                                 </Select>
+                                                {err['veiculo.tipo_veiculo'] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {
+                                                            err[
+                                                                'veiculo.tipo_veiculo'
+                                                            ]
+                                                        }
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-sm leading-none font-medium">
@@ -1151,6 +1237,15 @@ export default function CreateApoliceProfileModal({
                                                     }
                                                     className="h-10 rounded-xl border border-border/70 bg-background"
                                                 />
+                                                {err['veiculo.renavam'] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {
+                                                            err[
+                                                                'veiculo.renavam'
+                                                            ]
+                                                        }
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
 
@@ -1170,6 +1265,15 @@ export default function CreateApoliceProfileModal({
                                                     }
                                                     className="h-10 rounded-xl border border-border/70 bg-background"
                                                 />
+                                                {err['veiculo.chassi'] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {
+                                                            err[
+                                                                'veiculo.chassi'
+                                                            ]
+                                                        }
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-sm leading-none font-medium">
@@ -1185,6 +1289,11 @@ export default function CreateApoliceProfileModal({
                                                     }
                                                     className="h-10 rounded-xl border border-border/70 bg-background"
                                                 />
+                                                {err['veiculo.marca'] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {err['veiculo.marca']}
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-sm leading-none font-medium">
@@ -1200,6 +1309,11 @@ export default function CreateApoliceProfileModal({
                                                     }
                                                     className="h-10 rounded-xl border border-border/70 bg-background"
                                                 />
+                                                {err['veiculo.modelo'] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {err['veiculo.modelo']}
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
 
@@ -1222,6 +1336,17 @@ export default function CreateApoliceProfileModal({
                                                     }
                                                     className="h-10 rounded-xl border border-border/70 bg-background"
                                                 />
+                                                {err[
+                                                    'veiculo.ano_fabricacao'
+                                                ] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {
+                                                            err[
+                                                                'veiculo.ano_fabricacao'
+                                                            ]
+                                                        }
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-sm leading-none font-medium">
@@ -1240,6 +1365,15 @@ export default function CreateApoliceProfileModal({
                                                     }
                                                     className="h-10 rounded-xl border border-border/70 bg-background"
                                                 />
+                                                {err['veiculo.ano_modelo'] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {
+                                                            err[
+                                                                'veiculo.ano_modelo'
+                                                            ]
+                                                        }
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-sm leading-none font-medium">
@@ -1255,6 +1389,11 @@ export default function CreateApoliceProfileModal({
                                                     }
                                                     className="h-10 rounded-xl border border-border/70 bg-background"
                                                 />
+                                                {err['veiculo.cor'] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {err['veiculo.cor']}
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-sm leading-none font-medium">
@@ -1287,6 +1426,15 @@ export default function CreateApoliceProfileModal({
                                                         ))}
                                                     </SelectContent>
                                                 </Select>
+                                                {err['veiculo.combustivel'] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {
+                                                            err[
+                                                                'veiculo.combustivel'
+                                                            ]
+                                                        }
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
 
@@ -1320,6 +1468,11 @@ export default function CreateApoliceProfileModal({
                                                         ))}
                                                     </SelectContent>
                                                 </Select>
+                                                {err['veiculo.uso'] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {err['veiculo.uso']}
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-sm leading-none font-medium">
@@ -1340,6 +1493,15 @@ export default function CreateApoliceProfileModal({
                                                     }
                                                     className="h-10 rounded-xl border border-border/70 bg-background"
                                                 />
+                                                {err['veiculo.cep_pernoite'] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {
+                                                            err[
+                                                                'veiculo.cep_pernoite'
+                                                            ]
+                                                        }
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
 
@@ -1445,6 +1607,15 @@ export default function CreateApoliceProfileModal({
                                                         ))}
                                                     </SelectContent>
                                                 </Select>
+                                                {err['residencia.tipo_imovel'] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {
+                                                            err[
+                                                                'residencia.tipo_imovel'
+                                                            ]
+                                                        }
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-sm leading-none font-medium">
@@ -1478,6 +1649,17 @@ export default function CreateApoliceProfileModal({
                                                         ))}
                                                     </SelectContent>
                                                 </Select>
+                                                {err[
+                                                    'residencia.tipo_construcao'
+                                                ] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {
+                                                            err[
+                                                                'residencia.tipo_construcao'
+                                                            ]
+                                                        }
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
 
@@ -1498,9 +1680,20 @@ export default function CreateApoliceProfileModal({
                                                 }
                                                 className="h-10 rounded-xl border border-border/70 bg-background"
                                             />
+                                            {err[
+                                                'residencia.endereco_imovel'
+                                            ] && (
+                                                <span className="text-xs font-medium text-rose-500">
+                                                    {
+                                                        err[
+                                                            'residencia.endereco_imovel'
+                                                        ]
+                                                    }
+                                                </span>
+                                            )}
                                         </div>
 
-                                        <div className="grid gap-4 sm:grid-cols-4">
+                                        <div className="grid gap-4 sm:grid-cols-2">
                                             <div className="space-y-2">
                                                 <label className="text-sm leading-none font-medium">
                                                     Número
@@ -1517,7 +1710,38 @@ export default function CreateApoliceProfileModal({
                                                     }
                                                     className="h-10 rounded-xl border border-border/70 bg-background"
                                                 />
+                                                {err['residencia.numero'] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {
+                                                            err[
+                                                                'residencia.numero'
+                                                            ]
+                                                        }
+                                                    </span>
+                                                )}
                                             </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm leading-none font-medium">
+                                                    Complemento
+                                                </label>
+                                                <Input
+                                                    placeholder="Apto, bloco..."
+                                                    value={
+                                                        data.residencia
+                                                            .complemento
+                                                    }
+                                                    onChange={(e) =>
+                                                        atualizarResidencia(
+                                                            'complemento',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    className="h-10 rounded-xl border border-border/70 bg-background"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid gap-4 sm:grid-cols-4">
                                             <div className="space-y-2">
                                                 <label className="text-sm leading-none font-medium">
                                                     Bairro
@@ -1535,6 +1759,17 @@ export default function CreateApoliceProfileModal({
                                                     }
                                                     className="h-10 rounded-xl border border-border/70 bg-background"
                                                 />
+                                                {err[
+                                                    'residencia.bairro_imovel'
+                                                ] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {
+                                                            err[
+                                                                'residencia.bairro_imovel'
+                                                            ]
+                                                        }
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-sm leading-none font-medium">
@@ -1553,6 +1788,17 @@ export default function CreateApoliceProfileModal({
                                                     }
                                                     className="h-10 rounded-xl border border-border/70 bg-background"
                                                 />
+                                                {err[
+                                                    'residencia.cidade_imovel'
+                                                ] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {
+                                                            err[
+                                                                'residencia.cidade_imovel'
+                                                            ]
+                                                        }
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-sm leading-none font-medium">
@@ -1572,6 +1818,17 @@ export default function CreateApoliceProfileModal({
                                                     }
                                                     className="h-10 rounded-xl border border-border/70 bg-background"
                                                 />
+                                                {err[
+                                                    'residencia.estado_imovel'
+                                                ] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {
+                                                            err[
+                                                                'residencia.estado_imovel'
+                                                            ]
+                                                        }
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
 
@@ -1595,6 +1852,15 @@ export default function CreateApoliceProfileModal({
                                                     }
                                                     className="h-10 rounded-xl border border-border/70 bg-background"
                                                 />
+                                                {err['residencia.cep_imovel'] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {
+                                                            err[
+                                                                'residencia.cep_imovel'
+                                                            ]
+                                                        }
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-sm leading-none font-medium">
@@ -1614,6 +1880,17 @@ export default function CreateApoliceProfileModal({
                                                     }
                                                     className="h-10 rounded-xl border border-border/70 bg-background"
                                                 />
+                                                {err[
+                                                    'residencia.area_construida_m2'
+                                                ] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {
+                                                            err[
+                                                                'residencia.area_construida_m2'
+                                                            ]
+                                                        }
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-sm leading-none font-medium">
@@ -1665,6 +1942,15 @@ export default function CreateApoliceProfileModal({
                                                     ))}
                                                 </SelectContent>
                                             </Select>
+                                            {err['residencia.ocupacao'] && (
+                                                <span className="text-xs font-medium text-rose-500">
+                                                    {
+                                                        err[
+                                                            'residencia.ocupacao'
+                                                        ]
+                                                    }
+                                                </span>
+                                            )}
                                         </div>
 
                                         <label className="flex items-center gap-2 text-sm font-medium">
@@ -1734,6 +2020,15 @@ export default function CreateApoliceProfileModal({
                                                     }
                                                     className="h-10 rounded-xl border border-border/70 bg-background"
                                                 />
+                                                {err['vida.capital_segurado'] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {
+                                                            err[
+                                                                'vida.capital_segurado'
+                                                            ]
+                                                        }
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
 
@@ -1824,6 +2119,15 @@ export default function CreateApoliceProfileModal({
                                                     }
                                                     className="min-h-20 w-full resize-none rounded-xl border border-border/70 bg-background px-3 py-2 text-sm hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                                 />
+                                                {err['vida.descricao_doencas'] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {
+                                                            err[
+                                                                'vida.descricao_doencas'
+                                                            ]
+                                                        }
+                                                    </span>
+                                                )}
                                             </div>
                                         )}
 
@@ -1844,6 +2148,15 @@ export default function CreateApoliceProfileModal({
                                                     }
                                                     className="h-10 rounded-xl border border-border/70 bg-background"
                                                 />
+                                                {err['vida.qual_esporte'] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {
+                                                            err[
+                                                                'vida.qual_esporte'
+                                                            ]
+                                                        }
+                                                    </span>
+                                                )}
                                             </div>
                                         )}
                                     </div>
@@ -2051,6 +2364,17 @@ export default function CreateApoliceProfileModal({
                                                     }
                                                     className="h-10 rounded-xl border border-border/70 bg-background"
                                                 />
+                                                {err[
+                                                    'empresarial.cnae_ou_atividade'
+                                                ] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {
+                                                            err[
+                                                                'empresarial.cnae_ou_atividade'
+                                                            ]
+                                                        }
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-sm leading-none font-medium">
@@ -2070,6 +2394,17 @@ export default function CreateApoliceProfileModal({
                                                     }
                                                     className="h-10 rounded-xl border border-border/70 bg-background"
                                                 />
+                                                {err[
+                                                    'empresarial.numero_funcionarios'
+                                                ] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {
+                                                            err[
+                                                                'empresarial.numero_funcionarios'
+                                                            ]
+                                                        }
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
 
@@ -2092,6 +2427,17 @@ export default function CreateApoliceProfileModal({
                                                     }
                                                     className="h-10 rounded-xl border border-border/70 bg-background"
                                                 />
+                                                {err[
+                                                    'empresarial.valor_patrimonio_segurado'
+                                                ] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {
+                                                            err[
+                                                                'empresarial.valor_patrimonio_segurado'
+                                                            ]
+                                                        }
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-sm leading-none font-medium">
@@ -2111,6 +2457,17 @@ export default function CreateApoliceProfileModal({
                                                     }
                                                     className="h-10 rounded-xl border border-border/70 bg-background"
                                                 />
+                                                {err[
+                                                    'empresarial.faturamento_anual'
+                                                ] && (
+                                                    <span className="text-xs font-medium text-rose-500">
+                                                        {
+                                                            err[
+                                                                'empresarial.faturamento_anual'
+                                                            ]
+                                                        }
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
 
@@ -2317,14 +2674,21 @@ export default function CreateApoliceProfileModal({
                             <Button
                                 variant="outline"
                                 className="rounded-xl"
-                                onClick={() => setModo('visualizar')}
+                                onClick={cancelarEdicao}
                             >
                                 Cancelar
                             </Button>
                             <Button
                                 className="rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-600"
                                 onClick={salvarEdicao}
-                                disabled={processing}
+                                disabled={
+                                    processing ||
+                                    (categoriaRamoEmEdicao === 'vida' &&
+                                        Math.abs(
+                                            somaPercentuaisBeneficiarios -
+                                                100,
+                                        ) > 0.01)
+                                }
                             >
                                 Salvar alterações
                             </Button>

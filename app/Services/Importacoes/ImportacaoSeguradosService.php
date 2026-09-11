@@ -4,7 +4,7 @@ namespace App\Services\Importacoes;
 
 use App\Models\Apolice;
 use App\Models\HistoricoImportacao;
-use App\Models\Parcela as Parcela;
+use App\Models\Parcelas;
 use App\Models\Ramo;
 use App\Models\Segurado;
 use App\Models\Seguradora;
@@ -155,23 +155,40 @@ class ImportacaoSeguradosService
         }
 
         $cpfCnpj = preg_replace('/\D/', '', $linha['cpf_cnpj']);
+        // 'pf'/'pj' — mesmo vocabulário usado no cadastro manual
+        // (StoreSeguradoRequest::tipo_pessoa) e checado no frontend
+        // (isPF === 'pf'). Usar 'Física'/'Jurídica' aqui fazia o cliente
+        // importado aparecer com o tipo errado na tela de perfil.
         $tipoPessoa = match (strlen($cpfCnpj)) {
-            11 => 'Física',
-            14 => 'Jurídica',
+            11 => 'pf',
+            14 => 'pj',
             default => null,
         };
         if ($tipoPessoa === null) {
             return "CPF/CNPJ \"{$linha['cpf_cnpj']}\" parece inválido (precisa ter 11 ou 14 dígitos).";
         }
 
-        $statusPagamento = ucfirst(strtolower($linha['status_pagamento'] ?? ''));
-        if (! in_array($statusPagamento, ['Pago', 'Pendente', 'Atrasado'], true)) {
-            $statusPagamento = 'Pendente';
-        }
+        // Mesma máscara aplicada no cadastro manual (formataCpfCnpj no
+        // frontend) — sem isso, o mesmo documento ficava salvo com e sem
+        // pontuação dependendo da origem do cadastro, furando a checagem
+        // de duplicidade (CpfCnpjDisponivel compara a string exata).
+        $cpfCnpjFormatado = $this->formatarCpfCnpj($cpfCnpj);
+
+        // 'em_aberto'/'paga'/'vencida' — mesmo vocabulário usado no resto do
+        // sistema (Parcelas::status_pagamento). 'Pago'/'Pendente'/'Atrasado'
+        // não eram reconhecidos em nenhuma outra query (cobrança, suspensão
+        // automática, dashboard), então parcela importada ficava invisível
+        // pra tudo isso.
+        $statusPagamentoBruto = Str::lower(trim($linha['status_pagamento'] ?? ''));
+        $statusPagamento = match ($statusPagamentoBruto) {
+            'pago' => 'paga',
+            'atrasado' => 'vencida',
+            default => 'em_aberto',
+        };
 
         // 1) Segurado — só sobrescreve campos opcionais se vierem preenchidos,
         // pra não apagar dados já existentes com linhas incompletas.
-        $segurado = Segurado::firstOrNew(['cpf_cnpj' => $cpfCnpj]);
+        $segurado = Segurado::firstOrNew(['cpf_cnpj' => $cpfCnpjFormatado]);
         $segurado->nome_completo = $linha['nome_completo'];
         $segurado->tipo_pessoa = $tipoPessoa;
         if (! empty($linha['email'])) $segurado->email = $linha['email'];
@@ -191,13 +208,13 @@ class ImportacaoSeguradosService
         if (! empty($linha['fim_vigencia'])) {
             $apolice->fim_vigencia = $linha['fim_vigencia'];
         }
-        if (! $apolice->exists) {
-            $apolice->status = 'Ativa';
-        }
+        // Não seta mais 'status' — a coluna foi removida de apolices
+        // (migration drop_status_from_apolices_table); escrever nela
+        // quebrava o INSERT com erro de coluna inexistente.
         $apolice->save();
 
         // 3) Parcela (chave: apólice + número da parcela)
-        Parcela::updateOrCreate(
+        Parcelas::updateOrCreate(
             [
                 'apolice_id' => $apolice->id,
                 'numero_parcela' => (int) $linha['numero_parcela'],
@@ -210,6 +227,19 @@ class ImportacaoSeguradosService
         );
 
         return null;
+    }
+
+    /**
+     * Aplica a mesma máscara do cadastro manual (formataCpfCnpj no
+     * frontend): CPF vira 000.000.000-00, CNPJ vira 00.000.000/0000-00.
+     */
+    private function formatarCpfCnpj(string $digitos): string
+    {
+        if (strlen($digitos) === 11) {
+            return preg_replace('/(\d{3})(\d{3})(\d{3})(\d{2})/', '$1.$2.$3-$4', $digitos);
+        }
+
+        return preg_replace('/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/', '$1.$2.$3/$4-$5', $digitos);
     }
 
     /**

@@ -40,10 +40,14 @@ class VerificarInadimplenciaParcelas extends Command
      */
     private function suspenderApolicesInadimplentes(NotificacaoService $notificacaoService): void
     {
+        // != 'paga' (não só 'em_aberto') porque o job AtualizarParcelasVencidas
+        // (07h, antes deste comando às 07h15) reclassifica parcela vencida em
+        // aberto para 'vencida' — com 'em_aberto' aqui, este comando nunca
+        // encontrava nada e a suspensão automática nunca disparava.
         $apolices = Apolice::whereNull('suspensa_em')
             ->whereHas('parcelas', function ($query) {
                 $query->where('numero_parcela', '>=', 2)
-                    ->where('status_pagamento', 'em_aberto')
+                    ->where('status_pagamento', '!=', 'paga')
                     ->where('data_vencimento', '<', now()->startOfDay());
             })
             ->get();
@@ -94,7 +98,7 @@ class VerificarInadimplenciaParcelas extends Command
     {
         $parcelaAtrasada = $apolice->parcelas()
             ->where('numero_parcela', '>=', 2)
-            ->where('status_pagamento', 'em_aberto')
+            ->where('status_pagamento', '!=', 'paga')
             ->where('data_vencimento', '<', now()->startOfDay())
             ->orderBy('numero_parcela')
             ->first();

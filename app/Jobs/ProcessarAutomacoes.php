@@ -175,22 +175,40 @@ class ProcessarAutomacoes implements ShouldQueue
      * PHP (Segurado::getStatusAttribute()), não uma coluna do banco — então
      * o `where('status', 'Inativo')` gerava erro de SQL (coluna inexistente)
      * toda vez que rodasse. Trocado pela condição real via whereDoesntHave.
+     *
+     * `updated_at` foi trocado pela data de fim de vigência da apólice mais
+     * recente do cliente (diasSemApoliceVigente()): updated_at muda a
+     * qualquer edição cadastral (telefone, endereço etc.) sem relação
+     * nenhuma com apólices, então um cliente sem cobertura há anos podia
+     * nunca disparar essa automação só por ter tido um dado corrigido.
      */
     private function processarClienteInativo(Automacao $automacao, NotificacaoService $service): void
     {
         $segurados = Segurado::whereDoesntHave('apolices', function ($query) {
             $query->ativas();
-        })
-            ->where('updated_at', '<=', now()->subDays($automacao->dias))
-            ->get();
+        })->get();
 
         foreach ($segurados as $segurado) {
-            $diasInativo = $segurado->updated_at->diffInDays(now()->startOfDay());
-            $offset = (int) $diasInativo - $automacao->dias;
+            $offset = $this->diasSemApoliceVigente($segurado) - $automacao->dias;
 
             if ($this->ehDiaDeDisparo($automacao, $offset)) {
                 $this->notificar($automacao, $service, $segurado);
             }
         }
+    }
+
+    /**
+     * Há quantos dias o cliente está sem nenhuma apólice vigente, contados a
+     * partir do fim de vigência da apólice mais recente dele (incluindo
+     * canceladas/renovadas — o que importa é até quando ele teve cobertura,
+     * não se a apólice em si ainda existe). Cliente que nunca teve nenhuma
+     * apólice usa a data de cadastro como referência.
+     */
+    private function diasSemApoliceVigente(Segurado $segurado): int
+    {
+        $fimMaisRecente = $segurado->apolices()->withTrashed()->max('fim_vigencia');
+        $referencia = $fimMaisRecente ? Carbon::parse($fimMaisRecente) : $segurado->created_at;
+
+        return (int) $referencia->startOfDay()->diffInDays(now()->startOfDay());
     }
 }

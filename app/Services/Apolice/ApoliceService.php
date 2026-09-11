@@ -529,8 +529,12 @@ class ApoliceService
 
     public function contarClientesDevedores()
     {
+        // != 'paga' (não só 'em_aberto') porque o job AtualizarParcelasVencidas
+        // reclassifica toda parcela em aberto vencida para 'vencida' às 07h —
+        // filtrar só 'em_aberto' aqui fazia esse card nunca encontrar nada
+        // depois desse horário.
         return Segurado::whereHas('apolices.parcelas', function ($query) {
-            $query->where('status_pagamento', 'em_aberto')
+            $query->where('status_pagamento', '!=', 'paga')
                 ->where('data_vencimento', '<', now()->startOfDay());
         })->count();
     }

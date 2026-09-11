@@ -59,6 +59,11 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
             observacoes: '',
         });
 
+    // Reseta o formulário sempre que o modal fecha, não importa a origem do
+    // fechamento (onOpenChange do Dialog, botão Cancelar, ou onSuccess do
+    // submit) — todas elas só mudam a prop `open`, então um único efeito
+    // reagindo a essa mudança substitui a lógica de reset que antes estava
+    // duplicada (e uma das cópias nunca era usada).
     useEffect(() => {
         if (!open) {
             reset();
@@ -66,15 +71,6 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
             setTipoPessoa('pf');
         }
     }, [open]);
-
-    const handleClose = (isOpen: boolean) => {
-        if (!isOpen) {
-            reset();
-            clearErrors();
-            setTipoPessoa('pf');
-        }
-        setOpen(isOpen);
-    };
 
     useEffect(() => {
         fetch(
@@ -134,18 +130,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
         });
 
     return (
-        <Dialog
-            open={open}
-            onOpenChange={(isOpen) => {
-                // Se o modal está fechando (isOpen vira false)
-                if (!isOpen) {
-                    reset(); // Reseta os campos do formulário do Inertia
-                    clearErrors(); // Limpa os erros de validação
-                    setTipoPessoa('pf'); // Reseta estados locais extras (se houver)
-                }
-                setOpen(isOpen); // Atualiza o estado no componente pai
-            }}
-        >
+        <Dialog open={open} onOpenChange={setOpen}>
             <DialogContent className="!flex max-h-[92vh] flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 sm:max-w-3xl">
                 <DialogHeader className="shrink-0 border-b border-border/70 px-6 py-6 pr-12 sm:px-8">
                     <div className="flex items-center gap-3">

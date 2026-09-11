@@ -20,7 +20,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { aplicarMascaraCEP } from '@/utils/Masks';
+import { aplicarMascaraCEP, formatarTelefone } from '@/utils/Masks';
 import {
     Select,
     SelectContent,
@@ -394,7 +394,9 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                                 onChange={(e) =>
                                                     setData(
                                                         'celular_whatsapp',
-                                                        e.target.value,
+                                                        formatarTelefone(
+                                                            e.target.value,
+                                                        ),
                                                     )
                                                 }
                                             />
@@ -411,7 +413,9 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
                                             onChange={(e) =>
                                                 setData(
                                                     'telefone_fixo',
-                                                    e.target.value,
+                                                    formatarTelefone(
+                                                        e.target.value,
+                                                    ),
                                                 )
                                             }
                                         />

@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSeguradoraRequest;
+use App\Http\Requests\UpdateSeguradoraRequest;
 use App\Services\Cliente\SeguradorasService;
-use Illuminate\Http\Request;
 
 class SeguradoraController extends Controller
 {
@@ -46,11 +46,10 @@ class SeguradoraController extends Controller
         }
     }
 
-    public function update(Request $request, int $id)
+    public function update(UpdateSeguradoraRequest $request, int $id)
     {
         try {
-            // Passa apenas o array de dados validados
-            $this->seguradorasService->updateSeguradora($id, $request->all());
+            $this->seguradorasService->updateSeguradora($id, $request->validated());
             return redirect()->back()->with('success', 'Seguradora atualizada com sucesso!');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());

@@ -21,8 +21,11 @@ class CancelarApolicesPorAtrasoDaPrimeiraParcela extends Command
             return;
         }
 
+        // != 'paga' (não só 'em_aberto') porque o job AtualizarParcelasVencidas
+        // reclassifica parcela vencida em aberto para 'vencida' às 07h — com
+        // 'em_aberto' aqui, este comando nunca encontrava a 1ª parcela atrasada.
         $parcelasAtrasadas = Parcelas::where('numero_parcela', 1)
-            ->where('status_pagamento', 'em_aberto')
+            ->where('status_pagamento', '!=', 'paga')
             ->where('data_vencimento', '<', now()->startOfDay())
             ->get();
 
