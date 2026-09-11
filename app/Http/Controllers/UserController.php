@@ -3,18 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\Apolice\ApoliceService;
 use App\Services\Cliente\SeguradoService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class UserController extends Controller
 {
-
     protected SeguradoService $segurado_service;
 
-    public function __construct(SeguradoService $segurado_service)
+    protected ApoliceService $apolice_service;
+
+    public function __construct(SeguradoService $segurado_service, ApoliceService $apolice_service)
     {
         $this->segurado_service = $segurado_service;
+        $this->apolice_service = $apolice_service;
     }
 
     public function index()
@@ -24,7 +27,10 @@ class UserController extends Controller
 
         return Inertia::render('FunctionsApp/administracao', [
             'users' => $users,
-            'inativos' => $inativos
+            'inativos' => $inativos,
+            'apolicesCanceladas' => $this->apolice_service->listarCanceladas(),
+            'apolicesVencidas' => $this->apolice_service->listarVencidas(),
+            'apolicesSuspensas' => $this->apolice_service->listarSuspensas(),
         ]);
     }
 
@@ -33,15 +39,15 @@ class UserController extends Controller
         $user = User::findOrFail($id);
 
         $request->validate([
-            'role' => 'required|string|in:admin,user'
+            'role' => 'required|string|in:admin,user',
         ]);
 
-        //Total de admins
+        // Total de admins
         $totalAdmins = User::where('role', 'admin')->count();
 
-        //VaiDeixarDeSerAdmin é uma variável booleana onde caso cargo 
+        // VaiDeixarDeSerAdmin é uma variável booleana onde caso cargo
         // do usuario seja identico a admin e onde a alteração do request alterar
-        //o cargo para algo diferente de admin 
+        // o cargo para algo diferente de admin
         $vaiDeixarDeSerAdmin = $user->role === 'admin' && $request->role !== 'admin';
         $eOUltimoAdmin = $totalAdmins === 1;
 
@@ -53,7 +59,7 @@ class UserController extends Controller
         }
 
         $user->update([
-            'role' => $request->role
+            'role' => $request->role,
         ]);
 
         return redirect()->back()->with('success', 'Cargo atualizado com sucesso!');

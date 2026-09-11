@@ -40,44 +40,46 @@ interface DistribuicaoRamo {
     total: number;
 }
 
+interface NotificacaoRecente {
+    id: number;
+    texto: string;
+    data: string;
+    status: 'enviado' | 'falha' | 'pendente';
+}
+
 interface Props {
     clientesDevedores: number;
     vencimentosProximos: VencimentoProximo[];
+    notificacoesRecentes: NotificacaoRecente[];
     receitaMensal: Record<string, any>[];
     clientesAtivosMensal: Record<string, any>[];
     distribuicaoPorRamo: DistribuicaoRamo[];
 }
 
-/* ------------------------------------------------------------------ */
-/* Dados de exemplo — só o que ainda não vem do backend                */
-/* ------------------------------------------------------------------ */
+// "há 12 min" / "há 3h" / "há 2 dias" a partir de um timestamp do backend —
+// mesma ideia do diasDesde() de administracao.tsx, só que com granularidade
+// de minuto/hora pra notificação recente (a de cliente é sempre em dias).
+function tempoRelativo(data: string): string {
+    const minutos = Math.floor((Date.now() - new Date(data).getTime()) / 60000);
 
-const NOTIFICACOES_RECENTES = [
-    {
-        id: 1,
-        texto: 'Cobrança enviada para Maria Souza',
-        tempo: 'há 12 min',
-        status: 'enviado' as const,
-    },
-    {
-        id: 2,
-        texto: 'Falha ao notificar Juliana Castro',
-        tempo: 'há 40 min',
-        status: 'falha' as const,
-    },
-    {
-        id: 3,
-        texto: 'Lembrete de renovação — Carlos Lima',
-        tempo: 'há 2h',
-        status: 'enviado' as const,
-    },
-    {
-        id: 4,
-        texto: 'Cobrança pendente — Roberto Dias',
-        tempo: 'há 3h',
-        status: 'pendente' as const,
-    },
-];
+    if (minutos < 1) {
+        return 'agora mesmo';
+    }
+
+    if (minutos < 60) {
+        return `há ${minutos} min`;
+    }
+
+    const horas = Math.floor(minutos / 60);
+
+    if (horas < 24) {
+        return `há ${horas}h`;
+    }
+
+    const dias = Math.floor(horas / 24);
+
+    return dias === 1 ? 'há 1 dia' : `há ${dias} dias`;
+}
 
 const AÇÕES_RAPIDAS = [
     // adminOnly: mesmo sinalizador usado em app-sidebar.tsx — essas duas
@@ -121,15 +123,8 @@ const CORES_RAMO = [
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
+import { formatarMoeda } from '@/utils/Masks';
 /* ------------------------------------------------------------------ */
-
-function formatarMoeda(valor: number) {
-    return valor.toLocaleString('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-    });
-}
-
 // Calcula a variação percentual entre o último e o penúltimo ponto de uma
 // série mensal (mês atual vs. mês anterior). Retorna null quando não há
 // base de comparação válida (ex: mês anterior com valor 0).
@@ -283,6 +278,7 @@ function TrendBarChart({
 export default function Dashboard({
     clientesDevedores,
     vencimentosProximos = [],
+    notificacoesRecentes = [],
     receitaMensal = [],
     clientesAtivosMensal = [],
     distribuicaoPorRamo = [],
@@ -316,8 +312,8 @@ export default function Dashboard({
                 {/* Saudação */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <p className="mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-[0.16em] text-emerald-600 uppercase">
-                            <Sparkles className="size-3" />
+                        <p className="mb-5 flex items-center gap-1.5 text-[10px] font-bold tracking-[0.16em] text-emerald-600 uppercase">
+                            <Sparkles className="size-5" />
                             {dataHoje}
                         </p>
                         <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
@@ -573,25 +569,31 @@ export default function Dashboard({
                             </div>
 
                             <div className="flex flex-col gap-4">
-                                {NOTIFICACOES_RECENTES.map((n) => (
-                                    <div
-                                        key={n.id}
-                                        className="flex items-start gap-3"
-                                    >
-                                        <span
-                                            className={`mt-1.5 size-2 shrink-0 rounded-full ${STATUS_NOTIFICACAO[n.status].dot}`}
-                                        />
-                                        <div className="min-w-0">
-                                            <p className="text-sm text-foreground">
-                                                {n.texto}
-                                            </p>
-                                            <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                                                <Clock className="size-3" />
-                                                {n.tempo}
-                                            </p>
+                                {notificacoesRecentes.length === 0 ? (
+                                    <p className="py-6 text-center text-xs text-muted-foreground">
+                                        Nenhuma notificação enviada ainda.
+                                    </p>
+                                ) : (
+                                    notificacoesRecentes.map((n) => (
+                                        <div
+                                            key={n.id}
+                                            className="flex items-start gap-3"
+                                        >
+                                            <span
+                                                className={`mt-1.5 size-2 shrink-0 rounded-full ${STATUS_NOTIFICACAO[n.status].dot}`}
+                                            />
+                                            <div className="min-w-0">
+                                                <p className="text-sm text-foreground">
+                                                    {n.texto}
+                                                </p>
+                                                <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                                                    <Clock className="size-3" />
+                                                    {tempoRelativo(n.data)}
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))
+                                )}
                             </div>
                         </div>
                     </div>

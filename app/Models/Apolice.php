@@ -15,6 +15,16 @@ class Apolice extends Model
 
     use SoftDeletes;
 
+    // Motivos de cancelamento (coluna motivo_cancelamento) — decidem se a
+    // apólice pode voltar pelo botão "Restaurar" (ver podeSerRestaurada()).
+    public const MOTIVO_CANCELAMENTO_MANUAL = 'manual';
+
+    public const MOTIVO_CANCELAMENTO_ATRASO_PRIMEIRA_PARCELA = 'atraso_primeira_parcela';
+
+    public const MOTIVO_CANCELAMENTO_SUSPENSAO_PROLONGADA = 'suspensao_prolongada';
+
+    public const MOTIVO_CANCELAMENTO_RENOVADA = 'renovada';
+
     protected $appends = ['status_vigencia'];
 
     protected $casts = [
@@ -22,6 +32,22 @@ class Apolice extends Model
         'fim_vigencia' => 'date',
         'suspensa_em' => 'datetime',
     ];
+
+    /**
+     * Cancelamento por atraso da 1ª parcela (Lei 15.040/2024, art. 21) é
+     * definitivo — a cobertura nunca chegou a valer de fato, sem aviso
+     * prévio. "Renovada" também não restaura: uma apólice nova já assumiu
+     * a cobertura, restaurar a antiga criaria duas apólices ativas para o
+     * mesmo período. Os outros dois motivos (exclusão manual e suspensão
+     * prolongada por atraso da 2ª+ parcela) podem voltar.
+     */
+    public function podeSerRestaurada(): bool
+    {
+        return in_array($this->motivo_cancelamento, [
+            self::MOTIVO_CANCELAMENTO_MANUAL,
+            self::MOTIVO_CANCELAMENTO_SUSPENSAO_PROLONGADA,
+        ], true);
+    }
 
     public function getStatusVigenciaAttribute(): string
     {
@@ -104,6 +130,7 @@ class Apolice extends Model
         'inicio_vigencia',
         'fim_vigencia',
         'suspensa_em',
+        'motivo_cancelamento',
         'status',
         'observacoes',
     ];

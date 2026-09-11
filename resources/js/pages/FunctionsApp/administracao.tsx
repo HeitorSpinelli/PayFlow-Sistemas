@@ -1,9 +1,13 @@
 import { Head, router } from '@inertiajs/react';
 import {
+    Ban,
     ChevronRight,
     Info,
     MoreVertical,
+    PlayCircle,
+    RefreshCw,
     RotateCcw,
+    ScrollText,
     Search,
     Settings2,
     Shield,
@@ -14,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import RenovarApoliceModal from '@/components/modals/renovar-apolice-modal';
 import UserProfileModal from '@/components/modals/user-profile-modal';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -34,9 +39,28 @@ interface SeguradoInativo {
     deleted_at: string;
 }
 
+interface ApoliceResumo {
+    id: number;
+    numero_apolice: string;
+    valor_premio_total: string | number;
+    valor_cobertura: string | number;
+    quantidade_parcelas: number;
+    inicio_vigencia: string;
+    fim_vigencia: string;
+    suspensa_em: string | null;
+    deleted_at: string | null;
+    motivo_cancelamento: string | null;
+    cliente?: { nome_completo: string; cpf_cnpj: string } | null;
+    seguradora?: { nome_fantasia: string } | null;
+    ramo?: { nome_ramo: string } | null;
+}
+
 interface Props {
     users: User[];
     inativos: SeguradoInativo[];
+    apolicesCanceladas?: ApoliceResumo[];
+    apolicesVencidas?: ApoliceResumo[];
+    apolicesSuspensas?: ApoliceResumo[];
 }
 
 function formatarData(data?: string) {
@@ -63,12 +87,21 @@ function diasDesde(data: string) {
     return `há ${dias} dias`;
 }
 
-export default function Administracao({ users, inativos }: Props) {
+export default function Administracao({
+    users,
+    inativos,
+    apolicesCanceladas = [],
+    apolicesVencidas = [],
+    apolicesSuspensas = [],
+}: Props) {
     const [openPerfil, setOpenPerfil] = useState(false);
     const [usuarioSelecionado, setUsuarioSelecionado] = useState<User | null>(
         null,
     );
     const [busca, setBusca] = useState('');
+    const [openRenovar, setOpenRenovar] = useState(false);
+    const [apoliceParaRenovar, setApoliceParaRenovar] =
+        useState<ApoliceResumo | null>(null);
 
     const totalUsuarios = users?.length ?? 0;
     const totalAdmins = useMemo(
@@ -115,6 +148,67 @@ export default function Administracao({ users, inativos }: Props) {
         );
     };
 
+    const ativarApolice = (id: number) => {
+        router.patch(
+            `/apolices/ativar/${id}`,
+            {},
+            {
+                onSuccess: () => {
+                    toast.success('Apólice ativada com sucesso!', {
+                        position: 'top-right',
+                    });
+                },
+                onError: () => {
+                    toast.error('Erro ao ativar apólice.', {
+                        position: 'top-right',
+                    });
+                },
+            },
+        );
+    };
+
+    const abrirRenovacao = (apolice: ApoliceResumo) => {
+        setApoliceParaRenovar(apolice);
+        setOpenRenovar(true);
+    };
+
+    const restaurarApolice = (id: number) => {
+        router.patch(
+            `/apolices/restaurar/${id}`,
+            {},
+            {
+                onSuccess: () => {
+                    toast.success('Apólice restaurada com sucesso!', {
+                        position: 'top-right',
+                    });
+                },
+                onError: () => {
+                    toast.error('Erro ao restaurar apólice.', {
+                        position: 'top-right',
+                    });
+                },
+            },
+        );
+    };
+
+    // Só exclusão manual e suspensão prolongada podem ser restauradas — ver
+    // Apolice::podeSerRestaurada() no backend, fonte da verdade desta regra.
+    const podeRestaurarApolice = (motivo: string | null) =>
+        motivo === 'manual' || motivo === 'suspensao_prolongada';
+
+    const rotuloMotivoCancelamento = (motivo: string | null) => {
+        switch (motivo) {
+            case 'atraso_primeira_parcela':
+                return 'Atraso da 1ª parcela';
+            case 'suspensao_prolongada':
+                return 'Suspensão prolongada';
+            case 'manual':
+                return 'Exclusão manual';
+            default:
+                return 'Não informado';
+        }
+    };
+
     return (
         <>
             <Head title="Administração" />
@@ -144,6 +238,10 @@ export default function Administracao({ users, inativos }: Props) {
                         <TabsTrigger value="clientes">
                             <Trash2 className="mr-1.5 size-4" />
                             Clientes Inativos
+                        </TabsTrigger>
+                        <TabsTrigger value="apolices">
+                            <ScrollText className="mr-1.5 size-4" />
+                            Apólices Inativas/Vencidas/Canceladas
                         </TabsTrigger>
                         <TabsTrigger value="sistema">
                             <Settings2 className="mr-1.5 size-4" />
@@ -373,6 +471,292 @@ export default function Administracao({ users, inativos }: Props) {
                         </div>
                     </TabsContent>
 
+                    <TabsContent value="apolices">
+                        <div className="flex flex-col gap-6">
+                            {/* Suspensas (inativas) */}
+                            <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
+                                <div className="border-b border-border/70 p-4 sm:p-5">
+                                    <h3 className="text-sm font-bold">
+                                        Apólices Inativas (Suspensas)
+                                    </h3>
+                                    <p className="text-xs text-muted-foreground">
+                                        Suspensas por atraso de parcela — o
+                                        cliente ainda está dentro do prazo de 30
+                                        dias antes do cancelamento automático
+                                        (Lei 15.040/2024, art. 21)
+                                    </p>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full border-collapse text-left">
+                                        <thead>
+                                            <tr className="border-b border-border/70 bg-muted/30 text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+                                                <th className="p-4 pl-6">
+                                                    Apólice
+                                                </th>
+                                                <th className="p-4">Cliente</th>
+                                                <th className="p-4">
+                                                    Suspensa em
+                                                </th>
+                                                <th className="p-4 pr-6 text-right">
+                                                    Ações
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-border/70 text-sm">
+                                            {apolicesSuspensas.length === 0 ? (
+                                                <tr>
+                                                    <td
+                                                        colSpan={4}
+                                                        className="p-10 text-center text-muted-foreground"
+                                                    >
+                                                        Nenhuma apólice suspensa
+                                                        no momento.
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                apolicesSuspensas.map(
+                                                    (apolice) => (
+                                                        <tr
+                                                            key={apolice.id}
+                                                            className="transition-colors hover:bg-muted/30"
+                                                        >
+                                                            <td className="flex items-center gap-3 p-4 pl-6">
+                                                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-amber-500">
+                                                                    <Ban className="size-4" />
+                                                                </span>
+                                                                <span className="font-semibold text-foreground">
+                                                                    #
+                                                                    {
+                                                                        apolice.numero_apolice
+                                                                    }
+                                                                </span>
+                                                            </td>
+                                                            <td className="p-4 text-muted-foreground">
+                                                                {apolice.cliente
+                                                                    ?.nome_completo ??
+                                                                    '—'}
+                                                            </td>
+                                                            <td className="p-4 text-muted-foreground">
+                                                                {formatarData(
+                                                                    apolice.suspensa_em,
+                                                                )}
+                                                            </td>
+                                                            <td className="p-4 pr-6 text-right">
+                                                                <button
+                                                                    onClick={() =>
+                                                                        ativarApolice(
+                                                                            apolice.id,
+                                                                        )
+                                                                    }
+                                                                    className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600 transition-colors hover:bg-emerald-500/20"
+                                                                >
+                                                                    <PlayCircle className="size-3.5" />
+                                                                    Ativar
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ),
+                                                )
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {/* Vencidas */}
+                            <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
+                                <div className="border-b border-border/70 p-4 sm:p-5">
+                                    <h3 className="text-sm font-bold">
+                                        Apólices Vencidas
+                                    </h3>
+                                    <p className="text-xs text-muted-foreground">
+                                        Vigência encerrada — podem ser renovadas
+                                        com um novo ciclo de datas e parcelas
+                                    </p>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full border-collapse text-left">
+                                        <thead>
+                                            <tr className="border-b border-border/70 bg-muted/30 text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+                                                <th className="p-4 pl-6">
+                                                    Apólice
+                                                </th>
+                                                <th className="p-4">Cliente</th>
+                                                <th className="p-4">
+                                                    Vencida em
+                                                </th>
+                                                <th className="p-4 pr-6 text-right">
+                                                    Ações
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-border/70 text-sm">
+                                            {apolicesVencidas.length === 0 ? (
+                                                <tr>
+                                                    <td
+                                                        colSpan={4}
+                                                        className="p-10 text-center text-muted-foreground"
+                                                    >
+                                                        Nenhuma apólice vencida
+                                                        no momento.
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                apolicesVencidas.map(
+                                                    (apolice) => (
+                                                        <tr
+                                                            key={apolice.id}
+                                                            className="transition-colors hover:bg-muted/30"
+                                                        >
+                                                            <td className="flex items-center gap-3 p-4 pl-6">
+                                                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-amber-500">
+                                                                    <RefreshCw className="size-4" />
+                                                                </span>
+                                                                <span className="font-semibold text-foreground">
+                                                                    #
+                                                                    {
+                                                                        apolice.numero_apolice
+                                                                    }
+                                                                </span>
+                                                            </td>
+                                                            <td className="p-4 text-muted-foreground">
+                                                                {apolice.cliente
+                                                                    ?.nome_completo ??
+                                                                    '—'}
+                                                            </td>
+                                                            <td className="p-4 text-muted-foreground">
+                                                                {formatarData(
+                                                                    apolice.fim_vigencia,
+                                                                )}
+                                                            </td>
+                                                            <td className="p-4 pr-6 text-right">
+                                                                <button
+                                                                    onClick={() =>
+                                                                        abrirRenovacao(
+                                                                            apolice,
+                                                                        )
+                                                                    }
+                                                                    className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600 transition-colors hover:bg-emerald-500/20"
+                                                                >
+                                                                    <RefreshCw className="size-3.5" />
+                                                                    Renovar
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ),
+                                                )
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {/* Canceladas */}
+                            <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
+                                <div className="border-b border-border/70 p-4 sm:p-5">
+                                    <h3 className="text-sm font-bold">
+                                        Apólices Canceladas
+                                    </h3>
+                                    <p className="text-xs text-muted-foreground">
+                                        Canceladas por atraso da 1ª parcela não
+                                        têm restauração (a cobertura nunca
+                                        chegou a valer) — as demais podem voltar
+                                    </p>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full border-collapse text-left">
+                                        <thead>
+                                            <tr className="border-b border-border/70 bg-muted/30 text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+                                                <th className="p-4 pl-6">
+                                                    Apólice
+                                                </th>
+                                                <th className="p-4">Cliente</th>
+                                                <th className="p-4">
+                                                    Cancelada em
+                                                </th>
+                                                <th className="p-4">Motivo</th>
+                                                <th className="p-4 pr-6 text-right">
+                                                    Ações
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-border/70 text-sm">
+                                            {apolicesCanceladas.length === 0 ? (
+                                                <tr>
+                                                    <td
+                                                        colSpan={5}
+                                                        className="p-10 text-center text-muted-foreground"
+                                                    >
+                                                        Nenhuma apólice
+                                                        cancelada.
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                apolicesCanceladas.map(
+                                                    (apolice) => (
+                                                        <tr
+                                                            key={apolice.id}
+                                                            className="transition-colors hover:bg-muted/30"
+                                                        >
+                                                            <td className="flex items-center gap-3 p-4 pl-6">
+                                                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
+                                                                    <Trash2 className="size-4" />
+                                                                </span>
+                                                                <span className="font-semibold text-foreground">
+                                                                    #
+                                                                    {
+                                                                        apolice.numero_apolice
+                                                                    }
+                                                                </span>
+                                                            </td>
+                                                            <td className="p-4 text-muted-foreground">
+                                                                {apolice.cliente
+                                                                    ?.nome_completo ??
+                                                                    '—'}
+                                                            </td>
+                                                            <td className="p-4 text-muted-foreground">
+                                                                {formatarData(
+                                                                    apolice.deleted_at,
+                                                                )}
+                                                            </td>
+                                                            <td className="p-4 text-muted-foreground">
+                                                                {rotuloMotivoCancelamento(
+                                                                    apolice.motivo_cancelamento,
+                                                                )}
+                                                            </td>
+                                                            <td className="p-4 pr-6 text-right">
+                                                                {podeRestaurarApolice(
+                                                                    apolice.motivo_cancelamento,
+                                                                ) ? (
+                                                                    <button
+                                                                        onClick={() =>
+                                                                            restaurarApolice(
+                                                                                apolice.id,
+                                                                            )
+                                                                        }
+                                                                        className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600 transition-colors hover:bg-emerald-500/20"
+                                                                    >
+                                                                        <RotateCcw className="size-3.5" />
+                                                                        Restaurar
+                                                                    </button>
+                                                                ) : (
+                                                                    <span className="text-xs font-medium text-rose-500">
+                                                                        Cancelamento
+                                                                        definitivo
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    ),
+                                                )
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </TabsContent>
+
                     <TabsContent value="sistema">
                         <div className="grid gap-4 lg:grid-cols-2">
                             <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
@@ -444,6 +828,12 @@ export default function Administracao({ users, inativos }: Props) {
                     user={usuarioSelecionado}
                 />
             )}
+
+            <RenovarApoliceModal
+                open={openRenovar}
+                setOpen={setOpenRenovar}
+                apolice={apoliceParaRenovar}
+            />
         </>
     );
 }

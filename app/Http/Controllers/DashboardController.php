@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\Apolice\ApoliceService;
 use App\Services\Cliente\SeguradoService;
+use App\Services\Notificacao\NotificacaoService;
 
 class DashboardController extends Controller
 {
@@ -11,10 +12,13 @@ class DashboardController extends Controller
 
     protected ApoliceService $apoliceService;
 
-    public function __construct(ApoliceService $apoliceService, SeguradoService $seguradoService)
+    protected NotificacaoService $notificacaoService;
+
+    public function __construct(ApoliceService $apoliceService, SeguradoService $seguradoService, NotificacaoService $notificacaoService)
     {
         $this->apoliceService = $apoliceService;
         $this->seguradoService = $seguradoService;
+        $this->notificacaoService = $notificacaoService;
     }
 
     public function index()
@@ -24,6 +28,7 @@ class DashboardController extends Controller
         $clientesDevedores = $this->apoliceService->contarClientesDevedores();
         $receitaDoMes = $this->apoliceService->receitaDoMes();
         $vencimentosProximos = $this->apoliceService->vencimentosProximos();
+        $notificacoesRecentes = $this->notificacaoService->recentes();
 
         // Dados para os gráficos do dashboard
         $receitaMensal = $this->apoliceService->receitaUltimosMeses();
@@ -36,6 +41,7 @@ class DashboardController extends Controller
             'clientesDevedores' => $clientesDevedores,
             'receitaDoMes' => $receitaDoMes,
             'vencimentosProximos' => $vencimentosProximos,
+            'notificacoesRecentes' => $notificacoesRecentes,
             'receitaMensal' => $receitaMensal,
             'clientesAtivosMensal' => $clientesAtivosMensal,
             'distribuicaoPorRamo' => $distribuicaoPorRamo,

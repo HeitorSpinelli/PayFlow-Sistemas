@@ -2,149 +2,195 @@
 
 namespace App\Jobs;
 
+use App\Models\Apolice;
+use App\Models\Automacao;
+use App\Models\Notificacoes;
+use App\Models\Parcelas;
+use App\Models\Segurado;
+use App\Services\Notificacao\NotificacaoService;
+use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use App\Models\Automacao;
-use App\Models\Segurado;
-use App\Models\Apolice;
-use App\Models\Parcelas;
-use App\Services\Notificacao\NotificacaoService;
-use Dom\Notation;
 
 class ProcessarAutomacoes implements ShouldQueue
 {
     use Queueable;
 
-    /**
-     * Create a new job instance.
-     */
-    public function __construct()
-    {
-        //
-    }
-
-    /**
-     * Executa a automação.
-     */
     public function handle(): void
     {
-        $service = new NotificacaoService();
-        $automacoes = Automacao::with(['notificacoes'])->where('ativo', true)->get();
+        $service = new NotificacaoService;
+        $automacoes = Automacao::with(['tipoNotificacao'])->where('ativo', true)->get();
 
         foreach ($automacoes as $automacao) {
             // Pula automações cujo tipo de notificação foi desativado
-            if (!$automacao->notificacoes || !$automacao->notificacoes->ativo) {
+            if (! $automacao->tipoNotificacao || ! $automacao->tipoNotificacao->ativo) {
                 continue;
             }
 
             match ($automacao->tipo_condicao) {
-                'apolice_vencendo'   => $this->processarApoliceVencendo($automacao, $service),
-                'parcela_vencendo'   => $this->processarParcelaVencendo($automacao, $service),
-                'parcela_em_atraso'  => $this->processarParcelaEmAtraso($automacao, $service),
-                'cliente_inativo'    => $this->processarClienteInativo($automacao, $service),
-                default              => null,
+                'apolice_vencendo' => $this->processarApoliceVencendo($automacao, $service),
+                'parcela_vencendo' => $this->processarParcelaVencendo($automacao, $service),
+                'parcela_em_atraso' => $this->processarParcelaEmAtraso($automacao, $service),
+                'cliente_inativo' => $this->processarClienteInativo($automacao, $service),
+                default => null,
             };
         }
     }
-    private function processarClienteInativo(Automacao $automacao, NotificacaoService $service): void
+
+    /**
+     * Decide se HOJE é um dia de disparo dado quantos dias faltam/já se
+     * passaram desde o limiar configurado (ex: dias antes de vencer, ou dias
+     * de atraso). Sem intervalo_dias: dispara uma única vez, exatamente
+     * quando offset == 0 (comportamento original, preservado). Com
+     * intervalo_dias: repete a cada N dias a partir dali, sempre que offset
+     * >= 0 — é isso que permite o "avisa de 5 em 5 dias" pedido.
+     */
+    private function ehDiaDeDisparo(Automacao $automacao, int $offset): bool
     {
-        $dataLimite = now()->subDays($automacao->dias);
-
-        $segurados = Segurado::where('status', 'Inativo')
-            ->where('updated_at', '<=', $dataLimite)
-            ->get();
-
-        foreach ($segurados as $segurado) {
-            $service->criarEEnviar([
-                'segurado_ids'        => [$segurado->id],
-                'canal'               => $automacao->canal,
-                'mensagem'            => $automacao->mensagem,
-                'tipo_notificacao_id' => $automacao->tipo_notificacao_id,
-            ]);
+        if ($offset < 0) {
+            return false;
         }
+
+        if ($automacao->intervalo_dias === null) {
+            return $offset === 0;
+        }
+
+        return $offset % $automacao->intervalo_dias === 0;
     }
 
-    private function processarParcelaEmAtraso(Automacao $automacao, NotificacaoService $service): void
+    /**
+     * Evita reenviar a mesma notificação mais de uma vez no mesmo dia pro
+     * mesmo segurado — só importa se o job rodar mais de uma vez num dia
+     * (ex: teste manual), já que ehDiaDeDisparo() já limita a 1x/dia por si só.
+     */
+    private function jaNotificadoHoje(int $seguradoId, int $tipoNotificacaoId): bool
     {
-        // 'dias' define a tolerância: só notifica parcelas vencidas há MAIS de X dias.
-        // Ex: se dias = 3, só notifica quem está em atraso há mais de 3 dias,
-        // evitando notificar no mesmo dia do vencimento.
-        $dataLimite = now()->subDays($automacao->dias);
-
-        // Busca parcelas com status 'vencida' E cuja data de vencimento
-        // já passou há mais de X dias (dataLimite).
-        // O with('apolice.cliente') carrega o relacionamento encadeado:
-        // parcela → apólice → cliente (segurado), tudo em uma única query
-        // pra evitar o problema de N+1 queries (buscar um por um seria muito lento).
-        $parcelas = parcelas::with('apolice.cliente')
-            ->where('status_pagamento', 'vencida')
-            ->where('data_vencimento', '<=', $dataLimite) // aqui deveria ser $dataLimite, não now()
-            ->get();
-
-        // Percorre cada parcela encontrada e dispara uma notificação
-        // pro segurado dono da apólice vinculada a essa parcela.
-        foreach ($parcelas as $parcela) {
-            // Navega o relacionamento: parcela → apolice → cliente (segurado)
-            $segurado = $parcela->apolice->cliente;
-
-            // Proteção: se a apólice foi deletada ou o cliente não existe,
-            // pula essa parcela sem quebrar o loop inteiro.
-            if (!$segurado) continue;
-
-            // Usa o serviço já existente pra criar o registro no banco
-            // E disparar o email/whatsapp pro segurado.
-            $service->criarEEnviar([
-                'segurado_ids'        => [$segurado->id],
-                'canal'               => $automacao->canal,
-                'mensagem'            => $automacao->mensagem,
-                'tipo_notificacao_id' => $automacao->tipo_notificacao_id,
-            ]);
-        }
+        return Notificacoes::where('segurado_id', $seguradoId)
+            ->where('tipo_notificacao_id', $tipoNotificacaoId)
+            ->whereDate('created_at', now())
+            ->exists();
     }
 
-    private function processarParcelaVencendo(Automacao $automacao, NotificacaoService $service): void
+    private function notificar(Automacao $automacao, NotificacaoService $service, Segurado $segurado): void
     {
-        // 'dias' define a antecedência do aviso: notifica só as parcelas cujo
-        // vencimento cai EXATAMENTE daqui a X dias (não um intervalo), pra evitar
-        // reenviar o mesmo aviso todo dia até o vencimento (o job roda diariamente).
-        $dataAlvo = now()->addDays($automacao->dias)->toDateString();
-
-        $parcelas = Parcelas::with('apolice.cliente')
-            ->whereDate('data_vencimento', $dataAlvo)
-            ->where('status_pagamento', '!=', 'paga')
-            ->get();
-
-        //Para cada parcela dentro de apolice do cliente dono da mesma usar o service de disparo de email
-        foreach ($parcelas as $parcela) {
-            $segurado = $parcela->apolice->cliente;
-
-            if (!$segurado) continue;
-
-            $service->criarEEnviar([
-                'segurado_ids'        => [$segurado->id],
-                'canal'               => $automacao->canal,
-                'mensagem'            => $automacao->mensagem,
-                'tipo_notificacao_id' => $automacao->tipo_notificacao_id,
-            ]);
+        if ($this->jaNotificadoHoje($segurado->id, $automacao->tipo_notificacao_id)) {
+            return;
         }
+
+        $service->criarEEnviar([
+            'segurado_ids' => [$segurado->id],
+            'canal' => $automacao->canal,
+            'mensagem' => $automacao->mensagem,
+            'tipo_notificacao_id' => $automacao->tipo_notificacao_id,
+        ]);
     }
+
+    /**
+     * "dias" = janela de antecedência (ex: 10 = avisa a partir de 10 dias
+     * antes de vencer). Antes buscava tudo num whereBetween e reenviava a
+     * MESMA apólice todo santo dia até vencer — trocado por checar dia a dia
+     * quantos faltam e só disparar nos dias certos (ver ehDiaDeDisparo()).
+     */
     private function processarApoliceVencendo(Automacao $automacao, NotificacaoService $service): void
     {
-        //define parcelas com status de pagamento vencidas ou data de vencimento menor igual a atual
-        $apolices = Apolice::with('cliente')->whereBetween('fim_vigencia', [now(), now()->addDays($automacao->dias)])->get();
+        $apolices = Apolice::with('cliente')
+            ->whereBetween('fim_vigencia', [now()->startOfDay(), now()->addDays($automacao->dias)->endOfDay()])
+            ->get();
 
-        //Para cada parcela dentro de apolice do cliente dono da mesma usar o service de disparo de email
         foreach ($apolices as $apolice) {
             $segurado = $apolice->cliente;
 
-            if (!$segurado) continue;
+            if (! $segurado) {
+                continue;
+            }
 
-            $service->criarEEnviar([
-                'segurado_ids'        => [$segurado->id],
-                'canal'               => $automacao->canal,
-                'mensagem'            => $automacao->mensagem,
-                'tipo_notificacao_id' => $automacao->tipo_notificacao_id,
-            ]);
+            $diasParaVencer = now()->startOfDay()->diffInDays($apolice->fim_vigencia, false);
+
+            if ($this->ehDiaDeDisparo($automacao, (int) $diasParaVencer)) {
+                $this->notificar($automacao, $service, $segurado);
+            }
+        }
+    }
+
+    /**
+     * "dias" = quantos dias antes do vencimento avisar. Mesma correção do
+     * método acima: antes usava whereDate == data exata (só uma chance de
+     * acertar o dia certo, e nunca repetia); agora usa uma janela e decide
+     * dia a dia, então intervalo_dias passa a funcionar aqui também.
+     */
+    private function processarParcelaVencendo(Automacao $automacao, NotificacaoService $service): void
+    {
+        $parcelas = Parcelas::with('apolice.cliente')
+            ->where('status_pagamento', '!=', 'paga')
+            ->whereBetween('data_vencimento', [now()->startOfDay(), now()->addDays($automacao->dias)->endOfDay()])
+            ->get();
+
+        foreach ($parcelas as $parcela) {
+            $segurado = $parcela->apolice?->cliente;
+
+            if (! $segurado) {
+                continue;
+            }
+
+            $diasParaVencer = now()->startOfDay()->diffInDays(Carbon::parse($parcela->data_vencimento), false);
+
+            if ($this->ehDiaDeDisparo($automacao, (int) $diasParaVencer)) {
+                $this->notificar($automacao, $service, $segurado);
+            }
+        }
+    }
+
+    /**
+     * "dias" = tolerância mínima de atraso antes do primeiro aviso. Antes
+     * buscava tudo que já passou de "dias" e reenviava todo santo dia pra
+     * sempre; agora só dispara exatamente no dia em que o atraso bate "dias"
+     * (sem intervalo) ou a cada intervalo_dias depois disso.
+     */
+    private function processarParcelaEmAtraso(Automacao $automacao, NotificacaoService $service): void
+    {
+        $parcelas = Parcelas::with('apolice.cliente')
+            ->where('status_pagamento', '!=', 'paga')
+            ->where('data_vencimento', '<', now()->startOfDay())
+            ->get();
+
+        foreach ($parcelas as $parcela) {
+            $segurado = $parcela->apolice?->cliente;
+
+            if (! $segurado) {
+                continue;
+            }
+
+            $diasEmAtraso = Carbon::parse($parcela->data_vencimento)->diffInDays(now()->startOfDay());
+            $offset = (int) $diasEmAtraso - $automacao->dias;
+
+            if ($this->ehDiaDeDisparo($automacao, $offset)) {
+                $this->notificar($automacao, $service, $segurado);
+            }
+        }
+    }
+
+    /**
+     * "dias" = há quanto tempo o cliente está sem nenhuma apólice vigente.
+     * A versão anterior filtrava por `status` — um accessor calculado em
+     * PHP (Segurado::getStatusAttribute()), não uma coluna do banco — então
+     * o `where('status', 'Inativo')` gerava erro de SQL (coluna inexistente)
+     * toda vez que rodasse. Trocado pela condição real via whereDoesntHave.
+     */
+    private function processarClienteInativo(Automacao $automacao, NotificacaoService $service): void
+    {
+        $segurados = Segurado::whereDoesntHave('apolices', function ($query) {
+            $query->ativas();
+        })
+            ->where('updated_at', '<=', now()->subDays($automacao->dias))
+            ->get();
+
+        foreach ($segurados as $segurado) {
+            $diasInativo = $segurado->updated_at->diffInDays(now()->startOfDay());
+            $offset = (int) $diasInativo - $automacao->dias;
+
+            if ($this->ehDiaDeDisparo($automacao, $offset)) {
+                $this->notificar($automacao, $service, $segurado);
+            }
         }
     }
 }

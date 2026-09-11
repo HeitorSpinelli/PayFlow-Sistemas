@@ -12,6 +12,7 @@ export interface Automacao {
     id: number;
     tipo_condicao: string;
     dias: number;
+    intervalo_dias: number | null;
     canal: string;
     mensagem: string;
     ativo: boolean;

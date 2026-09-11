@@ -1,10 +1,6 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Laravel\Fortify\Features;
-use App\Models\Segurado;
-use App\Models\TipoNotificacao;
-use App\Models\Automacao;
+use App\Console\Commands\AtualizarIndicadoresEconomicos;
 use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\ApolicesController;
 use App\Http\Controllers\AutomacoesController;
@@ -12,17 +8,22 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ImportacaoController;
 use App\Http\Controllers\NotificacoesController;
 use App\Http\Controllers\pagamentoController;
-use App\Http\Controllers\SeguradoraController;
 use App\Http\Controllers\SeguradoController;
+use App\Http\Controllers\SeguradoraController;
 use App\Http\Controllers\TipoNotificacoesController;
 use App\Http\Controllers\UserController;
+use App\Models\Automacao;
+use App\Models\Notificacoes;
+use App\Models\Segurado;
+use App\Models\TipoNotificacao;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schedule;
-use App\Console\Commands\AtualizarIndicadoresEconomicos;
+use Laravel\Fortify\Features;
 
 Schedule::command(AtualizarIndicadoresEconomicos::class)->daily();
 
 /* ------------------------------------------------------------------ */
-/* Rota Inicial                                                        */
+/* Rota Inicial */
 /* ------------------------------------------------------------------ */
 
 Route::inertia('/', 'welcome', [
@@ -30,7 +31,7 @@ Route::inertia('/', 'welcome', [
 ])->name('home');
 
 /* ------------------------------------------------------------------ */
-/* Rotas Protegidas por Autenticação                                   */
+/* Rotas Protegidas por Autenticação */
 /* ------------------------------------------------------------------ */
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -56,7 +57,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/{id}', [ApolicesController::class, 'update'])->name('apolices.update');
         Route::delete('/{id}', [ApolicesController::class, 'destroy'])->name('apolices.destroy');
         Route::patch('/{id}/alterar-ramo', [ApolicesController::class, 'updateRamo']);
-        Route::get('/inativos', [ApolicesController::class, 'inativos'])->name('apolices.inativos');
+        Route::patch('/ativar/{id}', [ApolicesController::class, 'ativar'])->name('apolices.ativar');
+        Route::patch('/renovar/{id}', [ApolicesController::class, 'renovar'])->name('apolices.renovar');
         Route::patch('/restaurar/{id}', [ApolicesController::class, 'restaurar'])->name('apolices.restore');
         Route::get('/exportar', [ApolicesController::class, 'exportar']);
     });
@@ -74,7 +76,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/agenda', [AgendaController::class, 'index'])->name('agenda');
 
     // Páginas Estáticas
-    Route::get('/importar', fn() => inertia('FunctionsApp/importar', [
+    Route::get('/importar', fn () => inertia('FunctionsApp/importar', [
         'importResumo' => session('importResumo'),
     ]))->name('importar');
 
@@ -83,7 +85,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 /* ------------------------------------------------------------------ */
-/* Rotas Exclusivas para Administradores                               */
+/* Rotas Exclusivas para Administradores */
 /* ------------------------------------------------------------------ */
 
 Route::middleware(['auth', 'can:is-admin'])->group(function () {
@@ -100,14 +102,14 @@ Route::middleware(['auth', 'can:is-admin'])->group(function () {
     Route::prefix('/notificacoes')->group(function () {
         Route::get('/', function () {
             return inertia('FunctionsApp/notificacoes', [
-                'totalHoje'     => \App\Models\Notificacoes::whereDate('created_at', today())->count(),
-                'totalEnviados' => \App\Models\Notificacoes::where('status', 'Enviado')->count(),
-                'totalPendentes' => \App\Models\Notificacoes::where('status', 'Pendente')->count(),
-                'totalFalhas'   => \App\Models\Notificacoes::where('status', 'Falha')->count(),
-                'tipos'        => TipoNotificacao::all(),
-                'segurados'    => Segurado::all(),
-                'notificacoes' => \App\Models\Notificacoes::with(['tipoNotificacao', 'segurado'])->paginate(10),
-                'automacoes' => \App\Models\Automacao::with('notificacoes')->get(),
+                'totalHoje' => Notificacoes::whereDate('created_at', today())->count(),
+                'totalEnviados' => Notificacoes::where('status', 'Enviado')->count(),
+                'totalPendentes' => Notificacoes::where('status', 'Pendente')->count(),
+                'totalFalhas' => Notificacoes::where('status', 'Falha')->count(),
+                'tipos' => TipoNotificacao::all(),
+                'segurados' => Segurado::all(),
+                'notificacoes' => Notificacoes::with(['tipoNotificacao', 'segurado'])->paginate(10),
+                'automacoes' => Automacao::with('tipoNotificacao')->get(),
             ]);
         })->name('notificacoes');
         Route::post('/', [NotificacoesController::class, 'store']);
@@ -130,7 +132,6 @@ Route::middleware(['auth', 'can:is-admin'])->group(function () {
         Route::delete('/{id}', [AutomacoesController::class, 'destroy']);
     });
 
-
     // Administração
     Route::prefix('/administracao')->group(function () {
         Route::get('/usuarios', [UserController::class, 'index'])->name('users');
@@ -138,4 +139,4 @@ Route::middleware(['auth', 'can:is-admin'])->group(function () {
     });
 });
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';

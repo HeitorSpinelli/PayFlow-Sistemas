@@ -2,7 +2,6 @@
 
 namespace App\Services\Cliente;
 
-use App\Models\Apolice;
 use App\Models\Segurado;
 use App\Services\Apolice\ApoliceService;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +22,7 @@ class SeguradoService
         try {
             Segurado::create($data);
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao cadastrar segurado: ' . $e->getMessage());
+            throw new \Exception('Erro ao cadastrar segurado: '.$e->getMessage());
         }
     }
 
@@ -43,7 +42,7 @@ class SeguradoService
                 $segurado->delete();
             });
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao excluir segurado: ' . $e->getMessage());
+            throw new \Exception('Erro ao excluir segurado: '.$e->getMessage());
         }
     }
 
@@ -54,30 +53,40 @@ class SeguradoService
             $segurado = Segurado::findOrFail($id);
             $segurado->update($data);
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao atualizar segurado: ' . $e->getMessage());
+            throw new \Exception('Erro ao atualizar segurado: '.$e->getMessage());
         }
     }
 
-    //Listando apenas clientes que estão com deleted at 
+    // Listando apenas clientes que estão com deleted at
     public function listarInativos()
     {
         return Segurado::onlyTrashed()->get();
     }
 
-    //Restaura o segurado pelo id
+    // Restaura o segurado pelo id
     public function restore(int $id)
     {
         try {
             DB::transaction(function () use ($id) {
                 $segurado = Segurado::withTrashed()->findOrFail($id);
                 $segurado->restore();
-                $apolices = $segurado->apolices()->onlyTrashed()->get();
-                foreach ($apolices as $apolice) {
-                    $this->apolice_service->restore($apolice->id);
+
+                // Restaura junto as apólices canceladas do cliente que podem
+                // voltar (exclusão manual ou suspensão prolongada). As
+                // canceladas por atraso da 1ª parcela ficam de fora — o
+                // ApoliceService::restore() rejeita essas, e o catch aqui só
+                // pula essa apólice específica sem travar a restauração do
+                // cliente como um todo.
+                foreach ($segurado->apolices()->onlyTrashed()->get() as $apolice) {
+                    try {
+                        $this->apolice_service->restore($apolice->id);
+                    } catch (\Exception) {
+                        continue;
+                    }
                 }
             });
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao restaurar segurado: ' . $e->getMessage());
+            throw new \Exception('Erro ao restaurar segurado: '.$e->getMessage());
         }
     }
 

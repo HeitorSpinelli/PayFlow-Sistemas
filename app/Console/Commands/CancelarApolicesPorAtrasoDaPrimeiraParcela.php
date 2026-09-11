@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Apolice;
 use App\Models\Parcelas;
 use App\Services\Apolice\ApoliceService;
 use Illuminate\Console\Command;
@@ -35,7 +36,7 @@ class CancelarApolicesPorAtrasoDaPrimeiraParcela extends Command
             }
 
             try {
-                $apoliceService->destroy($apolice->id);
+                $apoliceService->destroy($apolice->id, Apolice::MOTIVO_CANCELAMENTO_ATRASO_PRIMEIRA_PARCELA);
                 $canceladas++;
                 $this->info("Apólice #{$apolice->numero_apolice} cancelada — 1ª parcela em atraso.");
             } catch (\Exception $e) {

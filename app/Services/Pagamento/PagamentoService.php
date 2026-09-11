@@ -86,18 +86,44 @@ class PagamentoService
                 // Reabre a parcela — sem isso ela fica "paga" pra sempre mesmo
                 // sem nenhum pagamento associado, e a constraint de unicidade
                 // (apolice_id, parcela) impediria registrar outro pagamento nela
-                Parcelas::where('apolice_id', $pagamento->apolice_id)
+                $parcela = Parcelas::where('apolice_id', $pagamento->apolice_id)
                     ->where('numero_parcela', $pagamento->parcela)
-                    ->update([
-                        'status_pagamento' => 'em_aberto',
-                        'data_pagamento' => null,
-                    ]);
+                    ->first();
+
+                $parcela?->update([
+                    'status_pagamento' => 'em_aberto',
+                    'data_pagamento' => null,
+                ]);
 
                 $pagamento->delete();
+
+                if ($parcela) {
+                    $this->suspenderSeParcelaReabertaEstaAtrasada($parcela);
+                }
             });
         } catch (\Exception $e) {
             Log::error('Erro ao excluir pagamento', ['id' => $id, 'erro' => $e->getMessage()]);
             throw new \Exception('Não foi possível excluir o pagamento. Tente novamente ou contate o suporte.');
+        }
+    }
+
+    /**
+     * Excluir um pagamento pode reabrir uma parcela (2ª em diante) que já
+     * estava vencida — sem isso a apólice ficaria indevidamente "em dia" até
+     * o próximo horário do comando agendado (VerificarInadimplenciaParcelas,
+     * dailyAt 07:15), até quase 24h depois do estorno. Mesma condição usada
+     * lá, só que reavaliada na hora.
+     */
+    private function suspenderSeParcelaReabertaEstaAtrasada(Parcelas $parcela): void
+    {
+        $apolice = $parcela->apolice;
+
+        if (! $apolice || $apolice->suspensa_em !== null) {
+            return;
+        }
+
+        if ($parcela->numero_parcela >= 2 && $parcela->data_vencimento < now()) {
+            $apolice->update(['suspensa_em' => now()]);
         }
     }
 

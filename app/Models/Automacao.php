@@ -3,12 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\User;
-use App\Models\TipoNotificacao;
 
 class Automacao extends Model
 {
-
     protected $table = 'automacoes';
 
     protected $fillable = [
@@ -17,15 +14,18 @@ class Automacao extends Model
         'tipo_notificacao_id',
         'ativo',
         'dias',
+        'intervalo_dias',
         'canal',
-        'mensagem'
+        'mensagem',
     ];
 
-    public function user(){
+    public function user()
+    {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function notificacoes(){
+    public function tipoNotificacao()
+    {
         return $this->belongsTo(TipoNotificacao::class, 'tipo_notificacao_id');
     }
 }

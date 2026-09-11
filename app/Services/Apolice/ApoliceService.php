@@ -180,10 +180,10 @@ class ApoliceService
         }
     }
 
-    public function destroy(int $id)
+    public function destroy(int $id, string $motivo = Apolice::MOTIVO_CANCELAMENTO_MANUAL)
     {
         try {
-            DB::transaction(function () use ($id) {
+            DB::transaction(function () use ($id, $motivo) {
                 $apolice = Apolice::findOrFail($id);
                 foreach ($apolice->parcelas as $parcela) {
                     $parcela->delete();
@@ -191,6 +191,7 @@ class ApoliceService
                 foreach ($apolice->pagamentos as $pagamento) {
                     $pagamento->delete();
                 }
+                $apolice->update(['motivo_cancelamento' => $motivo]);
                 $apolice->delete();
             });
         } catch (\Exception $e) {
@@ -339,30 +340,190 @@ class ApoliceService
         }
     }
 
-    // Listando apenas clientes que estão com deleted at
-    public function listarInativos()
+    /**
+     * Apólices canceladas (soft-deleted) por exclusão manual, atraso da 1ª
+     * parcela ou suspensão prolongada. Exclui as arquivadas por renovação
+     * (motivo "renovada") — essas não são uma cancelação, são um ciclo
+     * fechado com sucesso porque uma apólice nova assumiu a cobertura, então
+     * não fazem sentido nesta lista de pendências administrativas.
+     */
+    public function listarCanceladas()
     {
-        return Apolice::onlyTrashed()->get();
+        return Apolice::onlyTrashed()
+            ->where(function ($q) {
+                $q->whereNull('motivo_cancelamento')
+                    ->orWhere('motivo_cancelamento', '!=', Apolice::MOTIVO_CANCELAMENTO_RENOVADA);
+            })
+            ->with(['cliente', 'seguradora', 'ramo'])
+            ->latest('deleted_at')
+            ->get();
     }
 
-    // Restaura o segurado pelo id
-    public function restore(int $id)
+    /**
+     * Apólices com vigência já encerrada mas ainda não canceladas — candidatas
+     * a renovação. Tem prioridade sobre "suspensa": uma apólice vencida não
+     * tem mais o que "ativar", ela precisa de uma nova vigência.
+     */
+    public function listarVencidas()
+    {
+        return Apolice::where('fim_vigencia', '<', now())
+            ->with(['cliente', 'seguradora', 'ramo'])
+            ->orderBy('fim_vigencia')
+            ->get();
+    }
+
+    /**
+     * Apólices suspensas por atraso de parcela (2ª em diante) que ainda estão
+     * dentro do prazo de vigência — excluímos as já vencidas porque essas
+     * caem em listarVencidas() em vez desta lista.
+     */
+    public function listarSuspensas()
+    {
+        return Apolice::whereNotNull('suspensa_em')
+            ->where('fim_vigencia', '>=', now())
+            ->with(['cliente', 'seguradora', 'ramo'])
+            ->orderBy('suspensa_em')
+            ->get();
+    }
+
+    /**
+     * Reativação manual de uma apólice suspensa — diferente da reativação
+     * automática em PagamentoService::reavaliarSuspensaoApolice(), que só
+     * libera quando NENHUMA parcela em atraso resta. Aqui é uma decisão do
+     * administrador (ex: cliente regularizou por fora do sistema), por isso
+     * não checa parcelas em atraso antes de limpar suspensa_em.
+     */
+    public function ativar(int $id): void
     {
         try {
-            DB::transaction(function () use ($id) {
-                $apolice = Apolice::withTrashed()->findOrFail($id);
+            $apolice = Apolice::findOrFail($id);
+            $apolice->update(['suspensa_em' => null]);
+        } catch (\Exception $e) {
+            throw new \Exception('Erro ao ativar apólice: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Renova uma apólice vencida: cada renovação é uma APÓLICE NOVA (número
+     * novo, escolhido pelo usuário), não uma edição da antiga — é assim que
+     * seguradoras emitem renovação na prática, e é o que permite auditar
+     * cada ciclo de vigência separadamente depois. A apólice antiga fica
+     * arquivada (soft-delete, motivo "renovada"): suas parcelas e pagamentos
+     * NÃO são apagados, só a antiga deixa de aparecer como pendência.
+     */
+    public function renovar(int $id, array $data): Apolice
+    {
+        try {
+            return DB::transaction(function () use ($id, $data) {
+                $apoliceAntiga = Apolice::with([
+                    'dadosVeiculo', 'dadosResidencia', 'dadosVida', 'beneficiarios', 'dadosEmpresarial',
+                ])->findOrFail($id);
+
+                $novaApolice = Apolice::create([
+                    'numero_apolice' => $data['numero_apolice'],
+                    'cliente_id' => $apoliceAntiga->cliente_id,
+                    'seguradora_id' => $apoliceAntiga->seguradora_id,
+                    'ramo_id' => $apoliceAntiga->ramo_id,
+                    'valor_premio_total' => $data['valor_premio_total'],
+                    'valor_cobertura' => $data['valor_cobertura'] ?? $apoliceAntiga->valor_cobertura,
+                    'quantidade_parcelas' => $data['quantidade_parcelas'],
+                    'forma_pagamento' => $apoliceAntiga->forma_pagamento,
+                    'inicio_vigencia' => $data['inicio_vigencia'],
+                    'fim_vigencia' => $data['fim_vigencia'],
+                    'observacoes' => $apoliceAntiga->observacoes,
+                ]);
+
+                $quantidadeParcelas = $data['quantidade_parcelas'];
+                $valorParcela = round($data['valor_premio_total'] / $quantidadeParcelas, 2);
+                $dataBase = Carbon::parse($data['inicio_vigencia']);
+
+                for ($i = 1; $i <= $quantidadeParcelas; $i++) {
+                    $valorDestaParcela = $i === $quantidadeParcelas
+                        ? round($data['valor_premio_total'] - ($valorParcela * ($quantidadeParcelas - 1)), 2)
+                        : $valorParcela;
+
+                    Parcelas::create([
+                        'apolice_id' => $novaApolice->id,
+                        'numero_parcela' => $i,
+                        'valor_parcela' => $valorDestaParcela,
+                        'data_vencimento' => $dataBase->copy()->addMonthsNoOverflow($i),
+                        'status_pagamento' => 'em_aberto',
+                    ]);
+                }
+
+                $ramo = Ramo::find($apoliceAntiga->ramo_id);
+                $this->copiarDadosExtras($apoliceAntiga, $novaApolice, $ramo?->categoria);
+
+                $apoliceAntiga->update(['motivo_cancelamento' => Apolice::MOTIVO_CANCELAMENTO_RENOVADA]);
+                $apoliceAntiga->delete();
+
+                return $novaApolice;
+            });
+        } catch (\Exception $e) {
+            throw new \Exception('Erro ao renovar apólice: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Copia os dados extras da categoria do ramo (veículo/residência/vida+
+     * beneficiários/empresarial) da apólice antiga para a nova — o bem
+     * segurado (o carro, o imóvel, a pessoa, a empresa) não muda numa
+     * renovação, só o ciclo de vigência e os valores.
+     */
+    private function copiarDadosExtras(Apolice $antiga, Apolice $nova, ?string $categoria): void
+    {
+        if ($categoria === Ramo::CATEGORIA_VEICULO && $antiga->dadosVeiculo) {
+            $copia = $antiga->dadosVeiculo->replicate(['created_at', 'updated_at']);
+            $copia->apolice_id = $nova->id;
+            $copia->save();
+        } elseif ($categoria === Ramo::CATEGORIA_RESIDENCIAL && $antiga->dadosResidencia) {
+            $copia = $antiga->dadosResidencia->replicate(['created_at', 'updated_at']);
+            $copia->apolice_id = $nova->id;
+            $copia->save();
+        } elseif ($categoria === Ramo::CATEGORIA_VIDA && $antiga->dadosVida) {
+            $copia = $antiga->dadosVida->replicate(['created_at', 'updated_at']);
+            $copia->apolice_id = $nova->id;
+            $copia->save();
+
+            foreach ($antiga->beneficiarios as $beneficiario) {
+                $copiaBeneficiario = $beneficiario->replicate(['created_at', 'updated_at']);
+                $copiaBeneficiario->apolice_id = $nova->id;
+                $copiaBeneficiario->save();
+            }
+        } elseif ($categoria === Ramo::CATEGORIA_EMPRESARIAL && $antiga->dadosEmpresarial) {
+            $copia = $antiga->dadosEmpresarial->replicate(['created_at', 'updated_at']);
+            $copia->apolice_id = $nova->id;
+            $copia->save();
+        }
+    }
+
+    /**
+     * Restaura uma apólice cancelada — só permitido para os motivos em
+     * podeSerRestaurada() (exclusão manual ou suspensão prolongada). Ver
+     * Apolice::podeSerRestaurada() para a regra completa.
+     */
+    public function restore(int $id): void
+    {
+        $apolice = Apolice::withTrashed()->findOrFail($id);
+
+        if (! $apolice->podeSerRestaurada()) {
+            throw new \Exception('Esta apólice não pode ser restaurada — cadastre uma apólice nova.');
+        }
+
+        try {
+            DB::transaction(function () use ($apolice) {
                 $apolice->restore();
-                $parcelas = $apolice->parcelas()->onlyTrashed()->get();
-                foreach ($parcelas as $parcela) {
+                $apolice->update(['motivo_cancelamento' => null]);
+
+                foreach ($apolice->parcelas()->onlyTrashed()->get() as $parcela) {
                     $parcela->restore();
                 }
-                $pagamentos = $apolice->pagamentos()->onlyTrashed()->get();
-                foreach ($pagamentos as $pagamento) {
+                foreach ($apolice->pagamentos()->onlyTrashed()->get() as $pagamento) {
                     $pagamento->restore();
                 }
             });
         } catch (\Exception $e) {
-            throw new \Exception('Erro ao restaurar segurado: '.$e->getMessage());
+            throw new \Exception('Erro ao restaurar apólice: '.$e->getMessage());
         }
     }
 

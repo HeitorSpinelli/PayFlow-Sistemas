@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAutomacaoRequest;
 use App\Models\Automacao;
 use Illuminate\Http\Request;
@@ -29,27 +28,31 @@ class AutomacoesController extends Controller
             }
 
             Automacao::create([
-                'user_id'             => auth()->id(),
-                'tipo_condicao'       => $request->tipo_condicao,
-                'dias'                => $request->dias,
-                'canal'               => $request->canal,
+                'user_id' => auth()->id(),
+                'tipo_condicao' => $request->tipo_condicao,
+                'dias' => $request->dias,
+                'intervalo_dias' => $request->intervalo_dias,
+                'canal' => $request->canal,
                 'tipo_notificacao_id' => $request->tipo_notificacao_id,
-                'mensagem'            => $request->mensagem,
-                'ativo'               => $request->ativo ?? true,
+                'mensagem' => $request->mensagem,
+                'ativo' => $request->ativo ?? true,
             ]);
+
             return redirect()->back()->with('success', 'Automação criada com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao criar automação: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erro ao criar automação: '.$e->getMessage());
         }
     }
+
     public function update(StoreAutomacaoRequest $request, string $id)
     {
         try {
             $automacao = Automacao::findOrFail($id);
             $automacao->update($request->validated());
+
             return redirect()->back()->with('success', 'Automação atualizada!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao atualizar: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erro ao atualizar: '.$e->getMessage());
         }
     }
 
@@ -60,11 +63,12 @@ class AutomacoesController extends Controller
             $ativo = Automacao::findOrFail($id);
 
             $request->validate([
-                'ativo' => 'required|boolean'
+                'ativo' => 'required|boolean',
             ]);
             $ativo->update([
-                'ativo' => $request->ativo
+                'ativo' => $request->ativo,
             ]);
+
             return redirect()->back()->with('success', 'Status Atualizado');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Erros ao atualizar status');
@@ -76,9 +80,10 @@ class AutomacoesController extends Controller
         try {
             $automacao = Automacao::findOrFail($id);
             $automacao->delete();
+
             return redirect()->back()->with('success', 'Automação excluída');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao excluir automação: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erro ao excluir automação: '.$e->getMessage());
         }
     }
 }

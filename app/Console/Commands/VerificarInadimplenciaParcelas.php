@@ -126,7 +126,7 @@ class VerificarInadimplenciaParcelas extends Command
 
         foreach ($apolices as $apolice) {
             try {
-                $apoliceService->destroy($apolice->id);
+                $apoliceService->destroy($apolice->id, Apolice::MOTIVO_CANCELAMENTO_SUSPENSAO_PROLONGADA);
                 $this->info("Apólice #{$apolice->numero_apolice} cancelada — suspensa há mais de ".self::DIAS_PARA_CANCELAMENTO.' dias.');
             } catch (\Exception $e) {
                 $this->error("Falha ao cancelar apólice #{$apolice->id}: ".$e->getMessage());

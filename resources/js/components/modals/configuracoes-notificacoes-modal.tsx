@@ -50,6 +50,7 @@ export default function ConfigNotificacaoModal({
     } = useForm({
         tipo_condicao: '',
         dias: '',
+        intervalo_dias: '',
         canal: '',
         tipo_notificacao_id: '',
         mensagem: '',
@@ -327,42 +328,68 @@ export default function ConfigNotificacaoModal({
                                     Nova Automação
                                 </p>
 
-                                <div className="grid grid-cols-2 gap-2">
-                                    <select
-                                        value={dataAuto.tipo_condicao}
-                                        onChange={(e) =>
-                                            setDataAuto(
-                                                'tipo_condicao',
-                                                e.target.value,
-                                            )
-                                        }
-                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 text-sm focus:ring-2 focus:ring-emerald-500/30 focus:outline-none"
-                                    >
-                                        <option value="">Condição...</option>
-                                        <option value="apolice_vencendo">
-                                            Apólice vencendo
-                                        </option>
-                                        <option value="parcela_vencendo">
-                                            Parcela vencendo
-                                        </option>
-                                        <option value="parcela_em_atraso">
-                                            Parcela em atraso
-                                        </option>
-                                        <option value="cliente_inativo">
-                                            Cliente inativo
-                                        </option>
-                                    </select>
+                                <select
+                                    value={dataAuto.tipo_condicao}
+                                    onChange={(e) =>
+                                        setDataAuto(
+                                            'tipo_condicao',
+                                            e.target.value,
+                                        )
+                                    }
+                                    className="h-10 rounded-xl border border-border/70 bg-background px-3 text-sm focus:ring-2 focus:ring-emerald-500/30 focus:outline-none"
+                                >
+                                    <option value="">Condição...</option>
+                                    <option value="apolice_vencendo">
+                                        Apólice vencendo
+                                    </option>
+                                    <option value="parcela_vencendo">
+                                        Parcela vencendo
+                                    </option>
+                                    <option value="parcela_em_atraso">
+                                        Parcela em atraso
+                                    </option>
+                                    <option value="cliente_inativo">
+                                        Cliente inativo
+                                    </option>
+                                </select>
 
-                                    <input
-                                        type="number"
-                                        min={1}
-                                        value={dataAuto.dias}
-                                        onChange={(e) =>
-                                            setDataAuto('dias', e.target.value)
-                                        }
-                                        placeholder="Dias..."
-                                        className="h-10 rounded-xl border border-border/70 bg-background px-3 text-sm focus:ring-2 focus:ring-emerald-500/30 focus:outline-none"
-                                    />
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div className="flex flex-col gap-1">
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={dataAuto.dias}
+                                            onChange={(e) =>
+                                                setDataAuto(
+                                                    'dias',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            placeholder="Dias..."
+                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 text-sm focus:ring-2 focus:ring-emerald-500/30 focus:outline-none"
+                                        />
+                                        <span className="text-[11px] text-muted-foreground">
+                                            Antecedência/limiar
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={dataAuto.intervalo_dias}
+                                            onChange={(e) =>
+                                                setDataAuto(
+                                                    'intervalo_dias',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            placeholder="Repetir a cada..."
+                                            className="h-10 rounded-xl border border-border/70 bg-background px-3 text-sm focus:ring-2 focus:ring-emerald-500/30 focus:outline-none"
+                                        />
+                                        <span className="text-[11px] text-muted-foreground">
+                                            Opcional — em branco avisa 1x
+                                        </span>
+                                    </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-2">
@@ -444,6 +471,9 @@ export default function ConfigNotificacaoModal({
                                                     <span className="ml-1.5 text-xs font-normal text-muted-foreground">
                                                         — {automacao.dias}{' '}
                                                         dia(s)
+                                                        {automacao.intervalo_dias
+                                                            ? `, repete a cada ${automacao.intervalo_dias}d`
+                                                            : ''}
                                                     </span>
                                                 </p>
                                                 <p className="mt-0.5 text-xs text-muted-foreground">
