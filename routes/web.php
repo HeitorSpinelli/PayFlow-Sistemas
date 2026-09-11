@@ -80,6 +80,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         'importResumo' => session('importResumo'),
     ]))->name('importar');
 
+    Route::get('/ajuda', fn () => inertia('FunctionsApp/ajuda'))->name('ajuda');
+
     // Módulo: Importação
     Route::post('/importar-dados', [ImportacaoController::class, 'store'])->name('importar-dados.store');
 });
@@ -89,6 +91,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 /* ------------------------------------------------------------------ */
 
 Route::middleware(['auth', 'can:is-admin'])->group(function () {
+
+    // Ajuda: Documentação do TCC (download restrito a administradores)
+    Route::get('/ajuda/documentacao-tcc', function () {
+        return response()->download(
+            storage_path('app/private/documentacao-tcc.docx'),
+            'Documentacao-TCC-PayFlow.docx'
+        );
+    })->name('ajuda.documentacao-tcc');
 
     // Módulo: Seguradoras
     Route::prefix('seguradoras')->group(function () {
