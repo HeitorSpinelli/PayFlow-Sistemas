@@ -218,6 +218,25 @@ export default function CreatePagamentoModal({
     }, [data.apolice_id]);
 
     const handleSubmit = () => {
+        // Antes de enviar, garante que as etapas anteriores (cadastro do
+        // cliente e da apólice) não foram puladas — sem isso o backend só
+        // rejeita "apolice_id" como obrigatório, sem explicar o motivo real.
+        if (!data.segurado_id) {
+            toast.error(
+                'Selecione um segurado cadastrado antes de registrar o pagamento. Se o cliente ainda não existe, cadastre-o primeiro.',
+            );
+
+            return;
+        }
+
+        if (!data.apolice_id) {
+            toast.error(
+                'Esse segurado ainda não possui nenhuma apólice cadastrada. Cadastre uma apólice para ele antes de registrar o pagamento.',
+            );
+
+            return;
+        }
+
         post('/pagamentos', {
             onSuccess: () => {
                 toast.success('Pagamento registrado com sucesso!');
@@ -355,7 +374,9 @@ export default function CreatePagamentoModal({
                                             sugestoes.length === 0 &&
                                             !data.segurado_id && (
                                                 <div className="absolute right-0 left-0 z-50 mt-1 rounded-xl border border-border/70 bg-popover px-3 py-2 text-sm text-muted-foreground shadow-xl">
-                                                    Nenhum segurado encontrado
+                                                    Nenhum segurado encontrado.
+                                                    Cadastre o cliente antes
+                                                    de registrar o pagamento.
                                                 </div>
                                             )}
                                     </div>
@@ -407,7 +428,9 @@ export default function CreatePagamentoModal({
                                                     0 && (
                                                     <div className="px-3 py-2 text-sm text-muted-foreground">
                                                         Nenhuma apólice para
-                                                        esse segurado
+                                                        esse segurado. Cadastre
+                                                        uma apólice antes de
+                                                        registrar o pagamento.
                                                     </div>
                                                 )}
                                                 {apolicesDoSegurado.map(
