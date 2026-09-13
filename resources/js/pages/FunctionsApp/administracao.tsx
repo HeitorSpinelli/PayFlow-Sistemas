@@ -129,20 +129,16 @@ export default function Administracao({
         setOpenPerfil(true);
     };
 
+    // Os toasts de sucesso não são mostrados aqui — o layout já mostra
+    // automaticamente a partir da flash message do backend; duplicar com
+    // toast.success aqui mostrava dois avisos a cada ação.
     const restaurarSegurado = (id: number) => {
         router.patch(
             `/clientes/restaurar/${id}`,
             {},
             {
-                onSuccess: () => {
-                    toast.success('Cliente restaurado com sucesso!', {
-                        position: 'top-right',
-                    });
-                },
                 onError: () => {
-                    toast.error('Erro ao restaurar cliente.', {
-                        position: 'top-right',
-                    });
+                    toast.error('Erro ao restaurar cliente.');
                 },
             },
         );
@@ -153,15 +149,8 @@ export default function Administracao({
             `/apolices/ativar/${id}`,
             {},
             {
-                onSuccess: () => {
-                    toast.success('Apólice ativada com sucesso!', {
-                        position: 'top-right',
-                    });
-                },
                 onError: () => {
-                    toast.error('Erro ao ativar apólice.', {
-                        position: 'top-right',
-                    });
+                    toast.error('Erro ao ativar apólice.');
                 },
             },
         );
@@ -177,15 +166,8 @@ export default function Administracao({
             `/apolices/restaurar/${id}`,
             {},
             {
-                onSuccess: () => {
-                    toast.success('Apólice restaurada com sucesso!', {
-                        position: 'top-right',
-                    });
-                },
                 onError: () => {
-                    toast.error('Erro ao restaurar apólice.', {
-                        position: 'top-right',
-                    });
+                    toast.error('Erro ao restaurar apólice.');
                 },
             },
         );

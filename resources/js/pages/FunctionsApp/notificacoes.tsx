@@ -131,23 +131,15 @@ export default function Notificacoes({
     const abrirModal = (canal: Canal) => setModalCanal(canal);
     const fecharModal = () => setModalCanal(null);
 
+    // O toast de sucesso não é mostrado aqui — o layout já mostra
+    // automaticamente a partir da flash message do backend.
     const toggleAutomacao = (id: number, ativo: boolean) => {
         router.patch(
             `/automacoes/${id}/toggle`,
             { ativo: !ativo },
             {
-                onSuccess: () => {
-                    toast.success(
-                        ativo ? 'Automação desativada!' : 'Automação ativada!',
-                        {
-                            position: 'top-right',
-                        },
-                    );
-                },
                 onError: () => {
-                    toast.error('Erro ao atualizar automação.', {
-                        position: 'top-right',
-                    });
+                    toast.error('Erro ao atualizar automação.');
                 },
             },
         );
@@ -595,6 +587,9 @@ export default function Notificacoes({
                                                     'Cliente inativo'}
                                                 <span className="ml-2 text-xs font-normal text-muted-foreground">
                                                     — {automacao.dias} dia(s)
+                                                    {automacao.intervalo_dias
+                                                        ? `, repete a cada ${automacao.intervalo_dias}d`
+                                                        : ''}
                                                 </span>
                                             </p>
                                             <p className="mt-0.5 text-xs text-muted-foreground">

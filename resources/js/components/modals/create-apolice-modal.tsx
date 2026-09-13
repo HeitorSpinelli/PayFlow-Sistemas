@@ -290,25 +290,17 @@ export default function CreateApoliceModal({
         }));
     };
 
-    // Envia o formulário
+    // Envia o formulário. O toast de sucesso não é mostrado aqui — o layout
+    // (AppSidebarLayout) já mostra automaticamente a partir da flash message
+    // que o backend manda; chamar toast.success aqui de novo duplicava o
+    // aviso toda vez que uma apólice era cadastrada.
     const salvarApolice = () => {
         post('/apolices', {
             onSuccess: () => {
-                toast.success('Apólice salva com sucesso!', {
-                    position: 'top-right',
-                    style: {
-                        color: '#e0ebe4',
-                    },
-                });
                 setOpen(false);
             },
             onError: () => {
-                toast.error('Falha ao salvar. Verifique os campos.', {
-                    position: 'top-right',
-                    style: {
-                        color: '#b61212',
-                    },
-                });
+                toast.error('Falha ao salvar. Verifique os campos.');
             },
         });
     };

@@ -61,6 +61,11 @@ export default function NotificacaoModal({
         );
     };
 
+    // O toast de sucesso não é mostrado aqui — o layout já mostra
+    // automaticamente a partir da flash message do backend. Também fecha o
+    // modal e limpa a seleção/mensagem: antes disso, o modal ficava aberto
+    // com tudo preenchido depois de enviar, sem nenhuma pista visual de que
+    // um novo envio começaria do zero (risco de reenviar sem querer).
     const enviarNotificacao = () => {
         setData('segurado_ids', selecionados);
         setData('canal', canal ?? '');
@@ -69,20 +74,13 @@ export default function NotificacaoModal({
 
         post('/notificacoes', {
             onSuccess: () => {
-                toast.success('Notificação Enviada!', {
-                    position: 'top-right',
-                    style: {
-                        color: '#e0ebe4',
-                    },
-                });
+                setSelecionados([]);
+                setMensagem('');
+                setTipo('');
+                onClose();
             },
             onError: () => {
-                toast.error('Falha ao enviar, Tente mais tarde', {
-                    position: 'top-right',
-                    style: {
-                        color: '#b61212',
-                    },
-                });
+                toast.error('Falha ao enviar, tente mais tarde.');
             },
         });
     };

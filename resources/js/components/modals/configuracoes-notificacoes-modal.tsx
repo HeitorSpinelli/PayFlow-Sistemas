@@ -59,18 +59,18 @@ export default function ConfigNotificacaoModal({
 
     if (!aberto) return null;
 
+    // Os toasts de sucesso não são mostrados aqui — o layout já mostra
+    // automaticamente a partir da flash message do backend. Os de erro
+    // ficam: quando vêm de errors.<campo>, são falha de validação (422, sem
+    // flash correspondente); os genéricos são um fallback pra falha de
+    // rede/HTTP de verdade.
     const criarTipo = () => {
         post('/tipo_notificacoes', {
-            onSuccess: () => {
-                toast.success('Tipo criado com sucesso!', {
-                    position: 'top-right',
-                });
-                reset();
-            },
+            onSuccess: () => reset(),
             onError: (errors) => {
                 const mensagem =
                     errors.nome_notificacao ?? 'Erro ao criar tipo.';
-                toast.error(mensagem, { position: 'top-right' });
+                toast.error(mensagem);
             },
         });
     };
@@ -80,16 +80,11 @@ export default function ConfigNotificacaoModal({
             `/tipo_notificacoes/${id}`,
             { nome_notificacao: nomeEditando },
             {
-                onSuccess: () => {
-                    toast.success('Tipo atualizado!', {
-                        position: 'top-right',
-                    });
-                    setEditandoId(null);
-                },
+                onSuccess: () => setEditandoId(null),
                 onError: (errors) => {
                     const mensagem =
                         errors.nome_notificacao ?? 'Erro ao atualizar tipo.';
-                    toast.error(mensagem, { position: 'top-right' });
+                    toast.error(mensagem);
                 },
             },
         );
@@ -100,16 +95,8 @@ export default function ConfigNotificacaoModal({
             `/tipo_notificacoes/${id}`,
             { ativo: !ativo },
             {
-                onSuccess: () => {
-                    toast.success(
-                        ativo ? 'Tipo desativado!' : 'Tipo ativado!',
-                        { position: 'top-right' },
-                    );
-                },
                 onError: () => {
-                    toast.error('Erro ao atualizar tipo.', {
-                        position: 'top-right',
-                    });
+                    toast.error('Erro ao atualizar tipo.');
                 },
             },
         );
@@ -119,14 +106,9 @@ export default function ConfigNotificacaoModal({
 
     const criarAutomacao = () => {
         postAuto('/automacoes', {
-            onSuccess: () => {
-                toast.success('Automação criada!', { position: 'top-right' });
-                resetAuto();
-            },
+            onSuccess: () => resetAuto(),
             onError: () => {
-                toast.error('Erro ao criar automação.', {
-                    position: 'top-right',
-                });
+                toast.error('Erro ao criar automação.');
             },
         });
     };
@@ -136,16 +118,8 @@ export default function ConfigNotificacaoModal({
             `/automacoes/${id}/toggle`,
             { ativo: !ativo },
             {
-                onSuccess: () => {
-                    toast.success(
-                        ativo ? 'Automação desativada!' : 'Automação ativada!',
-                        { position: 'top-right' },
-                    );
-                },
                 onError: () => {
-                    toast.error('Erro ao atualizar automação.', {
-                        position: 'top-right',
-                    });
+                    toast.error('Erro ao atualizar automação.');
                 },
             },
         );
@@ -153,13 +127,8 @@ export default function ConfigNotificacaoModal({
 
     const deletarAutomacao = (id: number) => {
         router.delete(`/automacoes/${id}`, {
-            onSuccess: () => {
-                toast.success('Automação excluída!', { position: 'top-right' });
-            },
             onError: () => {
-                toast.error('Erro ao excluir automação.', {
-                    position: 'top-right',
-                });
+                toast.error('Erro ao excluir automação.');
             },
         });
     };

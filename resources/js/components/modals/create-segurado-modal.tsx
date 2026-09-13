@@ -10,6 +10,7 @@ import {
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Section } from '@/components/ui/detail-section';
 import {
     Dialog,
     DialogContent,
@@ -24,18 +25,29 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Section } from '@/components/ui/detail-section';
-
 import {
     aplicarMascaraCEP,
     formataCpfCnpj,
     formatarTelefone,
-} from '@/utils/Masks'; // Ajuste o caminho conforme a pasta onde você salvou o arquivo
-import 'react-toastify/dist/ReactToastify.css';
+} from '@/utils/Masks';
 
 export default function CreateSeguradoModal({ open, setOpen }: any) {
     const [tipoPessoa, setTipoPessoa] = useState('pf');
+    const [openAnterior, setOpenAnterior] = useState(open);
     const [estados, setEstados] = useState<any[]>([]);
+
+    // Ajusta o estado durante a renderização em vez de num useEffect — evita
+    // o aviso react-hooks/set-state-in-effect (chamar setState síncrono
+    // dentro de um efeito pode causar renderizações em cascata). Mesmo
+    // padrão usado em create-profile-modal.tsx.
+    if (open !== openAnterior) {
+        setOpenAnterior(open);
+
+        if (!open) {
+            setTipoPessoa('pf');
+        }
+    }
+
     const isPF = tipoPessoa === 'pf';
     const labelNome = isPF ? 'Nome completo' : 'Nome fantasia';
     const labelDocumento = isPF ? 'CPF' : 'CNPJ';
@@ -59,16 +71,16 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
             observacoes: '',
         });
 
-    // Reseta o formulário sempre que o modal fecha, não importa a origem do
-    // fechamento (onOpenChange do Dialog, botão Cancelar, ou onSuccess do
-    // submit) — todas elas só mudam a prop `open`, então um único efeito
-    // reagindo a essa mudança substitui a lógica de reset que antes estava
-    // duplicada (e uma das cópias nunca era usada).
+    // Reseta o formulário do Inertia sempre que o modal fecha, não importa a
+    // origem do fechamento (onOpenChange do Dialog, botão Cancelar, ou
+    // onSuccess do submit) — todas elas só mudam a prop `open`. reset()/
+    // clearErrors() são do useForm, não um useState local, então não caem
+    // no aviso set-state-in-effect (só o setTipoPessoa acima cai, por isso
+    // saiu do efeito).
     useEffect(() => {
         if (!open) {
             reset();
             clearErrors();
-            setTipoPessoa('pf');
         }
     }, [open]);
 
@@ -109,24 +121,15 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
         }
     };
 
+    // O toast de sucesso não é mostrado aqui — o layout já mostra
+    // automaticamente a partir da flash message do backend; chamar
+    // toast.success aqui de novo duplicava o aviso a cada cliente cadastrado.
     const salvarClientes = () =>
         post('/clientes', {
             onSuccess: () => {
-                toast.success('Segurado salvo com sucesso!', {
-                    position: 'top-right',
-                    style: {
-                        color: '#e0ebe4',
-                    },
-                });
                 setOpen(false);
             },
-            onError: () =>
-                toast.error('Falha ao salvar. Verifique os campos.', {
-                    position: 'top-right',
-                    style: {
-                        color: '#b61212',
-                    },
-                }),
+            onError: () => toast.error('Falha ao salvar. Verifique os campos.'),
         });
 
     return (
