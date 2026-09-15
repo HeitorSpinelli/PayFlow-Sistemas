@@ -105,8 +105,9 @@ class ProcessarAutomacoes implements ShouldQueue
             }
 
             $diasParaVencer = now()->startOfDay()->diffInDays($apolice->fim_vigencia, false);
+            $offset = $automacao->dias - (int) $diasParaVencer;
 
-            if ($this->ehDiaDeDisparo($automacao, (int) $diasParaVencer)) {
+            if ($this->ehDiaDeDisparo($automacao, $offset)) {
                 $this->notificar($automacao, $service, $segurado);
             }
         }
@@ -133,8 +134,9 @@ class ProcessarAutomacoes implements ShouldQueue
             }
 
             $diasParaVencer = now()->startOfDay()->diffInDays(Carbon::parse($parcela->data_vencimento), false);
+            $offset = $automacao->dias - (int) $diasParaVencer;
 
-            if ($this->ehDiaDeDisparo($automacao, (int) $diasParaVencer)) {
+            if ($this->ehDiaDeDisparo($automacao, $offset)) {
                 $this->notificar($automacao, $service, $segurado);
             }
         }
