@@ -72,18 +72,17 @@ export default function RenovarApoliceModal({ open, setOpen, apolice }: Props) {
         reset();
     };
 
+    // O toast de sucesso não é mostrado aqui — o layout já mostra
+    // automaticamente a partir da flash message do backend (que já inclui o
+    // número da nova apólice); duplicar com toast.success aqui mostrava dois
+    // avisos a cada renovação.
     const confirmarRenovacao = () => {
         if (!apolice) {
             return;
         }
 
         patch(`/apolices/renovar/${apolice.id}`, {
-            onSuccess: () => {
-                toast.success(
-                    `Apólice renovada! Nova apólice #${data.numero_apolice} criada.`,
-                );
-                fechar();
-            },
+            onSuccess: () => fechar(),
             onError: () => toast.error('Verifique os dados informados.'),
         });
     };

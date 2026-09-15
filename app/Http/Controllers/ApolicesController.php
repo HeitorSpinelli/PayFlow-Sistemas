@@ -126,9 +126,9 @@ class ApolicesController extends Controller
         ]);
 
         try {
-            $this->apoliceService->renovar($id, $data);
+            $novaApolice = $this->apoliceService->renovar($id, $data);
 
-            return redirect()->back()->with('success', 'Apólice renovada com sucesso!');
+            return redirect()->back()->with('success', "Apólice renovada com sucesso! Nova apólice #{$novaApolice->numero_apolice} criada.");
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Erro ao renovar apólice: '.$e->getMessage());
         }

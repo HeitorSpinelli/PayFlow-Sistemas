@@ -145,15 +145,15 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
     };
 
     // Envia os dados editados para o Laravel via PUT
-    // PUT /clientes/{id} — atualiza o segurado no banco
-    // Se der certo (onSuccess), fecha o modal
+    // PUT /clientes/{id} — atualiza o segurado no banco. O toast de sucesso
+    // não é mostrado aqui — o layout já mostra automaticamente a partir da
+    // flash message do backend; duplicar com toast.success aqui mostrava
+    // "sucesso" até quando o backend tinha rejeitado a ação (o Inertia trata
+    // uma resposta com flash de erro como uma visita bem-sucedida).
     const salvarEdicao = () => {
         if (!segurado) return;
         put(`/clientes/${segurado.id}`, {
-            onSuccess: () => {
-                toast.success('Cliente atualizado com sucesso!');
-                fechar();
-            },
+            onSuccess: () => fechar(),
             onError: () => toast.error('Falha ao salvar. Verifique os campos.'),
         });
     };
@@ -161,7 +161,6 @@ export default function SeguradoProfileModal({ open, setOpen, segurado }: any) {
     const confirmarExclusao = () => {
         if (!segurado) return; // ← proteção
         router.delete(`/clientes/${segurado.id}`, {
-            onSuccess: () => toast.success('Cliente excluído com sucesso!'),
             onError: () =>
                 toast.error('Erro ao excluir cliente. Tente novamente.'),
             onFinish: () => fechar(), // Fecha o modal mesmo se der erro, para evitar confusão
