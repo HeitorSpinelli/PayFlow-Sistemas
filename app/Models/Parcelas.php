@@ -29,19 +29,24 @@ class Parcelas extends Model
         return $this->belongsTo(Apolice::class, 'apolice_id');
     }
 
-    public function diasEmAtraso(): int
+    /**
+     * Dias de atraso até a data de referência informada (por padrão, hoje).
+     * Passar a data de pagamento real permite calcular o atraso de verdade
+     * em lançamentos retroativos, em vez de sempre contar até "agora".
+     */
+    public function diasEmAtraso(?Carbon $dataReferencia = null): int
     {
         if ($this->status_pagamento === 'paga') {
             return 0;
         }
 
         $vencimento = Carbon::parse($this->data_vencimento)->startOfDay();
-        $hoje = now()->startOfDay();
+        $referencia = ($dataReferencia ?? now())->copy()->startOfDay();
 
-        if ($hoje->lte($vencimento)) {
+        if ($referencia->lte($vencimento)) {
             return 0;
         }
 
-        return abs($hoje->diffInDays($vencimento));
+        return abs($referencia->diffInDays($vencimento));
     }
 }

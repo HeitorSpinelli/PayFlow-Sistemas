@@ -3,6 +3,7 @@
 namespace App\Services\Financeiro;
 
 use App\Models\Parcelas;
+use Carbon\Carbon;
 
 class ParcelaFinanceiroService
 {
@@ -27,10 +28,15 @@ class ParcelaFinanceiroService
      * Calcula o valor atualizado de uma parcela, somando multa (fixa, 2%)
      * e juros de mora (proporcionais aos dias de atraso) ao valor original.
      * Se a parcela não estiver atrasada, devolve os acréscimos zerados.
+     *
+     * $dataPagamento é a data em que o pagamento realmente aconteceu — por
+     * padrão, hoje. Passar a data real evita cobrar juros a mais quando o
+     * lançamento no sistema é feito depois do pagamento de fato (lançamento
+     * retroativo).
      */
-    public function calcular(Parcelas $parcela): array
+    public function calcular(Parcelas $parcela, ?Carbon $dataPagamento = null): array
     {
-        $diasAtraso = $parcela->diasEmAtraso();
+        $diasAtraso = $parcela->diasEmAtraso($dataPagamento);
         $valorOriginal = (float) $parcela->valor_parcela;
 
         if ($diasAtraso === 0) {
@@ -64,6 +70,10 @@ class ParcelaFinanceiroService
     private function taxaDiaria(): float
     {
         $taxaAnual = $this->indicadorService->calcularTaxaLegalMora() ?? self::TAXA_ANUAL_FALLBACK;
+
+        // Selic - IPCA já foi negativo historicamente no Brasil — sem esse
+        // piso, juros de mora vira desconto por estar atrasado.
+        $taxaAnual = max($taxaAnual, 0.0);
 
         $taxaMensal = $taxaAnual / 12;
         $taxaDiariaPercentual = $taxaMensal / 30;
