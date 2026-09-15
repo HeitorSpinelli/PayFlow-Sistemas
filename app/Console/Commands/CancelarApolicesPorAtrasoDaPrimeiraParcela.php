@@ -38,6 +38,14 @@ class CancelarApolicesPorAtrasoDaPrimeiraParcela extends Command
                 continue; // já foi cancelada antes, ou não existe mais
             }
 
+            // Reconfere agora, não só no momento em que a lista foi lida —
+            // fecha a janela entre ler os inadimplentes e agir: um pagamento
+            // confirmado durante o processamento não deve ser ignorado.
+            $parcela->refresh();
+            if ($parcela->status_pagamento === 'paga') {
+                continue;
+            }
+
             try {
                 $apoliceService->destroy($apolice->id, Apolice::MOTIVO_CANCELAMENTO_ATRASO_PRIMEIRA_PARCELA);
                 $canceladas++;

@@ -8,6 +8,7 @@ use App\Models\Pagamento;
 use App\Models\Parcelas;
 use App\Models\Segurado;
 use App\Services\Exportacoes\ExportacaoPagamentoService;
+use App\Services\Financeiro\ParcelaFinanceiroService;
 use App\Services\Pagamento\PagamentoService;
 use Illuminate\Http\Request;
 
@@ -15,9 +16,12 @@ class pagamentoController extends Controller
 {
     protected PagamentoService $pagamentoService;
 
-    public function __construct(PagamentoService $pagamentoService)
+    protected ParcelaFinanceiroService $parcelaFinanceiroService;
+
+    public function __construct(PagamentoService $pagamentoService, ParcelaFinanceiroService $parcelaFinanceiroService)
     {
         $this->pagamentoService = $pagamentoService;
+        $this->parcelaFinanceiroService = $parcelaFinanceiroService;
     }
 
     public function store(StorePagamentoRequest $request)
@@ -85,6 +89,14 @@ class pagamentoController extends Controller
                     // pra distinguir parcela "a vencer" de parcela realmente atrasada
                     $apolice->parcelas->each(function ($parcela) {
                         $parcela->dias_atraso = $parcela->diasEmAtraso();
+
+                        // Valor sugerido já com multa/juros (se atrasada), calculado
+                        // com a data de hoje — é o que o formulário pré-preenche.
+                        // O cálculo final na hora de salvar usa a data de pagamento
+                        // que o operador realmente informar (PagamentoService::store()).
+                        $parcela->valor_sugerido = $parcela->status_pagamento !== 'paga'
+                            ? $this->parcelaFinanceiroService->calcular($parcela)['valor_total']
+                            : null;
                     });
                 }),
         ]);

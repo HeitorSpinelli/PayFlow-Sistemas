@@ -6,6 +6,7 @@ use App\Models\Apolice;
 use App\Models\Pagamento;
 use App\Models\Parcelas;
 use App\Services\Financeiro\ParcelaFinanceiroService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -17,36 +18,59 @@ class PagamentoService
 
     public function store(array $data)
     {
-        return DB::transaction(function () use ($data) {
-            $parcela = Parcelas::where('apolice_id', $data['apolice_id'])
-                ->where('numero_parcela', $data['parcela'])
-                ->first();
+        try {
+            return DB::transaction(function () use ($data) {
+                $parcela = Parcelas::where('apolice_id', $data['apolice_id'])
+                    ->where('numero_parcela', $data['parcela'])
+                    ->first();
 
-            if (! $parcela) {
-                throw new \Exception('Não existe a parcela informada para esta apólice.');
+                if (! $parcela) {
+                    throw new \Exception('Não existe a parcela informada para esta apólice.');
+                }
+
+                // Calcula o valor de referência (original + multa + juros, se
+                // atrasada) usando a DATA DE PAGAMENTO informada — não "hoje" —
+                // pra não cobrar juros a mais num lançamento retroativo (ex:
+                // cliente pagou dia 5, operador só lança no sistema dia 13).
+                $dataPagamento = Carbon::parse($data['data_pagamento']);
+                $calculo = $this->parcelaFinanceiroService->calcular($parcela, $dataPagamento);
+
+                // O operador pode ajustar o campo "Valor" manualmente (ex: um
+                // desconto negociado com o cliente). Quando o valor digitado
+                // difere do calculado, respeita a decisão do operador em vez
+                // de sobrescrever silenciosamente — só usa o valor calculado
+                // quando o campo não foi alterado do sugerido.
+                $valorDigitado = round((float) $data['valor'], 2);
+                $valorCalculado = round($calculo['valor_total'], 2);
+                $valorFinal = abs($valorDigitado - $valorCalculado) > 0.01
+                    ? $valorDigitado
+                    : $valorCalculado;
+
+                $pagamento = Pagamento::create([
+                    ...$data,
+                    'valor' => $valorFinal,
+                ]);
+
+                $parcela->update([
+                    'status_pagamento' => 'paga',
+                    'data_pagamento' => $data['data_pagamento'],
+                    'forma_pagamento_efetiva' => $data['forma_pagamento'],
+                ]);
+
+                $this->reavaliarSuspensaoApolice($parcela->apolice);
+
+                return $pagamento;
+            });
+        } catch (\Exception $e) {
+            // "Não existe a parcela informada" já é uma mensagem segura pro
+            // usuário — só mascara quando for algo inesperado (ex: erro de banco).
+            if ($e->getMessage() === 'Não existe a parcela informada para esta apólice.') {
+                throw $e;
             }
 
-            // Recalcula o valor de verdade (original + multa + juros se estiver
-            // atrasada) em vez de confiar no que foi digitado no formulário —
-            // reaproveita a mesma regra usada em toda a cobrança de inadimplência,
-            // não duplica esse cálculo aqui.
-            $calculo = $this->parcelaFinanceiroService->calcular($parcela);
-
-            $pagamento = Pagamento::create([
-                ...$data,
-                'valor' => $calculo['valor_total'],
-            ]);
-
-            $parcela->update([
-                'status_pagamento' => 'paga',
-                'data_pagamento' => $data['data_pagamento'],
-                'forma_pagamento_efetiva' => $data['forma_pagamento'],
-            ]);
-
-            $this->reavaliarSuspensaoApolice($parcela->apolice);
-
-            return $pagamento;
-        });
+            Log::error('Erro ao registrar pagamento', ['dados' => $data, 'erro' => $e->getMessage()]);
+            throw new \Exception('Não foi possível registrar o pagamento. Tente novamente ou contate o suporte.');
+        }
     }
 
     /**
@@ -68,7 +92,7 @@ class PagamentoService
         $aindaTemParcelaAtrasada = $apolice->parcelas()
             ->where('numero_parcela', '>=', 2)
             ->where('status_pagamento', '!=', 'paga')
-            ->where('data_vencimento', '<', now())
+            ->where('data_vencimento', '<', now()->startOfDay())
             ->exists();
 
         if (! $aindaTemParcelaAtrasada) {
@@ -126,7 +150,7 @@ class PagamentoService
             return;
         }
 
-        if ($parcela->numero_parcela >= 2 && $parcela->data_vencimento < now()) {
+        if ($parcela->numero_parcela >= 2 && Carbon::parse($parcela->data_vencimento)->lt(now()->startOfDay())) {
             $apolice->update(['suspensa_em' => now()]);
         }
     }

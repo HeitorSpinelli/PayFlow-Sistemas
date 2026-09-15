@@ -54,9 +54,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [ApolicesController::class, 'index'])->name('apolices');
         Route::post('/', [ApolicesController::class, 'store']);
         Route::put('/{id}', [ApolicesController::class, 'update'])->name('apolices.update');
-        Route::delete('/{id}', [ApolicesController::class, 'destroy'])->name('apolices.destroy');
+        // Cancelar (destroy) e reativar uma suspensão são ações com peso
+        // legal (Lei 15.040/2024, art. 21) — exigem admin, diferente do
+        // resto do módulo de apólices, que qualquer atendente autenticado usa.
+        Route::delete('/{id}', [ApolicesController::class, 'destroy'])->middleware('can:is-admin')->name('apolices.destroy');
         Route::patch('/{id}/alterar-ramo', [ApolicesController::class, 'updateRamo']);
-        Route::patch('/ativar/{id}', [ApolicesController::class, 'ativar'])->name('apolices.ativar');
+        Route::patch('/ativar/{id}', [ApolicesController::class, 'ativar'])->middleware('can:is-admin')->name('apolices.ativar');
         Route::patch('/renovar/{id}', [ApolicesController::class, 'renovar'])->name('apolices.renovar');
         Route::patch('/restaurar/{id}', [ApolicesController::class, 'restaurar'])->name('apolices.restore');
         Route::get('/exportar', [ApolicesController::class, 'exportar']);

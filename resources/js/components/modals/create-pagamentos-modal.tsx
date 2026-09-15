@@ -207,7 +207,20 @@ export default function CreatePagamentoModal({
             }
         }
 
-        const valorParcela = totalParcelas > 0 ? valorTotal / totalParcelas : 0;
+        // Usa o valor sugerido pelo backend (valor da parcela + multa/juros
+        // se estiver atrasada, calculado em ParcelaFinanceiroService) — não
+        // só o valor de face. Sem isso, editar o campo nunca fazia diferença
+        // pro backend: ele sempre recalculava e ignorava o que foi digitado.
+        // Agora o pré-preenchido JÁ é o valor calculado, então só conta como
+        // "o operador decidiu outro valor" quando ele realmente muda o campo.
+        const parcelaReal = (apolice.parcelas ?? []).find(
+            (p: any) => Number(p.numero_parcela) === proximaParcela,
+        );
+        const valorParcela = parcelaReal
+            ? Number(parcelaReal.valor_sugerido ?? parcelaReal.valor_parcela)
+            : totalParcelas > 0
+              ? valorTotal / totalParcelas
+              : 0;
 
         setData((prev) => ({
             ...prev,
@@ -233,6 +246,27 @@ export default function CreatePagamentoModal({
             toast.error(
                 'Esse segurado ainda não possui nenhuma apólice cadastrada. Cadastre uma apólice para ele antes de registrar o pagamento.',
             );
+
+            return;
+        }
+
+        // Mesmas regras que o backend exige (StorePagamentoRequest) —
+        // checar aqui evita a ida e volta ao servidor só pra descobrir um
+        // campo obrigatório vazio.
+        if (!data.valor || Number(data.valor) <= 0) {
+            toast.error('Informe o valor do pagamento.');
+
+            return;
+        }
+
+        if (!data.data_pagamento) {
+            toast.error('Informe a data do pagamento.');
+
+            return;
+        }
+
+        if (!data.forma_pagamento) {
+            toast.error('Selecione a forma de pagamento.');
 
             return;
         }

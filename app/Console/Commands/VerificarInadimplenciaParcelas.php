@@ -64,6 +64,19 @@ class VerificarInadimplenciaParcelas extends Command
         );
 
         foreach ($apolices as $apolice) {
+            // Reconfere agora — fecha a janela entre ler a lista de
+            // inadimplentes e agir: se a parcela foi paga durante o
+            // processamento, não suspende uma apólice já regularizada.
+            $aindaAtrasada = $apolice->parcelas()
+                ->where('numero_parcela', '>=', 2)
+                ->where('status_pagamento', '!=', 'paga')
+                ->where('data_vencimento', '<', now()->startOfDay())
+                ->exists();
+
+            if (! $aindaAtrasada) {
+                continue;
+            }
+
             $apolice->update(['suspensa_em' => now()]);
             $this->info("Apólice #{$apolice->numero_apolice} suspensa — parcela em atraso.");
 
@@ -129,6 +142,14 @@ class VerificarInadimplenciaParcelas extends Command
             ->get();
 
         foreach ($apolices as $apolice) {
+            // Reconfere agora — se a apólice foi reativada (pagamento
+            // regularizado) durante o processamento desta lista, não cancela
+            // uma apólice que já deixou de estar suspensa.
+            $apolice->refresh();
+            if ($apolice->suspensa_em === null) {
+                continue;
+            }
+
             try {
                 $apoliceService->destroy($apolice->id, Apolice::MOTIVO_CANCELAMENTO_SUSPENSAO_PROLONGADA);
                 $this->info("Apólice #{$apolice->numero_apolice} cancelada — suspensa há mais de ".self::DIAS_PARA_CANCELAMENTO.' dias.');
