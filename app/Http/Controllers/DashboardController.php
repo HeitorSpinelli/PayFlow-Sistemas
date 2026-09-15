@@ -23,10 +23,7 @@ class DashboardController extends Controller
 
     public function index()
     {
-        $totalClientes = $this->seguradoService->count();
-        $apolicesAtivas = $this->apoliceService->contarAtivas();
         $clientesDevedores = $this->apoliceService->contarClientesDevedores();
-        $receitaDoMes = $this->apoliceService->receitaDoMes();
         $vencimentosProximos = $this->apoliceService->vencimentosProximos();
         $notificacoesRecentes = $this->notificacaoService->recentes();
 
@@ -36,10 +33,7 @@ class DashboardController extends Controller
         $distribuicaoPorRamo = $this->apoliceService->distribuicaoPorRamo();
 
         return inertia('dashboard', [
-            'totalClientes' => $totalClientes,
-            'apolicesAtivas' => $apolicesAtivas,
             'clientesDevedores' => $clientesDevedores,
-            'receitaDoMes' => $receitaDoMes,
             'vencimentosProximos' => $vencimentosProximos,
             'notificacoesRecentes' => $notificacoesRecentes,
             'receitaMensal' => $receitaMensal,

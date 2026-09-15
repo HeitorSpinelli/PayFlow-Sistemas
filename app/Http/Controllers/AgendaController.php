@@ -11,8 +11,16 @@ class AgendaController extends Controller
     {
         $hoje = Carbon::today();
 
+        // Limita a janela pra não carregar todo o histórico de parcelas do
+        // sistema de uma vez (a agenda deixa navegar mês a mês localmente no
+        // front, então precisa de uma folga em torno de hoje, não a base
+        // inteira desde o primeiro cliente cadastrado).
         $cobrancas = Parcelas::with(['apolice.cliente', 'apolice.ramo'])
             ->whereHas('apolice')
+            ->whereBetween('data_vencimento', [
+                $hoje->copy()->subYear(),
+                $hoje->copy()->addYear(),
+            ])
             ->orderBy('data_vencimento')
             ->get()
             ->map(function (Parcelas $parcela) use ($hoje) {

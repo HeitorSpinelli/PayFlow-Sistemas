@@ -66,7 +66,12 @@ export default function PagamentoProfileModal({
     apolices,
 }: any) {
     const [modo, setModo] = useState<Modo>('visualizar');
-    const [apoliceSelecionada, setApoliceSelecionada] = useState('');
+    // Inicialização "preguiçosa": já nasce com a apólice certa em vez de
+    // esperar o useEffect rodar depois do primeiro render — evita um frame
+    // com "nenhuma parcela encontrada" antes do valor certo aparecer.
+    const [apoliceSelecionada, setApoliceSelecionada] = useState(() =>
+        String(pagamento?.apolice_id ?? ''),
+    );
 
     // Começa mostrando a apólice do pagamento que foi clicado
     useEffect(() => {

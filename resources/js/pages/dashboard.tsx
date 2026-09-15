@@ -338,7 +338,9 @@ export default function Dashboard({
                                 mutedColor="rgba(16,185,129,0.22)"
                                 cursorColor="rgba(16,185,129,0.08)"
                                 variacao={variacaoReceita}
-                                tooltipFormatter={(v) => formatarMoeda(v)}
+                                tooltipFormatter={(v) =>
+                                    `R$ ${formatarMoeda(v)}`
+                                }
                                 emptyMessage="Nenhum pagamento confirmado no período."
                             />
                             <TrendBarChart
@@ -369,13 +371,20 @@ export default function Dashboard({
                                         atraso
                                     </p>
                                 </div>
-                                <Link
-                                    href="/agenda"
-                                    className="flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700"
-                                >
-                                    Ver agenda
-                                    <ChevronRight className="size-3.5" />
-                                </Link>
+                                <div className="flex items-center gap-3">
+                                    {clientesDevedores > 0 && (
+                                        <span className="rounded-full border border-red-500/20 bg-red-500/10 px-2.5 py-1 text-xs font-bold text-red-600">
+                                            {clientesDevedores} devedor(es)
+                                        </span>
+                                    )}
+                                    <Link
+                                        href="/agenda"
+                                        className="flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700"
+                                    >
+                                        Ver agenda
+                                        <ChevronRight className="size-3.5" />
+                                    </Link>
+                                </div>
                             </div>
 
                             <div className="flex flex-col">
@@ -402,7 +411,7 @@ export default function Dashboard({
                                         </div>
                                         <div className="flex shrink-0 items-center gap-3">
                                             <span className="text-sm font-bold text-foreground">
-                                                {formatarMoeda(item.valor)}
+                                                R$ {formatarMoeda(item.valor)}
                                             </span>
                                             <span
                                                 className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${STATUS_VENCIMENTO[item.status].badge}`}

@@ -12,6 +12,7 @@ import {
     X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { formatarMoeda as formatarMoedaBase } from '@/utils/Masks';
 
 /* ------------------------------------------------------------------ */
 /* Tipos                                                              */
@@ -52,8 +53,11 @@ function toKey(y: number, m: number, day: number) {
     return `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
+// Reusa a formatação compartilhada (Masks.ts) em vez de reimplementar via
+// toLocaleString — essa reimplementação já causou um bug de formatação
+// antes no projeto quando um valor chegava como string, não number.
 function formatMoeda(valor: number) {
-    return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    return `R$ ${formatarMoedaBase(valor)}`;
 }
 
 function labelParcela(c: Cobranca) {
