@@ -58,10 +58,12 @@ class SeguradoService
         }
     }
 
-    // Listando apenas clientes que estão com deleted at
+    // Listando apenas clientes que estão com deleted at. with('apolices'):
+    // Segurado::getStatusAttribute() reaproveita essa relação já carregada
+    // em vez de rodar uma query EXISTS por cliente na hora de serializar.
     public function listarInativos()
     {
-        return Segurado::onlyTrashed()->get();
+        return Segurado::onlyTrashed()->with('apolices')->get();
     }
 
     // Restaura o segurado pelo id

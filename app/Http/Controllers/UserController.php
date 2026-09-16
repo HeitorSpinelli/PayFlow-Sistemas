@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Concerns\PasswordValidationRules;
 use App\Models\User;
 use App\Services\Apolice\ApoliceService;
 use App\Services\Cliente\SeguradoService;
@@ -10,6 +11,8 @@ use Inertia\Inertia;
 
 class UserController extends Controller
 {
+    use PasswordValidationRules;
+
     protected SeguradoService $segurado_service;
 
     protected ApoliceService $apolice_service;
@@ -18,6 +21,38 @@ class UserController extends Controller
     {
         $this->segurado_service = $segurado_service;
         $this->apolice_service = $apolice_service;
+    }
+
+    // Único jeito de criar usuário agora que o cadastro público em /register
+    // foi desativado (ver config/fortify.php) — só um admin já autenticado
+    // pode dar acesso a alguém. Marca email_verified_at na hora porque o
+    // admin já está confirmando a identidade da pessoa ao cadastrá-la; não
+    // depende do envio de e-mail de verificação (Resend está em modo
+    // sandbox e hoje não entrega pra outros endereços).
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email',
+            'password' => $this->passwordRules(),
+            'role' => 'required|string|in:admin,user',
+        ]);
+
+        $user = User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => $data['password'],
+            'role' => $data['role'],
+        ]);
+
+        // email_verified_at não está no $fillable do model (só name, email,
+        // password, role) — atribuição direta ignora essa proteção, que aqui
+        // é o comportamento certo, já que o admin está confirmando a
+        // identidade da pessoa neste exato momento.
+        $user->email_verified_at = now();
+        $user->save();
+
+        return redirect()->back()->with('success', 'Usuário cadastrado com sucesso!');
     }
 
     public function index()

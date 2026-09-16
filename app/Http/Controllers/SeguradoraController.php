@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSeguradoraRequest;
 use App\Http\Requests\UpdateSeguradoraRequest;
 use App\Services\Cliente\SeguradorasService;
 
 class SeguradoraController extends Controller
 {
-
     protected SeguradorasService $seguradorasService;
 
     public function __construct(SeguradorasService $seguradorasService)
@@ -22,7 +20,7 @@ class SeguradoraController extends Controller
         $seguradoras = $this->seguradorasService->getAllSeguradoras();
 
         return inertia('FunctionsApp/seguradoras', [
-            'seguradoras' => $seguradoras
+            'seguradoras' => $seguradoras,
         ]);
     }
 
@@ -30,9 +28,10 @@ class SeguradoraController extends Controller
     {
         try {
             $this->seguradorasService->createSeguradora($request->validated());
+
             return redirect()->back()->with('success', 'Seguradora cadastrada com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao cadastrar seguradora: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erro ao cadastrar seguradora: '.$e->getMessage());
         }
     }
 
@@ -40,9 +39,10 @@ class SeguradoraController extends Controller
     {
         try {
             $count = $this->seguradorasService->count();
+
             return redirect()->back()->with('success', "Total de seguradoras: $count");
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao contabilizar seguradoras: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erro ao contabilizar seguradoras: '.$e->getMessage());
         }
     }
 
@@ -50,6 +50,7 @@ class SeguradoraController extends Controller
     {
         try {
             $this->seguradorasService->updateSeguradora($id, $request->validated());
+
             return redirect()->back()->with('success', 'Seguradora atualizada com sucesso!');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
@@ -60,9 +61,13 @@ class SeguradoraController extends Controller
     {
         try {
             $this->seguradorasService->deleteSeguradora($id);
+
             return redirect()->back()->with('success', 'Seguradora excluída com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao excluir seguradora: ' . $e->getMessage());
+            // Sem prefixo aqui — deleteSeguradora() já lança uma mensagem
+            // pronta pro usuário (inclusive quando é a violação de chave
+            // estrangeira); prefixar de novo duplicava "excluir seguradora".
+            return redirect()->back()->with('error', $e->getMessage());
         }
     }
 }

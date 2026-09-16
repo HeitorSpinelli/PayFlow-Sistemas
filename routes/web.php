@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ImportacaoController;
 use App\Http\Controllers\NotificacoesController;
 use App\Http\Controllers\pagamentoController;
+use App\Http\Controllers\RamosController;
 use App\Http\Controllers\SeguradoController;
 use App\Http\Controllers\SeguradoraController;
 use App\Http\Controllers\TipoNotificacoesController;
@@ -16,15 +17,12 @@ use App\Models\Notificacoes;
 use App\Models\Segurado;
 use App\Models\TipoNotificacao;
 use Illuminate\Support\Facades\Route;
-use Laravel\Fortify\Features;
 
 /* ------------------------------------------------------------------ */
 /* Rota Inicial */
 /* ------------------------------------------------------------------ */
 
-Route::inertia('/', 'welcome', [
-    'canRegister' => Features::enabled(Features::registration()),
-])->name('home');
+Route::inertia('/', 'welcome')->name('home');
 
 /* ------------------------------------------------------------------ */
 /* Rotas Protegidas por Autenticação */
@@ -50,14 +48,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [ApolicesController::class, 'index'])->name('apolices');
         Route::post('/', [ApolicesController::class, 'store']);
         Route::put('/{id}', [ApolicesController::class, 'update'])->name('apolices.update');
-        // Cancelar (destroy) e reativar uma suspensão são ações com peso
-        // legal (Lei 15.040/2024, art. 21) — exigem admin, diferente do
-        // resto do módulo de apólices, que qualquer atendente autenticado usa.
+        // Cancelar (destroy), reativar uma suspensão, renovar e restaurar uma
+        // apólice cancelada são ações com peso legal/financeiro (Lei
+        // 15.040/2024, art. 21; renovar gera uma apólice nova; restaurar
+        // desfaz um cancelamento) — exigem admin, diferente do resto do
+        // módulo de apólices, que qualquer atendente autenticado usa.
         Route::delete('/{id}', [ApolicesController::class, 'destroy'])->middleware('can:is-admin')->name('apolices.destroy');
         Route::patch('/{id}/alterar-ramo', [ApolicesController::class, 'updateRamo']);
         Route::patch('/ativar/{id}', [ApolicesController::class, 'ativar'])->middleware('can:is-admin')->name('apolices.ativar');
-        Route::patch('/renovar/{id}', [ApolicesController::class, 'renovar'])->name('apolices.renovar');
-        Route::patch('/restaurar/{id}', [ApolicesController::class, 'restaurar'])->name('apolices.restore');
+        Route::patch('/renovar/{id}', [ApolicesController::class, 'renovar'])->middleware('can:is-admin')->name('apolices.renovar');
+        Route::patch('/restaurar/{id}', [ApolicesController::class, 'restaurar'])->middleware('can:is-admin')->name('apolices.restore');
         Route::get('/exportar', [ApolicesController::class, 'exportar']);
     });
 
@@ -106,6 +106,15 @@ Route::middleware(['auth', 'can:is-admin'])->group(function () {
         Route::delete('/{id}', [SeguradoraController::class, 'destroy'])->name('seguradoras.destroy');
     });
 
+    // Módulo: Ramos (das seguradoras) — antes existiam controller e service,
+    // mas nenhuma rota apontava pra eles: não tinha como editar ou adicionar
+    // ramo numa seguradora já cadastrada pela tela.
+    Route::prefix('ramos')->group(function () {
+        Route::post('/', [RamosController::class, 'store'])->name('ramos.store');
+        Route::put('/{id}', [RamosController::class, 'update'])->name('ramos.update');
+        Route::delete('/{id}', [RamosController::class, 'destroy'])->name('ramos.destroy');
+    });
+
     // Módulo: Notificações
     Route::prefix('/notificacoes')->group(function () {
         Route::get('/', function () {
@@ -115,7 +124,9 @@ Route::middleware(['auth', 'can:is-admin'])->group(function () {
                 'totalPendentes' => Notificacoes::where('status', 'Pendente')->count(),
                 'totalFalhas' => Notificacoes::where('status', 'Falha')->count(),
                 'tipos' => TipoNotificacao::all(),
-                'segurados' => Segurado::all(),
+                // with('apolices'): Segurado::getStatusAttribute() reaproveita essa
+                // relação já carregada em vez de rodar uma query EXISTS por cliente.
+                'segurados' => Segurado::with('apolices')->get(),
                 'notificacoes' => Notificacoes::with(['tipoNotificacao', 'segurado'])->paginate(10),
                 'automacoes' => Automacao::with('tipoNotificacao')->get(),
             ]);
@@ -143,6 +154,7 @@ Route::middleware(['auth', 'can:is-admin'])->group(function () {
     // Administração
     Route::prefix('/administracao')->group(function () {
         Route::get('/usuarios', [UserController::class, 'index'])->name('users');
+        Route::post('/usuarios', [UserController::class, 'store']);
         Route::put('/usuarios/{id}', [UserController::class, 'update']);
     });
 });

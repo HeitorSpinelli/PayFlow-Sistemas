@@ -1,6 +1,6 @@
 import { router } from '@inertiajs/react';
-import { ChevronRight, Mail, Shield, UserRound } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ChevronRight, Shield, UserRound } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -64,20 +64,27 @@ interface Props {
 
 export default function UserProfileModal({ open, setOpen, user }: Props) {
     const [novoCargo, setNovoCargo] = useState(user?.role ?? 'user');
+    const [usuarioAnterior, setUsuarioAnterior] = useState(user);
     const [processing, setProcessing] = useState(false);
 
-    // Sempre que o usuário selecionado mudar, reseta o valor do select
-    // para o cargo atual dele (evita "vazar" a seleção de um modal pro outro)
-    useEffect(() => {
+    // Ajusta o estado durante a renderização em vez de num useEffect — evita
+    // o aviso react-hooks/set-state-in-effect. Sempre que o usuário
+    // selecionado mudar, reseta o valor do select para o cargo atual dele
+    // (evita "vazar" a seleção de um modal pro outro, já que este componente
+    // fica montado entre uma abertura e outra em vez de remontar).
+    if (user !== usuarioAnterior) {
+        setUsuarioAnterior(user);
         setNovoCargo(user?.role ?? 'user');
-    }, [user]);
+    }
 
     const fechar = () => {
         setOpen(false);
     };
 
     const salvarCargo = () => {
-        if (!user) return;
+        if (!user) {
+            return;
+        }
 
         setProcessing(true);
         router.put(

@@ -33,9 +33,25 @@ class Segurado extends Model
         return $this->hasMany(Apolice::class, 'cliente_id');
     }
 
+    /**
+     * Ativo = tem pelo menos uma apólice DENTRO da vigência (não só "tem
+     * apólice"). Quando `apolices` já foi eager-loaded (ex: listagem de
+     * clientes), reaproveita a coleção em memória em vez de rodar uma nova
+     * query EXISTS por cliente — sem isso, cada linha da tabela de clientes
+     * disparava sua própria consulta extra (N+1), mesmo com o with('apolices')
+     * já feito no controller.
+     */
     public function getStatusAttribute(): string
     {
-        // Ativo = tem pelo menos uma apólice DENTRO da vigência (não só "tem apólice")
+        if ($this->relationLoaded('apolices')) {
+            $hoje = now();
+            $ativo = $this->apolices->contains(
+                fn (Apolice $apolice) => $apolice->inicio_vigencia <= $hoje && $apolice->fim_vigencia >= $hoje
+            );
+
+            return $ativo ? 'Ativo' : 'Inativo';
+        }
+
         return $this->apolices()->ativas()->exists() ? 'Ativo' : 'Inativo';
     }
 

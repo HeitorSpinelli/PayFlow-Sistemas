@@ -36,8 +36,21 @@ class ApolicesController extends Controller
         }
     }
 
-    public function destroy(int $id)
+    public function destroy(Request $request, int $id)
     {
+        // Exige a senha do usuário logado antes de cancelar a apólice — ação
+        // com peso legal (Lei 15.040/2024, art. 21) e de único passo pra
+        // desfazer. current_password é uma regra nativa do Laravel: valida
+        // contra o hash do usuário autenticado no guard padrão, sem precisar
+        // comparar hash manualmente aqui. Protege tanto o clique sem querer
+        // quanto uma sessão esquecida aberta sendo usada por outra pessoa.
+        $request->validate([
+            'senha' => ['required', 'current_password'],
+        ], [
+            'senha.required' => 'Digite sua senha para confirmar a exclusão.',
+            'senha.current_password' => 'Senha incorreta.',
+        ]);
+
         try {
             $this->apoliceService->destroy($id);
 
