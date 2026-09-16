@@ -27,9 +27,9 @@ export default function Profile({
 
     return (
         <>
-            <Head title="Profile settings" />
+            <Head title="Configurações de perfil" />
 
-            <h1 className="sr-only">Profile settings</h1>
+            <h1 className="sr-only">Configurações de perfil</h1>
 
             <div className="flex flex-col gap-6">
                 {/* Card principal: informações do perfil */}
@@ -46,10 +46,10 @@ export default function Profile({
                                 Perfil
                             </p>
                             <h2 className="text-lg font-bold tracking-tight text-foreground">
-                                Profile information
+                                Informações do perfil
                             </h2>
                             <p className="text-sm text-muted-foreground">
-                                Update your name and email address
+                                Atualize seu nome e endereço de e-mail
                             </p>
                         </div>
                     </div>
@@ -68,7 +68,7 @@ export default function Profile({
                                         htmlFor="name"
                                         className="text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase"
                                     >
-                                        Name
+                                        Nome
                                     </Label>
 
                                     <div className="relative">
@@ -80,7 +80,7 @@ export default function Profile({
                                             name="name"
                                             required
                                             autoComplete="name"
-                                            placeholder="Full name"
+                                            placeholder="Nome completo"
                                         />
                                     </div>
 
@@ -95,7 +95,7 @@ export default function Profile({
                                         htmlFor="email"
                                         className="text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase"
                                     >
-                                        Email address
+                                        Endereço de e-mail
                                     </Label>
 
                                     <div className="relative">
@@ -108,7 +108,7 @@ export default function Profile({
                                             name="email"
                                             required
                                             autoComplete="username"
-                                            placeholder="Email address"
+                                            placeholder="Endereço de e-mail"
                                         />
                                     </div>
 
@@ -124,16 +124,16 @@ export default function Profile({
                                             <TriangleAlert className="mt-0.5 size-4 shrink-0 text-amber-600" />
                                             <div className="text-sm text-amber-700 dark:text-amber-400">
                                                 <p>
-                                                    Your email address is
-                                                    unverified.{' '}
+                                                    Seu endereço de e-mail não
+                                                    foi verificado.{' '}
                                                     <Link
                                                         href={send()}
                                                         as="button"
                                                         className="font-semibold underline decoration-current/40 underline-offset-4 transition-colors hover:decoration-current"
                                                     >
-                                                        Click here to resend
-                                                        the verification
-                                                        email.
+                                                        Clique aqui para
+                                                        reenviar o e-mail de
+                                                        verificação.
                                                     </Link>
                                                 </p>
 
@@ -141,9 +141,9 @@ export default function Profile({
                                                     'verification-link-sent' && (
                                                     <p className="mt-2 flex items-center gap-1.5 font-semibold text-emerald-600">
                                                         <CheckCircle2 className="size-4" />
-                                                        A new verification
-                                                        link has been sent to
-                                                        your email address.
+                                                        Um novo link de
+                                                        verificação foi enviado
+                                                        para seu e-mail.
                                                     </p>
                                                 )}
                                             </div>
@@ -157,7 +157,7 @@ export default function Profile({
                                         className="h-11 rounded-xl bg-emerald-500 px-6 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
                                     >
                                         <Save className="mr-2 size-4" />
-                                        Save
+                                        Salvar
                                     </Button>
                                 </div>
                             </>
@@ -184,7 +184,7 @@ export default function Profile({
 Profile.layout = {
     breadcrumbs: [
         {
-            title: 'Profile settings',
+            title: 'Configurações de perfil',
             href: edit(),
         },
     ],

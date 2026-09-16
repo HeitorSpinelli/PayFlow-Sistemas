@@ -144,7 +144,10 @@ return [
     */
 
     'features' => [
-        Features::registration(),
+        // Registro público desativado: era possível qualquer pessoa criar
+        // conta sozinha e, combinado com o bug de MustVerifyEmail (ver
+        // App\Models\User), ganhar acesso imediato a dados de clientes.
+        // Agora só um admin cadastra usuário, em Administração > Usuários.
         Features::resetPasswords(),
         Features::emailVerification(),
         Features::twoFactorAuthentication([

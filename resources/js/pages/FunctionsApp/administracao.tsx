@@ -5,6 +5,7 @@ import {
     Info,
     MoreVertical,
     PlayCircle,
+    Plus,
     RefreshCw,
     RotateCcw,
     ScrollText,
@@ -18,8 +19,10 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import CreateUsuarioModal from '@/components/modals/create-usuario-modal';
 import RenovarApoliceModal from '@/components/modals/renovar-apolice-modal';
 import UserProfileModal from '@/components/modals/user-profile-modal';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
@@ -63,7 +66,7 @@ interface Props {
     apolicesSuspensas?: ApoliceResumo[];
 }
 
-function formatarData(data?: string) {
+function formatarData(data?: string | null) {
     if (!data) {
         return '—';
     }
@@ -98,6 +101,7 @@ export default function Administracao({
     const [usuarioSelecionado, setUsuarioSelecionado] = useState<User | null>(
         null,
     );
+    const [openNovoUsuario, setOpenNovoUsuario] = useState(false);
     const [busca, setBusca] = useState('');
     const [openRenovar, setOpenRenovar] = useState(false);
     const [apoliceParaRenovar, setApoliceParaRenovar] =
@@ -244,16 +248,25 @@ export default function Administracao({
                                         {totalUsuarios} usuário(s)
                                     </p>
                                 </div>
-                                <div className="relative">
-                                    <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/60" />
-                                    <Input
-                                        placeholder="Buscar por nome ou email..."
-                                        value={busca}
-                                        onChange={(e) =>
-                                            setBusca(e.target.value)
-                                        }
-                                        className="h-10 w-full rounded-xl border border-border/70 bg-background pr-3 pl-9 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none sm:w-72"
-                                    />
+                                <div className="flex items-center gap-3">
+                                    <div className="relative">
+                                        <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/60" />
+                                        <Input
+                                            placeholder="Buscar por nome ou email..."
+                                            value={busca}
+                                            onChange={(e) =>
+                                                setBusca(e.target.value)
+                                            }
+                                            className="h-10 w-full rounded-xl border border-border/70 bg-background pr-3 pl-9 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none sm:w-72"
+                                        />
+                                    </div>
+                                    <Button
+                                        className="h-10 shrink-0 rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-600"
+                                        onClick={() => setOpenNovoUsuario(true)}
+                                    >
+                                        <Plus className="mr-1.5 size-4" />
+                                        Novo usuário
+                                    </Button>
                                 </div>
                             </div>
 
@@ -810,6 +823,11 @@ export default function Administracao({
                     user={usuarioSelecionado}
                 />
             )}
+
+            <CreateUsuarioModal
+                open={openNovoUsuario}
+                setOpen={setOpenNovoUsuario}
+            />
 
             <RenovarApoliceModal
                 open={openRenovar}

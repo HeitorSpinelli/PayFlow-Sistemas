@@ -8,6 +8,7 @@ import CreateProfileSeguradoraModal from '@/components/modals/create-profileSegu
 interface Ramo {
     id: number;
     nome_ramo: string;
+    categoria: string;
 }
 
 interface Seguradora {
@@ -28,19 +29,28 @@ export default function Seguradoras({ seguradoras = [] }: Props) {
     // Estados independentes para cada modal
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-    
-    // Armazena a seguradora selecionada para exibir no perfil/edição
-    const [selectedSeguradora, setSelectedSeguradora] = useState<Seguradora | null>(null);
+
+    // Guarda só o ID selecionado, não uma cópia da seguradora — a seguradora
+    // exibida é sempre derivada do prop `seguradoras` atual. Sem isso, depois
+    // de adicionar/editar/excluir um ramo (que recarrega esse prop via
+    // Inertia), o modal continuaria mostrando a lista de ramos antiga até
+    // fechar e abrir de novo.
+    const [selectedSeguradoraId, setSelectedSeguradoraId] = useState<
+        number | null
+    >(null);
+    const selectedSeguradora =
+        seguradoras.find((s) => s.id === selectedSeguradoraId) ?? null;
 
     const abrirDetalhes = (seguradora: Seguradora) => {
-        setSelectedSeguradora(seguradora);
+        setSelectedSeguradoraId(seguradora.id);
         setIsProfileModalOpen(true);
     };
 
     const fecharDetalhes = (open: boolean) => {
         setIsProfileModalOpen(open);
+
         if (!open) {
-            setSelectedSeguradora(null);
+            setSelectedSeguradoraId(null);
         }
     };
 
@@ -133,7 +143,9 @@ export default function Seguradoras({ seguradoras = [] }: Props) {
                                 <div className="mt-4 flex items-center justify-end gap-2">
                                     <Button
                                         variant="outline"
-                                        onClick={() => abrirDetalhes(seguradora)}
+                                        onClick={() =>
+                                            abrirDetalhes(seguradora)
+                                        }
                                         size="sm"
                                         className="h-8 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 font-semibold text-emerald-600 shadow-sm shadow-emerald-500/20 transition-all hover:bg-emerald-500/20 hover:text-emerald-700 active:scale-[0.98]"
                                     >

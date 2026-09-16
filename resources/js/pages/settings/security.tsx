@@ -50,9 +50,9 @@ export default function Security({
 
     return (
         <>
-            <Head title="Security settings" />
+            <Head title="Configurações de segurança" />
 
-            <h1 className="sr-only">Security settings</h1>
+            <h1 className="sr-only">Configurações de segurança</h1>
 
             <div className="flex flex-col gap-6">
                 {/* Card: atualizar senha */}
@@ -68,11 +68,11 @@ export default function Security({
                                 Segurança
                             </p>
                             <h2 className="text-lg font-bold tracking-tight text-foreground">
-                                Update password
+                                Atualizar senha
                             </h2>
                             <p className="text-sm text-muted-foreground">
-                                Ensure your account is using a long, random
-                                password to stay secure
+                                Use uma senha longa e aleatória para manter sua
+                                conta segura
                             </p>
                         </div>
                     </div>
@@ -106,7 +106,7 @@ export default function Security({
                                         htmlFor="current_password"
                                         className="text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase"
                                     >
-                                        Current password
+                                        Senha atual
                                     </Label>
 
                                     <div className="relative">
@@ -117,7 +117,7 @@ export default function Security({
                                             name="current_password"
                                             className="h-12 rounded-xl border-border/70 bg-background pl-10 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/30"
                                             autoComplete="current-password"
-                                            placeholder="Current password"
+                                            placeholder="Senha atual"
                                         />
                                     </div>
 
@@ -131,7 +131,7 @@ export default function Security({
                                         htmlFor="password"
                                         className="text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase"
                                     >
-                                        New password
+                                        Nova senha
                                     </Label>
 
                                     <div className="relative">
@@ -142,7 +142,7 @@ export default function Security({
                                             name="password"
                                             className="h-12 rounded-xl border-border/70 bg-background pl-10 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/30"
                                             autoComplete="new-password"
-                                            placeholder="New password"
+                                            placeholder="Nova senha"
                                         />
                                     </div>
 
@@ -154,7 +154,7 @@ export default function Security({
                                         htmlFor="password_confirmation"
                                         className="text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase"
                                     >
-                                        Confirm password
+                                        Confirmar senha
                                     </Label>
 
                                     <div className="relative">
@@ -164,7 +164,7 @@ export default function Security({
                                             name="password_confirmation"
                                             className="h-12 rounded-xl border-border/70 bg-background pl-10 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/30"
                                             autoComplete="new-password"
-                                            placeholder="Confirm password"
+                                            placeholder="Confirmar senha"
                                         />
                                     </div>
 
@@ -180,7 +180,7 @@ export default function Security({
                                         className="h-11 rounded-xl bg-emerald-500 px-6 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
                                     >
                                         <Lock className="mr-2 size-4" />
-                                        Save password
+                                        Salvar senha
                                     </Button>
                                 </div>
                             </>
@@ -213,7 +213,7 @@ export default function Security({
                                 </p>
                                 <div className="flex flex-wrap items-center gap-2">
                                     <h2 className="text-lg font-bold tracking-tight text-foreground">
-                                        Two-factor authentication
+                                        Autenticação de dois fatores
                                     </h2>
                                     <span
                                         className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold tracking-wide uppercase ${
@@ -228,8 +228,8 @@ export default function Security({
                                     </span>
                                 </div>
                                 <p className="text-sm text-muted-foreground">
-                                    Manage your two-factor authentication
-                                    settings
+                                    Gerencie as configurações de autenticação de
+                                    dois fatores
                                 </p>
                             </div>
                         </div>
@@ -237,10 +237,10 @@ export default function Security({
                         {twoFactorEnabled ? (
                             <div className="relative flex flex-col items-start gap-4">
                                 <p className="max-w-xl text-sm text-muted-foreground">
-                                    You will be prompted for a secure, random
-                                    pin during login, which you can retrieve
-                                    from the TOTP-supported application on
-                                    your phone.
+                                    Você vai precisar informar um código seguro
+                                    e aleatório ao entrar no sistema, obtido no
+                                    aplicativo autenticador (TOTP) do seu
+                                    celular.
                                 </p>
 
                                 <div className="relative inline">
@@ -253,7 +253,7 @@ export default function Security({
                                                 className="h-11 rounded-xl px-6 font-bold shadow-lg shadow-red-500/10 active:scale-[0.98]"
                                             >
                                                 <ShieldOff className="mr-2 size-4" />
-                                                Disable 2FA
+                                                Desativar 2FA
                                             </Button>
                                         )}
                                     </Form>
@@ -268,11 +268,11 @@ export default function Security({
                         ) : (
                             <div className="relative flex flex-col items-start gap-4">
                                 <p className="max-w-xl text-sm text-muted-foreground">
-                                    When you enable two-factor authentication,
-                                    you will be prompted for a secure pin
-                                    during login. This pin can be retrieved
-                                    from a TOTP-supported application on your
-                                    phone.
+                                    Ao ativar a autenticação de dois fatores,
+                                    você vai precisar informar um código seguro
+                                    ao entrar no sistema. Esse código pode ser
+                                    obtido num aplicativo autenticador (TOTP) no
+                                    seu celular.
                                 </p>
 
                                 <div>
@@ -284,7 +284,7 @@ export default function Security({
                                             className="h-11 rounded-xl bg-emerald-500 px-6 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
                                         >
                                             <ShieldCheck className="mr-2 size-4" />
-                                            Continue setup
+                                            Continuar configuração
                                         </Button>
                                     ) : (
                                         <Form
@@ -300,7 +300,7 @@ export default function Security({
                                                     className="h-11 rounded-xl bg-emerald-500 px-6 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
                                                 >
                                                     <ShieldCheck className="mr-2 size-4" />
-                                                    Enable 2FA
+                                                    Ativar 2FA
                                                 </Button>
                                             )}
                                         </Form>
@@ -330,7 +330,7 @@ export default function Security({
 Security.layout = {
     breadcrumbs: [
         {
-            title: 'Security settings',
+            title: 'Configurações de segurança',
             href: edit(),
         },
     ],

@@ -8,11 +8,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 
-export default function Login({ status, canResetPassword, canRegister }: any) {
+export default function Login({ status, canResetPassword }: any) {
     return (
         <>
             <Head title="Entrar" />
@@ -104,17 +103,6 @@ export default function Login({ status, canResetPassword, canRegister }: any) {
                                 )}
                                 Entrar no Sistema
                             </Button>
-                            {canRegister && (
-                                <div className="mt-8 text-center text-sm text-muted-foreground">
-                                    Não tem uma conta?{' '}
-                                    <TextLink
-                                        href={register()}
-                                        className="font-bold text-emerald-600 hover:text-emerald-500"
-                                    >
-                                        Cadastre-se agora
-                                    </TextLink>
-                                </div>
-                            )}
                         </>
                     )}
                 </Form>

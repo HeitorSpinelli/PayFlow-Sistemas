@@ -2,28 +2,55 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Services\Cliente\RamoService;
 use App\Http\Requests\StoreRamoRequest;
+use App\Http\Requests\UpdateRamoRequest;
+use App\Services\Cliente\RamoService;
 
 class RamosController extends Controller
 {
-    private $ramoService;
+    private RamoService $ramoService;
 
     public function __construct(RamoService $ramoService)
     {
         $this->ramoService = $ramoService;
     }
 
-    //ramo de cada contrato de seguro, como automóvel, residencial, vida, saúde, etc.
-    public function storeRamo(StoreRamoRequest $request)
+    // Ramo de cada contrato de seguro, como automóvel, residencial, vida, empresarial, etc.
+    public function store(StoreRamoRequest $request)
     {
-        $data = $request->validated();
-        $this->ramoService->create($data);
+        try {
+            $this->ramoService->create($request->validated());
+
+            return redirect()->back()->with('success', 'Ramo cadastrado com sucesso!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
 
-    public function showRamo(int $id)
+    public function show(int $id)
     {
         return $this->ramoService->show($id);
+    }
+
+    public function update(UpdateRamoRequest $request, int $id)
+    {
+        try {
+            $this->ramoService->update($id, $request->validated());
+
+            return redirect()->back()->with('success', 'Ramo atualizado com sucesso!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function destroy(int $id)
+    {
+        try {
+            $this->ramoService->delete($id);
+
+            return redirect()->back()->with('success', 'Ramo excluído com sucesso!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
 }

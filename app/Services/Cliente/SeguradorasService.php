@@ -4,6 +4,7 @@ namespace App\Services\Cliente;
 
 use App\Models\Ramo;
 use App\Models\Seguradora;
+use Illuminate\Database\QueryException;
 
 class SeguradorasService
 {
@@ -53,12 +54,24 @@ class SeguradorasService
         }
     }
 
-    // Exclui a seguradora apenas se não tiver ramos associados
+    /**
+     * apolices.seguradora_id tem FK com ON DELETE RESTRICT — o próprio banco
+     * recusa apagar uma seguradora que ainda tem apólice vinculada (os ramos
+     * dela, em compensação, têm CASCADE e seriam apagados junto). Captura o
+     * erro específico (SQLSTATE 23503, violação de chave estrangeira) e
+     * devolve uma mensagem que faz sentido pro usuário, em vez do erro de
+     * SQL cru (mesmo tratamento já usado em RamoService::delete()).
+     */
     public function deleteSeguradora(int $id)
     {
         try {
-            $seguradora = Seguradora::findOrFail($id);
-            $seguradora->delete();
+            Seguradora::findOrFail($id)->delete();
+        } catch (QueryException $e) {
+            if ($e->getCode() === '23503') {
+                throw new \Exception('Não é possível excluir: já existem apólices cadastradas com esta seguradora.');
+            }
+
+            throw new \Exception('Erro ao excluir seguradora: '.$e->getMessage());
         } catch (\Exception $e) {
             throw new \Exception('Erro ao excluir seguradora: '.$e->getMessage());
         }

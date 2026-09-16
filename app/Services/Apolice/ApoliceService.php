@@ -246,6 +246,13 @@ class ApoliceService
      * adiciona/remove linhas de parcela se quantidade_parcelas mudar —
      * isso é um caso mais complexo (o que fazer se já existem parcelas
      * pagas além da nova quantidade?) e fica fora desta correção rápida.
+     *
+     * O valor é recalculado sobre o SALDO que falta pagar (prêmio total
+     * menos o que já foi quitado), dividido entre as parcelas em aberto —
+     * não sobre o prêmio total dividido pela quantidade original, que
+     * ignorava o que já tinha sido pago. A última parcela em aberto absorve
+     * o resto do arredondamento, mesma regra de store()/renovar(), pra soma
+     * de tudo (pago + em aberto) bater certinho com o prêmio total.
      */
     private function sincronizarParcelas(Apolice $apolice, array $data): void
     {
@@ -258,9 +265,21 @@ class ApoliceService
             return;
         }
 
-        $novoValorParcela = isset($data['valor_premio_total'], $data['quantidade_parcelas'])
-            ? round($data['valor_premio_total'] / $data['quantidade_parcelas'], 2)
-            : null;
+        $novosValores = null;
+
+        if (isset($data['valor_premio_total'])) {
+            $totalJaPago = $apolice->parcelas()->where('status_pagamento', 'paga')->sum('valor_parcela');
+            $saldoRestante = round($data['valor_premio_total'] - $totalJaPago, 2);
+            $quantidadeNaoPagas = $parcelasNaoPagas->count();
+            $valorPorParcela = round($saldoRestante / $quantidadeNaoPagas, 2);
+
+            $novosValores = [];
+            foreach ($parcelasNaoPagas->values() as $indice => $parcela) {
+                $novosValores[$parcela->id] = $indice === $quantidadeNaoPagas - 1
+                    ? round($saldoRestante - ($valorPorParcela * ($quantidadeNaoPagas - 1)), 2)
+                    : $valorPorParcela;
+            }
+        }
 
         $novaDataBase = isset($data['inicio_vigencia'])
             ? Carbon::parse($data['inicio_vigencia'])
@@ -273,8 +292,8 @@ class ApoliceService
                 $atualizacao['data_vencimento'] = $novaDataBase->copy()->addMonthsNoOverflow($parcela->numero_parcela);
             }
 
-            if ($novoValorParcela !== null) {
-                $atualizacao['valor_parcela'] = $novoValorParcela;
+            if ($novosValores !== null) {
+                $atualizacao['valor_parcela'] = $novosValores[$parcela->id];
             }
 
             if (! empty($atualizacao)) {
@@ -563,7 +582,14 @@ class ApoliceService
         $hoje = now()->startOfDay();
         $dataLimite = $hoje->copy()->addDays($diasLimite);
 
+        // whereHas('apolice'): exige uma apólice-pai não cancelada/arquivada.
+        // Sem isso, uma parcela em aberto de uma apólice já renovada (arquivada
+        // por soft-delete, mas com as parcelas propositalmente preservadas —
+        // ver ApoliceService::renovar()) continuava aparecendo aqui pra sempre,
+        // e o ->cliente encadeado abaixo quebrava com erro fatal (apolice nula)
+        // quando isso acontecia.
         $parcelas = Parcelas::with(['apolice.cliente'])
+            ->whereHas('apolice')
             ->where('status_pagamento', '!=', 'paga')
             ->where('data_vencimento', '<=', $dataLimite)
             ->orderBy('data_vencimento')

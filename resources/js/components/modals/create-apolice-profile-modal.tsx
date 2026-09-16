@@ -272,6 +272,13 @@ export default function CreateApoliceProfileModal({
 }: any) {
     const [modo, setModo] = useState<Modo>('visualizar');
 
+    // Confirmação por senha antes de excluir — estado próprio, separado do
+    // useForm principal (que é o formulário de edição da apólice), pra não
+    // misturar um campo de senha no payload de salvarEdicao().
+    const [senhaConfirmacao, setSenhaConfirmacao] = useState('');
+    const [erroSenha, setErroSenha] = useState('');
+    const [excluindo, setExcluindo] = useState(false);
+
     const { data, setData, put, processing, errors } = useForm({
         numero_apolice: '',
         cliente_id: '',
@@ -368,6 +375,8 @@ export default function CreateApoliceProfileModal({
 
     const fechar = () => {
         setModo('visualizar');
+        setSenhaConfirmacao('');
+        setErroSenha('');
         setOpen(false);
     };
 
@@ -396,11 +405,35 @@ export default function CreateApoliceProfileModal({
         });
     };
 
+    const cancelarExclusao = () => {
+        setSenhaConfirmacao('');
+        setErroSenha('');
+        setModo('visualizar');
+    };
+
     const confirmarExclusao = () => {
-        if (!apolice) return;
+        if (!apolice) {
+            return;
+        }
+
+        if (!senhaConfirmacao) {
+            setErroSenha('Digite sua senha para confirmar a exclusão.');
+
+            return;
+        }
+
+        setErroSenha('');
+        setExcluindo(true);
         router.delete(`/apolices/${apolice.id}`, {
-            onError: () => toast.error('Erro ao excluir apólice.'),
-            onFinish: () => fechar(),
+            data: { senha: senhaConfirmacao },
+            onSuccess: () => {
+                setSenhaConfirmacao('');
+                fechar();
+            },
+            onError: (errosResposta) => {
+                setErroSenha(errosResposta.senha ?? 'Erro ao excluir apólice.');
+            },
+            onFinish: () => setExcluindo(false),
         });
     };
 
@@ -2642,6 +2675,33 @@ export default function CreateApoliceProfileModal({
                                 </span>{' '}
                                 será removida permanentemente.
                             </p>
+
+                            <div className="mt-4 space-y-2">
+                                <label className="text-sm leading-none font-medium">
+                                    Digite sua senha para confirmar *
+                                </label>
+                                <Input
+                                    type="password"
+                                    autoComplete="current-password"
+                                    value={senhaConfirmacao}
+                                    onChange={(e) => {
+                                        setSenhaConfirmacao(e.target.value);
+                                        setErroSenha('');
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            confirmarExclusao();
+                                        }
+                                    }}
+                                    placeholder="Sua senha de login"
+                                    className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
+                                />
+                                {erroSenha && (
+                                    <span className="text-xs font-medium text-rose-500">
+                                        {erroSenha}
+                                    </span>
+                                )}
+                            </div>
                         </Section>
                     )}
                 </div>
@@ -2697,16 +2757,19 @@ export default function CreateApoliceProfileModal({
                             <Button
                                 variant="outline"
                                 className="rounded-xl"
-                                onClick={() => setModo('visualizar')}
+                                onClick={cancelarExclusao}
                             >
                                 Cancelar
                             </Button>
                             <Button
                                 className="rounded-xl bg-rose-500 text-white shadow-lg shadow-rose-500/25 hover:bg-rose-600"
                                 onClick={confirmarExclusao}
+                                disabled={excluindo || !senhaConfirmacao}
                             >
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                Confirmar exclusão
+                                {excluindo
+                                    ? 'Excluindo...'
+                                    : 'Confirmar exclusão'}
                             </Button>
                         </>
                     )}

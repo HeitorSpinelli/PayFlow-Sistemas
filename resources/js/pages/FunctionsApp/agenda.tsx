@@ -160,6 +160,7 @@ export default function Agenda({ cobrancas }: Props) {
             if (c.status === 'pendente') aReceber += c.valor;
             if (c.status === 'atrasado') {
                 atrasado += c.valor;
+                aReceber += c.valor;
                 qtdAtrasados++;
             }
         }
