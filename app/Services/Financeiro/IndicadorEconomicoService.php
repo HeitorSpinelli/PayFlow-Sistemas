@@ -47,23 +47,44 @@ class IndicadorEconomicoService
 
             $dados = $resposta->json();
 
-            if (empty($dados)) {
-                throw new \Exception('BCB não retornou nenhum valor para a série Selic.');
+            // json() devolve null quando o corpo não é JSON válido (página de
+            // erro/manutenção do BCB respondida com 200). Sem checar o tipo,
+            // o acesso a $dados[0] vira TypeError — que NÃO é \Exception e
+            // escaparia do catch, derrubando o comando agendado inteiro.
+            if (! is_array($dados) || ! isset($dados[0]['valor'], $dados[0]['data'])) {
+                throw new \Exception('BCB não retornou um valor válido para a série Selic.');
             }
 
             $ultimo = $dados[0]; // formato: ['data' => 'dd/MM/yyyy', 'valor' => 'x.xx']
 
             IndicadorEconomico::create([
                 'indicador' => 'selic',
-                'valor' => (float) $ultimo['valor'],
+                'valor' => $this->valorPlausivel((float) $ultimo['valor'], 'Selic'),
                 'data_referencia' => Carbon::createFromFormat('d/m/Y', $ultimo['data']),
                 'atualizado_em' => now(),
             ]);
-        } catch (\Exception $e) {
-            // Não relança a exceção — uma falha aqui não deve derrubar
-            // o resto do sistema. Só registra no log para investigação.
+        } catch (\Throwable $e) {
+            // \Throwable e não \Exception: erros de tipo/formato de data do
+            // Carbon são \Error. Uma falha aqui não deve derrubar o resto do
+            // agendamento — só registra no log para investigação, e o
+            // obterUltimoValor() continua servindo o último valor bom.
             Log::warning('Falha ao atualizar Selic via API do BCB: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Barreira de sanidade: um indicador fora de faixa (negativo, ou uma
+     * hiperinflação de três dígitos) quase certamente é dado corrompido,
+     * e gravá-lo contaminaria o cálculo de juros de TODAS as parcelas em
+     * atraso. Melhor rejeitar e continuar com o último valor confiável.
+     */
+    private function valorPlausivel(float $valor, string $nome): float
+    {
+        if ($valor < 0 || $valor > 100) {
+            throw new \Exception("Valor implausível para {$nome}: {$valor}% a.a.");
+        }
+
+        return $valor;
     }
 
     /**
@@ -91,12 +112,18 @@ class IndicadorEconomicoService
 
             $dados = $resposta->json();
 
-            if (count($dados) < 12) {
+            // Mesmo motivo do atualizarSelic(): count(null) é TypeError, não
+            // \Exception, e passaria direto pelo catch.
+            if (! is_array($dados) || count($dados) < 12) {
                 throw new \Exception('BCB retornou menos de 12 valores mensais de IPCA.');
             }
 
             $fatorAcumulado = 1.0;
             foreach ($dados as $mes) {
+                if (! isset($mes['valor'])) {
+                    throw new \Exception('Série do IPCA veio com um mês sem valor.');
+                }
+
                 $valorMensal = (float) $mes['valor'];
                 $fatorAcumulado *= (1 + ($valorMensal / 100));
             }
@@ -104,13 +131,17 @@ class IndicadorEconomicoService
 
             $dataMaisRecente = end($dados);
 
+            if (! isset($dataMaisRecente['data'])) {
+                throw new \Exception('Série do IPCA veio sem data de referência.');
+            }
+
             IndicadorEconomico::create([
                 'indicador' => 'ipca_12m',
-                'valor' => round($ipcaAcumulado12Meses, 4),
+                'valor' => $this->valorPlausivel(round($ipcaAcumulado12Meses, 4), 'IPCA 12m'),
                 'data_referencia' => Carbon::createFromFormat('d/m/Y', $dataMaisRecente['data']),
                 'atualizado_em' => now(),
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::warning('Falha ao atualizar IPCA via API do BCB: ' . $e->getMessage());
         }
     }
@@ -125,8 +156,13 @@ class IndicadorEconomicoService
      */
     public function obterUltimoValor(string $indicador): ?float
     {
+        // O desempate por id importa: duas execuções no mesmo segundo (ou um
+        // reprocessamento manual) gravam o mesmo atualizado_em, e sem
+        // critério secundário o Postgres pode devolver qualquer uma das duas
+        // — a taxa de juros mudaria de valor entre requisições idênticas.
         $registro = IndicadorEconomico::where('indicador', $indicador)
             ->orderByDesc('atualizado_em')
+            ->orderByDesc('id')
             ->first();
 
         return $registro?->valor;

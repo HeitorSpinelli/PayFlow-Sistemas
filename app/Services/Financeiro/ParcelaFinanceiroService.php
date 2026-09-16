@@ -19,6 +19,12 @@ class ParcelaFinanceiroService
 
     protected IndicadorEconomicoService $indicadorService;
 
+    // A taxa legal é a mesma para todas as parcelas calculadas na mesma
+    // requisição — sem esse cache, listar 30 parcelas atrasadas disparava
+    // 60 SELECTs (Selic + IPCA por parcela). O container entrega uma
+    // instância nova por resolução, então o cache não vaza entre requisições.
+    private ?float $taxaDiariaCache = null;
+
     public function __construct(IndicadorEconomicoService $indicadorService)
     {
         $this->indicadorService = $indicadorService;
@@ -69,6 +75,10 @@ class ParcelaFinanceiroService
      */
     private function taxaDiaria(): float
     {
+        if ($this->taxaDiariaCache !== null) {
+            return $this->taxaDiariaCache;
+        }
+
         $taxaAnual = $this->indicadorService->calcularTaxaLegalMora() ?? self::TAXA_ANUAL_FALLBACK;
 
         // Selic - IPCA já foi negativo historicamente no Brasil — sem esse
@@ -78,6 +88,6 @@ class ParcelaFinanceiroService
         $taxaMensal = $taxaAnual / 12;
         $taxaDiariaPercentual = $taxaMensal / 30;
 
-        return $taxaDiariaPercentual / 100;
+        return $this->taxaDiariaCache = $taxaDiariaPercentual / 100;
     }
 }
