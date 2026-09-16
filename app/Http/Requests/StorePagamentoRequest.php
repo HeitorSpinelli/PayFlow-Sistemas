@@ -28,7 +28,14 @@ class StorePagamentoRequest extends FormRequest
                     ->where('apolice_id', $this->apolice_id)
                     ->withoutTrashed(),
             ],
-            'valor' => 'required|numeric|min:0.01',
+            // Teto contra erro de digitação no modo manual (um zero a mais
+            // vira um pagamento de milhões) e contra estourar a coluna
+            // decimal(15,2) do Postgres, que gera erro de banco, não de
+            // validação — o usuário veria "erro interno" em vez do campo.
+            'valor' => 'required|numeric|min:0.01|max:99999999.99',
+            // Só vale quando o operador marca "ajustar valor manualmente";
+            // sem isso, o backend usa o valor que ele mesmo calcula.
+            'valor_manual' => 'sometimes|boolean',
             'data_pagamento' => 'required|date|before_or_equal:today',
             'forma_pagamento' => 'required|string|in:boleto,pix,cartão,débito',
             'status' => 'required|string|in:confirmado',
@@ -44,6 +51,7 @@ class StorePagamentoRequest extends FormRequest
             'parcela.required' => 'O campo parcela é obrigatório.',
             'parcela.unique' => 'Essa parcela já foi registrada para esta apólice.',
             'valor.required' => 'O campo valor é obrigatório.',
+            'valor.max' => 'O valor informado é alto demais. Confira se não sobrou um dígito a mais.',
             'data_pagamento.required' => 'O campo data de pagamento é obrigatório.',
             'data_pagamento.date' => 'O campo data de pagamento deve ser uma data válida.',
             'data_pagamento.before_or_equal' => 'A data de pagamento não pode ser uma data futura.',

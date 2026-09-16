@@ -95,6 +95,13 @@ export default function CreatePagamentoModal({
         apolice_id: '',
         parcela: '',
         valor: '',
+        // Quando false (padrão), o backend calcula o valor final sozinho
+        // (parcela + multa/juros pela data de pagamento informada) e ignora
+        // o que estiver no campo. Só quando o operador marca "ajustar valor
+        // manualmente" é que o valor digitado prevalece — antes o backend
+        // tentava adivinhar isso pela diferença numérica, e errava sempre
+        // que a data de pagamento era retroativa.
+        valor_manual: false as boolean,
         data_pagamento: '',
         forma_pagamento: '',
         status: 'confirmado', // pagamento já nasce confirmado ao ser registrado
@@ -191,7 +198,6 @@ export default function CreatePagamentoModal({
         if (!apolice) return;
 
         const totalParcelas = apolice.quantidade_parcelas ?? 1;
-        const valorTotal = Number(apolice.valor_premio_total ?? 0);
 
         // Parcelas que já têm pagamento lançado para essa apólice
         const parcelasPagas = (apolice.pagamentos ?? []).map((p: any) =>
@@ -207,28 +213,42 @@ export default function CreatePagamentoModal({
             }
         }
 
-        // Usa o valor sugerido pelo backend (valor da parcela + multa/juros
-        // se estiver atrasada, calculado em ParcelaFinanceiroService) — não
-        // só o valor de face. Sem isso, editar o campo nunca fazia diferença
-        // pro backend: ele sempre recalculava e ignorava o que foi digitado.
-        // Agora o pré-preenchido JÁ é o valor calculado, então só conta como
-        // "o operador decidiu outro valor" quando ele realmente muda o campo.
-        const parcelaReal = (apolice.parcelas ?? []).find(
-            (p: any) => Number(p.numero_parcela) === proximaParcela,
-        );
-        const valorParcela = parcelaReal
-            ? Number(parcelaReal.valor_sugerido ?? parcelaReal.valor_parcela)
-            : totalParcelas > 0
-              ? valorTotal / totalParcelas
-              : 0;
-
         setData((prev) => ({
             ...prev,
             parcela: String(proximaParcela),
-            valor: valorParcela.toFixed(2),
         }));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [data.apolice_id]);
+
+    // Mantém o valor exibido acompanhando a parcela selecionada — inclusive
+    // quando o operador troca a parcela na mão, o que antes deixava o valor
+    // da parcela anterior no campo. Não mexe no campo quando ele está em
+    // modo manual, pra não sobrescrever o que o operador digitou.
+    useEffect(() => {
+        if (!data.apolice_id || !data.parcela || data.valor_manual) return;
+
+        const apolice = apolicesDoSegurado.find(
+            (a: any) => String(a.id) === data.apolice_id,
+        );
+        if (!apolice) return;
+
+        // valor_sugerido vem do backend já com multa/juros (se atrasada). É só
+        // uma prévia calculada na data de hoje: o valor gravado é sempre
+        // recalculado no PagamentoService com a data de pagamento informada.
+        const parcelaReal = (apolice.parcelas ?? []).find(
+            (p: any) => Number(p.numero_parcela) === Number(data.parcela),
+        );
+
+        // Fallback pra apólice antiga sem parcelas materializadas: divide o
+        // prêmio pelo número de parcelas, que é como o valor era estimado antes.
+        const totalParcelas = apolice.quantidade_parcelas ?? 1;
+        const valorParcela = parcelaReal
+            ? Number(parcelaReal.valor_sugerido ?? parcelaReal.valor_parcela)
+            : Number(apolice.valor_premio_total ?? 0) / totalParcelas;
+
+        setData('valor', valorParcela.toFixed(2));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [data.apolice_id, data.parcela, data.valor_manual]);
 
     const handleSubmit = () => {
         // Antes de enviar, garante que as etapas anteriores (cadastro do
@@ -563,7 +583,8 @@ export default function CreatePagamentoModal({
                                                 type="text"
                                                 inputMode="numeric"
                                                 placeholder="0,00"
-                                                className={inputClass}
+                                                className={`${inputClass} ${!data.valor_manual ? 'opacity-60' : ''}`}
+                                                readOnly={!data.valor_manual}
                                                 value={
                                                     data.valor &&
                                                     Number(data.valor) > 0
@@ -583,6 +604,29 @@ export default function CreatePagamentoModal({
                                                     )
                                                 }
                                             />
+                                            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={data.valor_manual}
+                                                    onChange={(e) =>
+                                                        setData(
+                                                            'valor_manual',
+                                                            e.target.checked,
+                                                        )
+                                                    }
+                                                    className="size-3.5 accent-emerald-500"
+                                                />
+                                                Ajustar valor manualmente
+                                                (desconto negociado)
+                                            </label>
+                                            {!data.valor_manual && (
+                                                <p className="text-xs text-muted-foreground">
+                                                    Valor calculado
+                                                    automaticamente com multa e
+                                                    juros, se houver atraso, na
+                                                    data de pagamento informada.
+                                                </p>
+                                            )}
                                             {(errors as any).valor && (
                                                 <span className="text-xs font-medium text-rose-500">
                                                     {(errors as any).valor}
