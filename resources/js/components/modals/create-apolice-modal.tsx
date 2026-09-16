@@ -2078,9 +2078,17 @@ export default function CreateApoliceModal({
                                                 min="1"
                                                 value={data.quantidade_parcelas}
                                                 onChange={(e) =>
+                                                    // O campo é declarado como
+                                                    // number no useForm, mas
+                                                    // e.target.value é sempre
+                                                    // string — sem o Number()
+                                                    // o estado virava string e
+                                                    // qualquer conta com ele
+                                                    // concatenava em vez de
+                                                    // somar.
                                                     setData(
                                                         'quantidade_parcelas',
-                                                        e.target.value,
+                                                        Number(e.target.value),
                                                     )
                                                 }
                                                 className="h-11 rounded-xl border-border/80 bg-background"
