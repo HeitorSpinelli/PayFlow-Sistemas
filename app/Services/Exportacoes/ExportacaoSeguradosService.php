@@ -7,14 +7,17 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExportacaoSeguradosService
 {
+    use EscreveLinhaCsv;
+
     //StreamedResponse Cria um fluxo de dados para o navegador, permitindo que o arquivo seja baixado sem precisar armazená-lo no servidor
     public function exportarSeguradosCsv(): StreamedResponse
     {
         //Nome do arquivo = segurados + data atual + extensão .csv
         $fileName = 'Segurados-' . date('Y-m-d') . '.csv';
 
-        //Busca segurados no banco de dados
-        $segurados = Segurado::all();
+        // Montada aqui, executada só dentro do callback via cursor() — com
+        // ->all() tudo ia para a memória antes da resposta começar a sair.
+        $consulta = Segurado::query();
 
         // Cabeçalhos HTTP para o navegador saber que é um arquivo CSV para download
         $headers = [
@@ -26,7 +29,7 @@ class ExportacaoSeguradosService
         ];
 
         // Callback monta o arquivo CSV linha por linha e envia para o navegador
-        $callback = function () use ($segurados) {
+        $callback = function () use ($consulta) {
             //Abre um ponteiro de escrita direto para saida do PHP 
             $file = fopen('php://output', 'w');
 
@@ -34,7 +37,7 @@ class ExportacaoSeguradosService
             fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
             // Escreve a primeira linha com os nomes das colunas na planilha
-            fputcsv($file, [
+            $this->escreverLinha($file, [
                 'ID',
                 'Nome Completo',
                 'CPF/CNPJ',
@@ -49,9 +52,9 @@ class ExportacaoSeguradosService
             ]);
 
             // Percorre todos os segurados e escreve cada um como uma linha no CSV
-            foreach ($segurados as $segurado) {
-                //fputcsv escreve um array como uma linha CSV, separando os valores por vírgula
-                fputcsv($file, [
+            foreach ($consulta->cursor() as $segurado) {
+                //escreverLinha escreve um array como uma linha CSV, separando os valores por vírgula
+                $this->escreverLinha($file, [
                     $segurado->id,
                     $segurado->nome_completo,
                     $segurado->cpf_cnpj,

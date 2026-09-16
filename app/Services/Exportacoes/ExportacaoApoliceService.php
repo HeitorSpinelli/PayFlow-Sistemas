@@ -7,14 +7,17 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExportacaoApoliceService
 {
+    use EscreveLinhaCsv;
+
     // StreamedResponse cria um fluxo de dados direto para o navegador baixar sem ocupar memória do servidor
     public function exportarApolicesCsv(): StreamedResponse
     {
         // Nome do arquivo = apolices + data atual + extensão .csv
         $fileName = 'Apolices-' . date('Y-m-d') . '.csv';
 
-        // Busca as apólices carregando os relacionamentos para trazer os nomes em vez dos IDs
-        $apolices = Apolice::with(['cliente', 'seguradora', 'ramo'])->get();
+        // Montada aqui, executada só dentro do callback via cursor() — com
+        // ->get() tudo ia para a memória antes da resposta começar a sair.
+        $consulta = Apolice::with(['cliente', 'seguradora', 'ramo']);
 
         // Cabeçalhos HTTP para o navegador identificar o arquivo CSV
         $headers = [
@@ -26,7 +29,7 @@ class ExportacaoApoliceService
         ];
 
         // Callback monta o arquivo CSV linha por linha
-        $callback = function () use ($apolices) {
+        $callback = function () use ($consulta) {
             // Abre um ponteiro de escrita direto para a saída do PHP
             $file = fopen('php://output', 'w');
 
@@ -34,7 +37,7 @@ class ExportacaoApoliceService
             fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
             // Cabeçalhos das colunas correspondentes à tabela do banco
-            fputcsv($file, [
+            $this->escreverLinha($file, [
                 'ID',
                 'Número da Apólice',
                 'Cliente',
@@ -52,8 +55,8 @@ class ExportacaoApoliceService
             ]);
 
             // Percorre cada apólice para preencher as linhas do CSV
-            foreach ($apolices as $apolice) {
-                fputcsv($file, [
+            foreach ($consulta->cursor() as $apolice) {
+                $this->escreverLinha($file, [
                     $apolice->id,
                     $apolice->numero_apolice,
                     $apolice->cliente->nome_completo ?? 'Não informado', // Pega do relacionamento
