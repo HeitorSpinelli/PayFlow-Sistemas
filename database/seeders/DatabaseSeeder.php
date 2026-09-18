@@ -15,6 +15,13 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
+        // Usuário de teste com senha padrão do factory — só faz sentido em
+        // ambiente local. Rodar `db:seed` sem essa trava contra um banco de
+        // produção criaria uma conta com credencial previsível.
+        if (! app()->environment('local')) {
+            return;
+        }
+
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',

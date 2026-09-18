@@ -50,7 +50,7 @@ Route::post('/configuracao-inicial', [ConfiguracaoInicialController::class, 'sto
 /* Rotas Protegidas por Autenticação */
 /* ------------------------------------------------------------------ */
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'throttle:web-actions'])->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -103,14 +103,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/ajuda', fn () => inertia('FunctionsApp/ajuda'))->name('ajuda');
 
     // Módulo: Importação
-    Route::post('/importar-dados', [ImportacaoController::class, 'store'])->name('importar-dados.store');
+    Route::post('/importar-dados', [ImportacaoController::class, 'store'])
+        ->middleware('throttle:importacao')
+        ->name('importar-dados.store');
 });
 
 /* ------------------------------------------------------------------ */
 /* Rotas Exclusivas para Administradores */
 /* ------------------------------------------------------------------ */
 
-Route::middleware(['auth', 'can:is-admin'])->group(function () {
+Route::middleware(['auth', 'can:is-admin', 'throttle:web-actions'])->group(function () {
 
     // Ajuda: Documentação do TCC (download restrito a administradores)
     Route::get('/ajuda/documentacao-tcc', function () {
