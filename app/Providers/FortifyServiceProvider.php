@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -47,10 +48,17 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureViews(): void
     {
-        Fortify::loginView(fn (Request $request) => Inertia::render('auth/login', [
-            'canResetPassword' => Features::enabled(Features::resetPasswords()),
-            'status' => $request->session()->get('status'),
-        ]));
+        // Sem usuário nenhum no banco não tem como logar em lugar nenhum —
+        // manda direto pra Configuração Inicial em vez de mostrar um
+        // formulário de login que ninguém consegue de fato preencher.
+        // Cobre também quem cai aqui via redirecionamento automático do
+        // middleware `auth` (ex.: tentou abrir /dashboard sem estar logado).
+        Fortify::loginView(fn (Request $request) => User::query()->exists()
+            ? Inertia::render('auth/login', [
+                'canResetPassword' => Features::enabled(Features::resetPasswords()),
+                'status' => $request->session()->get('status'),
+            ])
+            : redirect()->route('configuracao-inicial'));
 
         Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/reset-password', [
             'email' => $request->email,

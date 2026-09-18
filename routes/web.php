@@ -17,13 +17,23 @@ use App\Models\Automacao;
 use App\Models\Notificacoes;
 use App\Models\Segurado;
 use App\Models\TipoNotificacao;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 /* ------------------------------------------------------------------ */
 /* Rota Inicial */
 /* ------------------------------------------------------------------ */
 
-Route::inertia('/', 'welcome')->name('home');
+// Sem usuário nenhum no banco, manda direto pra Configuração Inicial em vez
+// da página de boas-vindas — quem acabou de instalar o sistema não tem
+// motivo pra ver um botão "Entrar no Sistema" que não leva a lugar nenhum.
+Route::get('/', function () {
+    if (! User::query()->exists()) {
+        return redirect()->route('configuracao-inicial');
+    }
+
+    return inertia('welcome');
+})->name('home');
 
 /* ------------------------------------------------------------------ */
 /* Configuração Inicial (bootstrap do primeiro admin) */
