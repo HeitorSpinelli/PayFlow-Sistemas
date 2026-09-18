@@ -99,4 +99,28 @@ class UserController extends Controller
 
         return redirect()->back()->with('success', 'Cargo atualizado com sucesso!');
     }
+
+    public function destroy(Request $request, int $id)
+    {
+        // Excluir a própria conta enquanto está logado nela deixaria a
+        // sessão num estado esquisito (usuário autenticado que não existe
+        // mais) — mais seguro simplesmente não deixar.
+        if ($request->user()->id === $id) {
+            return redirect()->back()->with('error', 'Não é possível excluir sua própria conta enquanto estiver logado nela.');
+        }
+
+        $user = User::findOrFail($id);
+
+        // Mesma regra do update(): nunca pode ficar sem nenhum admin, senão
+        // ninguém mais consegue promover outro usuário de volta.
+        $totalAdmins = User::where('role', 'admin')->count();
+
+        if ($user->role === 'admin' && $totalAdmins === 1) {
+            return redirect()->back()->with('error', 'Não é possível excluir o último administrador do sistema.');
+        }
+
+        $user->delete();
+
+        return redirect()->back()->with('success', 'Usuário excluído com sucesso!');
+    }
 }

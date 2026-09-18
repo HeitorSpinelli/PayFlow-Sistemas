@@ -178,6 +178,7 @@ Route::middleware(['auth', 'can:is-admin'])->group(function () {
         Route::get('/usuarios', [UserController::class, 'index'])->name('users');
         Route::post('/usuarios', [UserController::class, 'store']);
         Route::put('/usuarios/{id}', [UserController::class, 'update']);
+        Route::delete('/usuarios/{id}', [UserController::class, 'destroy']);
     });
 });
 
