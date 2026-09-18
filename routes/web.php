@@ -4,6 +4,7 @@ use App\Console\Commands\AtualizarIndicadoresEconomicos;
 use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\ApolicesController;
 use App\Http\Controllers\AutomacoesController;
+use App\Http\Controllers\ConfiguracaoInicialController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ImportacaoController;
 use App\Http\Controllers\NotificacoesController;
@@ -27,6 +28,17 @@ Schedule::command(AtualizarIndicadoresEconomicos::class)->daily();
 /* ------------------------------------------------------------------ */
 
 Route::inertia('/', 'welcome')->name('home');
+
+/* ------------------------------------------------------------------ */
+/* Configuração Inicial (bootstrap do primeiro admin) */
+/* ------------------------------------------------------------------ */
+
+// Só acessível enquanto não existir nenhum usuário no banco — mesmo
+// comportamento que /register tinha antes de ser desativado: sem usuário
+// nenhum, dá 404 de verdade (ConfiguracaoInicialController garante isso),
+// não é uma tela "escondida" sem link visível.
+Route::get('/configuracao-inicial', [ConfiguracaoInicialController::class, 'create'])->name('configuracao-inicial');
+Route::post('/configuracao-inicial', [ConfiguracaoInicialController::class, 'store']);
 
 /* ------------------------------------------------------------------ */
 /* Rotas Protegidas por Autenticação */
