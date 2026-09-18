@@ -1,6 +1,5 @@
 <?php
 
-use App\Console\Commands\AtualizarIndicadoresEconomicos;
 use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\ApolicesController;
 use App\Http\Controllers\AutomacoesController;
@@ -19,9 +18,6 @@ use App\Models\Notificacoes;
 use App\Models\Segurado;
 use App\Models\TipoNotificacao;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Schedule;
-
-Schedule::command(AtualizarIndicadoresEconomicos::class)->daily();
 
 /* ------------------------------------------------------------------ */
 /* Rota Inicial */

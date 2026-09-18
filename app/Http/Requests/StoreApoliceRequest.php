@@ -89,6 +89,7 @@ class StoreApoliceRequest extends FormRequest
             'quantidade_parcelas.required' => 'A quantidade de parcelas é obrigatória.',
             'quantidade_parcelas.integer' => 'A quantidade de parcelas deve ser um número inteiro.',
             'quantidade_parcelas.min' => 'A quantidade de parcelas deve ser de pelo menos 1.',
+            'quantidade_parcelas.max' => 'O máximo de parcelas é 12.',
 
             'forma_pagamento.required' => 'A forma de pagamento é obrigatória.',
             'forma_pagamento.string' => 'A forma de pagamento informada é inválida.',

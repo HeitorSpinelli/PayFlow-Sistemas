@@ -7,14 +7,18 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExportacaoPagamentoService
 {
+    use EscreveLinhaCsv;
+
     // StreamedResponse cria um fluxo de dados direto para o navegador baixar sem ocupar memória do servidor
     public function exportarPagamentosCsv(): StreamedResponse
     {
         // Nome do arquivo = pagamentos + data atual + extensão .csv
         $fileName = 'Pagamentos-' . date('Y-m-d') . '.csv';
 
-        // Busca os pagamentos carregando os relacionamentos para trazer os nomes em vez dos IDs
-        $pagamentos = Pagamento::with(['apolice.cliente'])->get();
+        // A consulta é montada aqui mas só é EXECUTADA dentro do callback,
+        // via cursor(). Com ->get() o streaming não servia de nada: os
+        // registros já estavam todos na memória antes da resposta começar.
+        $consulta = Pagamento::with(['apolice.cliente']);
 
         // Cabeçalhos HTTP para o navegador identificar o arquivo CSV
         $headers = [
@@ -26,7 +30,7 @@ class ExportacaoPagamentoService
         ];
 
         // Callback monta o arquivo CSV linha por linha
-        $callback = function () use ($pagamentos) {
+        $callback = function () use ($consulta) {
             // Abre um ponteiro de escrita direto para a saída do PHP
             $file = fopen('php://output', 'w');
 
@@ -34,7 +38,7 @@ class ExportacaoPagamentoService
             fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
             // Cabeçalhos das colunas correspondentes à tabela do banco
-            fputcsv($file, [
+            $this->escreverLinha($file, [
                 'ID',
                 'Cliente',
                 'Apólice',
@@ -48,8 +52,10 @@ class ExportacaoPagamentoService
             ]);
 
             // Percorre cada pagamento para preencher as linhas do CSV
-            foreach ($pagamentos as $pagamento) {
-                fputcsv($file, [
+            // cursor() traz uma linha por vez do Postgres em vez de hidratar
+            // a coleção inteira — memória constante, independente do volume.
+            foreach ($consulta->cursor() as $pagamento) {
+                $this->escreverLinha($file, [
                     $pagamento->id,
                     $pagamento->apolice->cliente->nome_completo ?? 'Não informado', // Pega do relacionamento
                     $pagamento->apolice->numero_apolice ?? 'Não informado', // Pega do relacionamento

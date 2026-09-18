@@ -7,11 +7,18 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
+use App\Console\Commands\AtualizarIndicadoresEconomicos;
 use App\Console\Commands\CancelarApolicesPorAtrasoDaPrimeiraParcela;
 use App\Console\Commands\VerificarInadimplenciaParcelas;
 use App\Jobs\AtualizarParcelasVencidas;
 use App\Jobs\ProcessarAutomacoes;
 use Illuminate\Support\Facades\Schedule;
+
+// Selic/IPCA do dia. Estava declarado em routes/web.php, que só é carregado
+// no ciclo HTTP — o `schedule:run` nunca enxergava essa tarefa, e por isso a
+// tabela de indicadores estava vazia e todo juros de mora caía no fallback
+// de 12% a.a. Roda primeiro porque o cálculo das parcelas depende dele.
+Schedule::command(AtualizarIndicadoresEconomicos::class)->dailyAt('06:30');
 
 // Roda antes do ProcessarAutomacoes: precisa marcar as parcelas vencidas
 // antes da automação de notificação de atraso rodar, senão ela não acha nada.

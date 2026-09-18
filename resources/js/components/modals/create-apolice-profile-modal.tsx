@@ -1,4 +1,4 @@
-import { useForm, router } from '@inertiajs/react';
+import { useForm, router, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     Building2,
@@ -271,6 +271,15 @@ export default function CreateApoliceProfileModal({
     ramos,
 }: any) {
     const [modo, setModo] = useState<Modo>('visualizar');
+
+    // A rota apolices.destroy é protegida por `can:is-admin`. Sem esconder o
+    // botão, um operador comum clicava, confirmava a exclusão e só então
+    // levava um 403 — a permissão precisa aparecer na UI também, não só no
+    // backend. Mesmo padrão usado no dashboard e no app-sidebar.
+    const { auth } = usePage().props as unknown as {
+        auth: { user: { role: string } };
+    };
+    const isAdmin = auth?.user?.role === 'admin';
 
     // Confirmação por senha antes de excluir — estado próprio, separado do
     // useForm principal (que é o formulário de edição da apólice), pra não
@@ -2709,14 +2718,16 @@ export default function CreateApoliceProfileModal({
                 <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border/70 bg-background px-6 py-4 sm:px-8">
                     {modo === 'visualizar' && (
                         <>
-                            <Button
-                                variant="outline"
-                                className="rounded-xl"
-                                onClick={() => setModo('excluir')}
-                            >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Excluir
-                            </Button>
+                            {isAdmin && (
+                                <Button
+                                    variant="outline"
+                                    className="rounded-xl"
+                                    onClick={() => setModo('excluir')}
+                                >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Excluir
+                                </Button>
+                            )}
                             <Button
                                 className="rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-600"
                                 onClick={() => setModo('editar')}

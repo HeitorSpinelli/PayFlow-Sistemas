@@ -35,16 +35,17 @@ class PagamentoService
                 $dataPagamento = Carbon::parse($data['data_pagamento']);
                 $calculo = $this->parcelaFinanceiroService->calcular($parcela, $dataPagamento);
 
-                // O operador pode ajustar o campo "Valor" manualmente (ex: um
-                // desconto negociado com o cliente). Quando o valor digitado
-                // difere do calculado, respeita a decisão do operador em vez
-                // de sobrescrever silenciosamente — só usa o valor calculado
-                // quando o campo não foi alterado do sugerido.
-                $valorDigitado = round((float) $data['valor'], 2);
-                $valorCalculado = round($calculo['valor_total'], 2);
-                $valorFinal = abs($valorDigitado - $valorCalculado) > 0.01
-                    ? $valorDigitado
-                    : $valorCalculado;
+                // O operador pode ajustar o valor manualmente (ex: desconto
+                // negociado) — mas só quando marca isso explicitamente no
+                // formulário. Inferir a intenção pela diferença entre o valor
+                // digitado e o calculado não funciona: o campo vem
+                // pré-preenchido com o cálculo feito na data de HOJE, então
+                // qualquer lançamento retroativo divergia do recalculado e
+                // era tratado como "escolha do operador", cobrando os juros
+                // dos dias entre o pagamento real e o lançamento.
+                $valorFinal = ! empty($data['valor_manual'])
+                    ? round((float) $data['valor'], 2)
+                    : round($calculo['valor_total'], 2);
 
                 $pagamento = Pagamento::create([
                     ...$data,
