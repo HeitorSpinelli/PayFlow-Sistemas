@@ -53,6 +53,16 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
     const labelDocumento = isPF ? 'CPF' : 'CNPJ';
     const labelData = isPF ? 'Data de nascimento' : 'Data de fundação';
 
+    // Só bloqueia no seletor o que o backend também rejeita — data no futuro
+    // pra qualquer tipo, e menor de 18 anos quando for pessoa física. É só
+    // uma facilidade de UI: quem validar de verdade é StoreSeguradoRequest.
+    const hoje = new Date();
+    const dataMaximaNascimentoFundacao = isPF
+        ? new Date(hoje.getFullYear() - 18, hoje.getMonth(), hoje.getDate())
+              .toISOString()
+              .split('T')[0]
+        : hoje.toISOString().split('T')[0];
+
     const { data, setData, post, processing, errors, reset, clearErrors } =
         useForm({
             tipo_pessoa: 'pf',
@@ -294,6 +304,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                                         <Input
                                             className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none"
                                             type="date"
+                                            max={dataMaximaNascimentoFundacao}
                                             value={
                                                 data.data_nascimento_fundacao
                                             }

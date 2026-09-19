@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Rules\CpfCnpjDisponivel;
 use App\Rules\CpfCnpjValido;
+use Carbon\Carbon;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -32,7 +33,19 @@ class StoreSeguradoRequest extends FormRequest
             'razao_social' => 'nullable|string|max:255',
             'tipo_pessoa' => 'required|in:pf,pj',
             'cpf_cnpj' => ['required', 'string', 'max:20', new CpfCnpjValido, new CpfCnpjDisponivel],
-            'data_nascimento_fundacao' => 'required|date',
+            // before_or_equal:today cobre pf e pj (ninguém nasce nem uma
+            // empresa é fundada no futuro). A checagem de maioridade só faz
+            // sentido pra pessoa física — uma empresa não tem "idade mínima".
+            'data_nascimento_fundacao' => [
+                'required',
+                'date',
+                'before_or_equal:today',
+                function ($attribute, $value, $fail) {
+                    if ($this->input('tipo_pessoa') === 'pf' && Carbon::parse($value)->age < 18) {
+                        $fail('O cliente pessoa física precisa ter pelo menos 18 anos.');
+                    }
+                },
+            ],
             'email' => 'required|email|max:255',
             'telefone_fixo' => 'nullable|string|max:20',
             'celular_whatsapp' => 'required|string|max:20',
@@ -54,6 +67,7 @@ class StoreSeguradoRequest extends FormRequest
             'cpf_cnpj.required' => 'O campo CPF/CNPJ é obrigatório.',
             'data_nascimento_fundacao.required' => 'O campo data de nascimento/fundação é obrigatório.',
             'data_nascimento_fundacao.date' => 'O campo data de nascimento/fundação deve ser uma data válida.',
+            'data_nascimento_fundacao.before_or_equal' => 'A data de nascimento/fundação não pode estar no futuro.',
             'email.required' => 'O campo e-mail é obrigatório.',
             'email.email' => 'O campo e-mail deve ser um endereço de e-mail válido.',
             'telefone_fixo.string' => 'O campo telefone fixo deve ser uma string.',

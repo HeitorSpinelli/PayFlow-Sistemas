@@ -387,7 +387,7 @@ export default function Dashboard({
                                 </div>
                             </div>
 
-                            <div className="flex flex-col">
+                            <div className="scroll-fina flex max-h-[420px] flex-col overflow-y-auto pr-1">
                                 {vencimentosProximos.length === 0 && (
                                     <p className="py-6 text-center text-sm text-muted-foreground">
                                         Nenhum vencimento em atraso ou próximo.
@@ -577,7 +577,7 @@ export default function Dashboard({
                                 )}
                             </div>
 
-                            <div className="flex flex-col gap-4">
+                            <div className="scroll-fina flex max-h-[420px] flex-col gap-4 overflow-y-auto pr-1">
                                 {notificacoesRecentes.length === 0 ? (
                                     <p className="py-6 text-center text-xs text-muted-foreground">
                                         Nenhuma notificação enviada ainda.

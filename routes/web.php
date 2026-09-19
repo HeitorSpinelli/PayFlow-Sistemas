@@ -90,6 +90,7 @@ Route::middleware(['auth', 'verified', 'throttle:web-actions'])->group(function 
         Route::delete('/{id}', [pagamentoController::class, 'destroy'])->name('pagamentos.destroy');
         Route::get('/exportar', [pagamentoController::class, 'exportar']);
         Route::get('/cliente/{clienteId}', [pagamentoController::class, 'porCliente']);
+        Route::get('/apolice/{apoliceId}/exportar', [pagamentoController::class, 'exportarPorApolice']);
     });
 
     // Módulo: Agenda

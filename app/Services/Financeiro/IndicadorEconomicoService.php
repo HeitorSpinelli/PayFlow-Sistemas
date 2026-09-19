@@ -118,7 +118,11 @@ class IndicadorEconomicoService
                 throw new \Exception('BCB retornou menos de 12 valores mensais de IPCA.');
             }
 
+            //Fator acumulado Representa o valor original sem alteração de 
+            //Acumulo sobre juros nos 12 meses, ou seja, o valor original é multiplicado por 1 + a taxa de juros mensal.
             $fatorAcumulado = 1.0;
+
+            //Para cada mês, verifica se o valor existe e calcula o fator acumulado.
             foreach ($dados as $mes) {
                 if (! isset($mes['valor'])) {
                     throw new \Exception('Série do IPCA veio com um mês sem valor.');

@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StorePagamentoRequest;
 use App\Models\Apolice;
 use App\Models\Pagamento;
-use App\Models\Parcelas;
 use App\Models\Segurado;
+use App\Services\Apolice\ApoliceService;
 use App\Services\Exportacoes\ExportacaoPagamentoService;
 use App\Services\Financeiro\ParcelaFinanceiroService;
 use App\Services\Pagamento\PagamentoService;
@@ -18,10 +18,13 @@ class pagamentoController extends Controller
 
     protected ParcelaFinanceiroService $parcelaFinanceiroService;
 
-    public function __construct(PagamentoService $pagamentoService, ParcelaFinanceiroService $parcelaFinanceiroService)
+    protected ApoliceService $apoliceService;
+
+    public function __construct(PagamentoService $pagamentoService, ParcelaFinanceiroService $parcelaFinanceiroService, ApoliceService $apoliceService)
     {
         $this->pagamentoService = $pagamentoService;
         $this->parcelaFinanceiroService = $parcelaFinanceiroService;
+        $this->apoliceService = $apoliceService;
     }
 
     public function store(StorePagamentoRequest $request)
@@ -76,7 +79,12 @@ class pagamentoController extends Controller
             'pagamentos' => $pagamentos,
             'totalRecebido' => Pagamento::where('status', 'confirmado')->sum('valor'),
             'totalConfirmados' => Pagamento::where('status', 'confirmado')->count(),
-            'totalParcelas' => Parcelas::count(),
+            // Substituiu "Total de Parcelas" (uma contagem bruta, sem indicar
+            // se precisa de alguma ação) — reaproveita a mesma regra de
+            // "cliente devedor" já usada no dashboard (ApoliceService::
+            // contarClientesDevedores()): tem parcela não paga e já vencida,
+            // em qualquer apólice do cliente.
+            'clientesComPendencia' => $this->apoliceService->contarClientesDevedores(),
             'segurados' => Segurado::select('id', 'nome_completo', 'cpf_cnpj')->get(),
             'apolices' => Apolice::select('id', 'numero_apolice', 'cliente_id', 'valor_premio_total', 'quantidade_parcelas')
                 ->with([
@@ -123,5 +131,10 @@ class pagamentoController extends Controller
     public function exportar(ExportacaoPagamentoService $exportacaoService)
     {
         return $exportacaoService->exportarPagamentosCsv();
+    }
+
+    public function exportarPorApolice(int $apoliceId, ExportacaoPagamentoService $exportacaoService)
+    {
+        return $exportacaoService->exportarPagamentosApoliceCsv($apoliceId);
     }
 }

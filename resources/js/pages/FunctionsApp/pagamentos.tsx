@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import {
+    AlertTriangle,
     Search,
     Download,
     Filter,
@@ -11,12 +11,20 @@ import {
     ChevronRight,
     CircleCheck,
     DollarSign,
-    MoreHorizontal,
+    Trash2,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useState, useRef } from 'react';
+import { toast } from 'sonner';
 import CreatePagamentoModal from '@/components/modals/create-pagamentos-modal';
-import PagamentoProfileModal from '@/components/modals/create-pagamento-profile-modal';
+import PainelClientePagamentos from '@/components/pagamentos/painel-cliente';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 
 import { formatarDataBR, formatarMoeda } from '@/utils/Masks';
 
@@ -37,7 +45,7 @@ interface PageProps {
     pagamentos?: PaginatedPagamentos;
     totalRecebido?: number;
     totalConfirmados?: number;
-    totalParcelas?: number;
+    clientesComPendencia?: number;
     segurados?: any[];
     apolices?: any[];
 }
@@ -46,14 +54,22 @@ export default function Pagamentos({
     pagamentos,
     totalRecebido = 0,
     totalConfirmados = 0,
-    totalParcelas = 0,
+    clientesComPendencia = 0,
     segurados,
     apolices,
 }: PageProps) {
     const [openModal, setOpenModal] = useState(false);
-    const [openProfile, setOpenProfile] = useState(false);
     const [filtroAberto, setFiltroAberto] = useState(false);
-    const [pagamentoSelecionado, setPagamentoSelecionado] = useState<any>(null);
+    // Cliente selecionado alimenta o painel da coluna direita — não é mais
+    // um "pagamento" único aberto num modal, é o cliente daquela linha.
+    const [clienteSelecionado, setClienteSelecionado] = useState<{
+        id: number;
+        nome: string;
+    } | null>(null);
+    const [apoliceIdInicialPainel, setApoliceIdInicialPainel] = useState<
+        number | null
+    >(null);
+    const [pagamentoParaExcluir, setPagamentoParaExcluir] = useState<any>(null);
 
     const opcoesFiltro = ['Todos'];
 
@@ -85,6 +101,7 @@ export default function Pagamentos({
             } else {
                 params.delete('busca');
             }
+
             params.delete('page');
 
             router.get(
@@ -104,9 +121,25 @@ export default function Pagamentos({
         setFiltroAberto(false);
     };
 
-    const abrirPerfil = (pagamento: any) => {
-        setPagamentoSelecionado(pagamento);
-        setOpenProfile(true);
+    const selecionarCliente = (pagamento: any) => {
+        setClienteSelecionado({
+            id: pagamento.cliente_id,
+            nome: pagamento.cliente,
+        });
+        setApoliceIdInicialPainel(pagamento.apolice_id ?? null);
+    };
+
+    const confirmarExclusao = () => {
+        if (!pagamentoParaExcluir) {
+            return;
+        }
+
+        router.delete(`/pagamentos/${pagamentoParaExcluir.id}`, {
+            onSuccess: () => toast.success('Pagamento excluído com sucesso!'),
+            onError: () =>
+                toast.error('Erro ao excluir pagamento. Tente novamente.'),
+            onFinish: () => setPagamentoParaExcluir(null),
+        });
     };
 
     return (
@@ -170,248 +203,281 @@ export default function Pagamentos({
                         </div>
                     </div>
 
-                    <div className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:border-emerald-500/30">
-                        <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl"></div>
+                    <div className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:border-red-500/30">
+                        <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-red-500/10 blur-3xl"></div>
                         <div className="relative z-10 flex flex-col gap-1">
                             <span className="text-xs font-medium text-muted-foreground">
-                                Total de Parcelas
+                                Clientes com Pendência
                             </span>
-                            <span className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                                {totalParcelas}
+                            <span
+                                className={`text-2xl font-bold tracking-tight sm:text-3xl ${
+                                    clientesComPendencia > 0
+                                        ? 'text-red-500'
+                                        : 'text-foreground'
+                                }`}
+                            >
+                                {clientesComPendencia}
                             </span>
                         </div>
-                        <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
-                            <DollarSign className="size-6" />
+                        <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-xl bg-red-500/10 text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.2)]">
+                            <AlertTriangle className="size-6" />
                         </div>
                     </div>
                 </div>
 
-                {/* 3. Seção da Tabela */}
-                <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
-                    {/* Toolbar */}
-                    <div className="flex flex-col justify-between gap-4 border-b border-border/70 p-4 sm:p-5 lg:flex-row lg:items-center">
-                        <div>
-                            <h3 className="text-sm font-bold">
-                                Lista de Pagamentos
-                            </h3>
-                            <p className="text-xs text-muted-foreground">
-                                {pagamentos?.total ?? 0} pagamento(s)
-                                encontrado(s)
-                            </p>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2.5">
-                            <div className="relative">
-                                <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/60" />
-                                <Input
-                                    placeholder="Buscar por cliente, apólice..."
-                                    value={busca}
-                                    onChange={handleBuscaChange}
-                                    className="h-10 w-full rounded-xl border border-border/70 bg-background pr-3 pl-9 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none sm:w-64"
-                                />
+                {/* 3. Lista de pagamentos + painel do cliente selecionado, lado a lado */}
+                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_460px] lg:items-start">
+                    <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
+                        {/* Toolbar */}
+                        <div className="flex flex-col justify-between gap-4 border-b border-border/70 p-4 sm:p-5 lg:flex-row lg:items-center">
+                            <div>
+                                <h3 className="text-sm font-bold">
+                                    Lista de Pagamentos
+                                </h3>
+                                <p className="text-xs text-muted-foreground">
+                                    {pagamentos?.total ?? 0} pagamento(s)
+                                    encontrado(s)
+                                </p>
                             </div>
-
-                            {/* Dropdown de filtro por status */}
-                            <div className="relative">
-                                <button
-                                    onClick={() =>
-                                        setFiltroAberto(!filtroAberto)
-                                    }
-                                    className="inline-flex h-10 min-w-[120px] items-center justify-between gap-2 rounded-xl border border-border/70 bg-background px-3 text-sm font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
-                                >
-                                    <span className="flex items-center gap-2">
-                                        <Filter className="size-4 text-muted-foreground/60" />
-                                        {filtroSelecionado}
-                                    </span>
-                                    <ChevronDown
-                                        className={`size-4 text-muted-foreground/60 transition-transform ${filtroAberto ? 'rotate-180' : ''}`}
+                            <div className="flex flex-wrap items-center gap-2.5">
+                                <div className="relative">
+                                    <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/60" />
+                                    <Input
+                                        placeholder="Buscar por cliente, apólice..."
+                                        value={busca}
+                                        onChange={handleBuscaChange}
+                                        className="h-10 w-full rounded-xl border border-border/70 bg-background pr-3 pl-9 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none sm:w-64"
                                     />
-                                </button>
+                                </div>
 
-                                {filtroAberto && (
-                                    <div className="absolute left-0 z-50 mt-2 w-40 overflow-hidden rounded-xl border border-border/70 bg-popover py-1.5 shadow-xl">
-                                        {opcoesFiltro.map((opcao) => (
-                                            <button
-                                                key={opcao}
-                                                onClick={() =>
-                                                    handleFiltroChange(opcao)
-                                                }
-                                                className={`flex w-full cursor-pointer items-center justify-between px-3 py-2 text-sm transition-colors ${
-                                                    filtroSelecionado === opcao
-                                                        ? 'bg-emerald-500 font-medium text-white'
-                                                        : 'text-popover-foreground hover:bg-muted'
-                                                }`}
-                                            >
-                                                {opcao}
-                                                {filtroSelecionado ===
-                                                    opcao && (
-                                                    <Check className="size-4" />
-                                                )}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                                {/* Dropdown de filtro por status */}
+                                <div className="relative">
+                                    <button
+                                        onClick={() =>
+                                            setFiltroAberto(!filtroAberto)
+                                        }
+                                        className="inline-flex h-10 min-w-[120px] items-center justify-between gap-2 rounded-xl border border-border/70 bg-background px-3 text-sm font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            <Filter className="size-4 text-muted-foreground/60" />
+                                            {filtroSelecionado}
+                                        </span>
+                                        <ChevronDown
+                                            className={`size-4 text-muted-foreground/60 transition-transform ${filtroAberto ? 'rotate-180' : ''}`}
+                                        />
+                                    </button>
 
-                            <a
-                                href="/pagamentos/exportar"
-                                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border/70 bg-background px-4 text-sm font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
-                            >
-                                <Download className="size-4 text-muted-foreground/60" />
-                                Exportar
-                            </a>
-                        </div>
-                    </div>
-
-                    {/* Tabela de Pagamentos */}
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="border-b border-border/70 bg-muted/[0.18] font-medium text-muted-foreground">
-                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
-                                        ID
-                                    </th>
-                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
-                                        Cliente
-                                    </th>
-                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
-                                        Apólice / Parcela
-                                    </th>
-                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
-                                        Valor
-                                    </th>
-                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
-                                        Data Pagamento
-                                    </th>
-                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
-                                        Forma
-                                    </th>
-                                    <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
-                                        Status
-                                    </th>
-                                    <th className="h-11 px-4 text-right text-xs font-bold tracking-wider uppercase">
-                                        Ações
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {!pagamentos?.data ||
-                                pagamentos.data.length === 0 ? (
-                                    <tr>
-                                        <td
-                                            colSpan={8}
-                                            className="h-24 px-4 text-center text-muted-foreground"
-                                        >
-                                            Nenhum pagamento encontrado.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    pagamentos.data.map((p: any) => (
-                                        <tr
-                                            key={p.id}
-                                            className="border-b border-border/70 transition-colors hover:bg-muted/[0.12]"
-                                        >
-                                            <td className="px-4 py-3.5 font-mono text-xs text-muted-foreground">
-                                                #{String(p.id).padStart(4, '0')}
-                                            </td>
-                                            <td className="px-4 py-3.5 font-medium text-foreground">
-                                                {p.cliente}
-                                            </td>
-                                            <td className="px-4 py-3.5 text-muted-foreground">
-                                                {p.apolice} / {p.parcela}ª
-                                            </td>
-                                            <td className="px-4 py-3.5 text-foreground">
-                                                R$ {formatarMoeda(p.valor)}
-                                            </td>
-                                            <td className="px-4 py-3.5 text-muted-foreground">
-                                                {formatarDataBR(
-                                                    p.data_pagamento,
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3.5 text-muted-foreground capitalize">
-                                                {p.forma_pagamento}
-                                            </td>
-                                            <td className="px-4 py-3.5">
-                                                <span className="inline-flex rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-600 capitalize">
-                                                    {p.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3.5 text-right">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
+                                    {filtroAberto && (
+                                        <div className="absolute left-0 z-50 mt-2 w-40 overflow-hidden rounded-xl border border-border/70 bg-popover py-1.5 shadow-xl">
+                                            {opcoesFiltro.map((opcao) => (
+                                                <button
+                                                    key={opcao}
                                                     onClick={() =>
-                                                        abrirPerfil(p)
+                                                        handleFiltroChange(
+                                                            opcao,
+                                                        )
                                                     }
-                                                    className="h-8 w-8 rounded-lg p-0 hover:bg-emerald-500/10 hover:text-emerald-500"
+                                                    className={`flex w-full cursor-pointer items-center justify-between px-3 py-2 text-sm transition-colors ${
+                                                        filtroSelecionado ===
+                                                        opcao
+                                                            ? 'bg-emerald-500 font-medium text-white'
+                                                            : 'text-popover-foreground hover:bg-muted'
+                                                    }`}
                                                 >
-                                                    <MoreHorizontal className="size-4" />
-                                                </Button>
+                                                    {opcao}
+                                                    {filtroSelecionado ===
+                                                        opcao && (
+                                                        <Check className="size-4" />
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <a
+                                    href="/pagamentos/exportar"
+                                    className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border/70 bg-background px-4 text-sm font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
+                                >
+                                    <Download className="size-4 text-muted-foreground/60" />
+                                    Exportar
+                                </a>
+                            </div>
+                        </div>
+
+                        {/* Tabela de Pagamentos */}
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b border-border/70 bg-muted/[0.18] font-medium text-muted-foreground">
+                                        <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
+                                            ID
+                                        </th>
+                                        <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
+                                            Cliente
+                                        </th>
+                                        <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
+                                            Apólice / Parcela
+                                        </th>
+                                        <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
+                                            Valor
+                                        </th>
+                                        <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
+                                            Data Pagamento
+                                        </th>
+                                        <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
+                                            Forma
+                                        </th>
+                                        <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
+                                            Status
+                                        </th>
+                                        <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
+                                            Ações
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {!pagamentos?.data ||
+                                    pagamentos.data.length === 0 ? (
+                                        <tr>
+                                            <td
+                                                colSpan={8}
+                                                className="h-24 px-4 text-center text-muted-foreground"
+                                            >
+                                                Nenhum pagamento encontrado.
                                             </td>
                                         </tr>
-                                    ))
+                                    ) : (
+                                        pagamentos.data.map((p: any) => (
+                                            <tr
+                                                key={p.id}
+                                                onClick={() =>
+                                                    selecionarCliente(p)
+                                                }
+                                                className={`cursor-pointer border-b border-border/70 transition-colors hover:bg-muted/[0.12] ${
+                                                    clienteSelecionado?.id ===
+                                                    p.cliente_id
+                                                        ? 'bg-emerald-500/5'
+                                                        : ''
+                                                }`}
+                                            >
+                                                <td className="px-4 py-3.5 font-mono text-xs text-muted-foreground">
+                                                    #
+                                                    {String(p.id).padStart(
+                                                        4,
+                                                        '0',
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3.5 font-medium text-foreground">
+                                                    {p.cliente}
+                                                </td>
+                                                <td className="px-4 py-3.5 text-muted-foreground">
+                                                    {p.apolice} / {p.parcela}ª
+                                                </td>
+                                                <td className="px-4 py-3.5 text-foreground">
+                                                    R$ {formatarMoeda(p.valor)}
+                                                </td>
+                                                <td className="px-4 py-3.5 text-muted-foreground">
+                                                    {formatarDataBR(
+                                                        p.data_pagamento,
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3.5 text-muted-foreground capitalize">
+                                                    {p.forma_pagamento}
+                                                </td>
+                                                <td className="px-4 py-3.5">
+                                                    <span className="inline-flex rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-600 capitalize">
+                                                        {p.status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3.5 text-left">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setPagamentoParaExcluir(
+                                                                p,
+                                                            );
+                                                        }}
+                                                        className="h-8 w-8 rounded-lg p-0 text-muted-foreground hover:bg-red-500/10 hover:text-red-500"
+                                                    >
+                                                        <Trash2 className="size-4" />
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* 4. Paginação (mesmo padrão de Clientes) */}
+                        <div className="flex flex-col gap-4 border-t border-border/70 bg-muted/[0.08] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                            <div className="text-xs text-muted-foreground">
+                                Mostrando{' '}
+                                <span className="font-semibold text-foreground">
+                                    {pagamentos?.from ?? 0}
+                                </span>{' '}
+                                até{' '}
+                                <span className="font-semibold text-foreground">
+                                    {pagamentos?.to ?? 0}
+                                </span>{' '}
+                                de{' '}
+                                <span className="font-semibold text-foreground">
+                                    {pagamentos?.total ?? 0}
+                                </span>{' '}
+                                resultados
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                {pagamentos?.prev_page_url ? (
+                                    <Link
+                                        href={pagamentos.prev_page_url}
+                                        preserveScroll
+                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50"
+                                    >
+                                        <ChevronLeft className="size-3.5" />
+                                        Anterior
+                                    </Link>
+                                ) : (
+                                    <button
+                                        disabled
+                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40"
+                                    >
+                                        <ChevronLeft className="size-3.5" />
+                                        Anterior
+                                    </button>
                                 )}
-                            </tbody>
-                        </table>
-                    </div>
 
-                    {/* 4. Paginação (mesmo padrão de Clientes) */}
-                    <div className="flex flex-col gap-4 border-t border-border/70 bg-muted/[0.08] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-                        <div className="text-xs text-muted-foreground">
-                            Mostrando{' '}
-                            <span className="font-semibold text-foreground">
-                                {pagamentos?.from ?? 0}
-                            </span>{' '}
-                            até{' '}
-                            <span className="font-semibold text-foreground">
-                                {pagamentos?.to ?? 0}
-                            </span>{' '}
-                            de{' '}
-                            <span className="font-semibold text-foreground">
-                                {pagamentos?.total ?? 0}
-                            </span>{' '}
-                            resultados
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            {pagamentos?.prev_page_url ? (
-                                <Link
-                                    href={pagamentos.prev_page_url}
-                                    preserveScroll
-                                    className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50"
-                                >
-                                    <ChevronLeft className="size-3.5" />
-                                    Anterior
-                                </Link>
-                            ) : (
-                                <button
-                                    disabled
-                                    className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40"
-                                >
-                                    <ChevronLeft className="size-3.5" />
-                                    Anterior
-                                </button>
-                            )}
-
-                            {pagamentos?.next_page_url ? (
-                                <Link
-                                    href={pagamentos.next_page_url}
-                                    preserveScroll
-                                    className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50"
-                                >
-                                    Próxima
-                                    <ChevronRight className="size-3.5" />
-                                </Link>
-                            ) : (
-                                <button
-                                    disabled
-                                    className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40"
-                                >
-                                    Próxima
-                                    <ChevronRight className="size-3.5" />
-                                </button>
-                            )}
+                                {pagamentos?.next_page_url ? (
+                                    <Link
+                                        href={pagamentos.next_page_url}
+                                        preserveScroll
+                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50"
+                                    >
+                                        Próxima
+                                        <ChevronRight className="size-3.5" />
+                                    </Link>
+                                ) : (
+                                    <button
+                                        disabled
+                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40"
+                                    >
+                                        Próxima
+                                        <ChevronRight className="size-3.5" />
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
+
+                    <PainelClientePagamentos
+                        key={clienteSelecionado?.id ?? 'vazio'}
+                        cliente={clienteSelecionado}
+                        apolices={apolices ?? []}
+                        apoliceIdInicial={apoliceIdInicialPainel}
+                    />
                 </div>
             </div>
 
@@ -422,14 +488,47 @@ export default function Pagamentos({
                 apolices={apolices}
             />
 
-            {pagamentoSelecionado && (
-                <PagamentoProfileModal
-                    open={openProfile}
-                    setOpen={setOpenProfile}
-                    pagamento={pagamentoSelecionado}
-                    apolices={apolices}
-                />
-            )}
+            <Dialog
+                open={!!pagamentoParaExcluir}
+                onOpenChange={(open) => !open && setPagamentoParaExcluir(null)}
+            >
+                <DialogContent className="rounded-2xl border-border/70 sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-lg font-bold">
+                            <AlertTriangle className="size-5 text-rose-500" />
+                            Excluir pagamento
+                        </DialogTitle>
+                    </DialogHeader>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                        O pagamento de{' '}
+                        <span className="font-semibold text-foreground">
+                            {pagamentoParaExcluir?.cliente}
+                        </span>{' '}
+                        referente à apólice{' '}
+                        <span className="font-semibold text-foreground">
+                            {pagamentoParaExcluir?.apolice}
+                        </span>{' '}
+                        ({pagamentoParaExcluir?.parcela}ª parcela) será removido
+                        permanentemente do sistema.
+                    </p>
+                    <div className="mt-2 flex justify-end gap-2">
+                        <Button
+                            variant="outline"
+                            className="rounded-xl"
+                            onClick={() => setPagamentoParaExcluir(null)}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            onClick={confirmarExclusao}
+                            className="rounded-xl bg-rose-500 text-white shadow-lg shadow-rose-500/25 hover:bg-rose-600"
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Confirmar exclusão
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }
