@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Apolice;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 
 class Parcelas extends Model
 {
@@ -34,7 +35,7 @@ class Parcelas extends Model
      * Passar a data de pagamento real permite calcular o atraso de verdade
      * em lançamentos retroativos, em vez de sempre contar até "agora".
      */
-    public function diasEmAtraso(?Carbon $dataReferencia = null): int
+    public function diasEmAtraso(?CarbonInterface $dataReferencia = null): int
     {
         if ($this->status_pagamento === 'paga') {
             return 0;

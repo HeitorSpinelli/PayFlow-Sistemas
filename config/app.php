@@ -65,7 +65,22 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    /*
+     * America/Sao_Paulo, não UTC. O sistema calcula multa e juros de mora a
+     * partir de "hoje", e com UTC o "hoje" da aplicação virava às 21h de
+     * Brasília — das 21h à meia-noite o sistema cobrava multa de 2% + 1 dia
+     * de juros de uma parcela que ainda vencia naquele dia (medido: R$ 400,00
+     * às 20:59 e R$ 408,11 às 21:00). Isso acontecia todos os dias.
+     *
+     * A mesma mudança corrige a validação `before_or_equal:today`, que
+     * aceitava data futura brasileira nesse intervalo, e o `receitaDoMes()`
+     * do dashboard, que virava o mês 3 horas antes.
+     *
+     * Os timestamps continuam gravados sem fuso no Postgres; o que muda é a
+     * referência que o PHP usa para "hoje" — que é o que a regra de negócio
+     * (e a lei) entende por dia de vencimento.
+     */
+    'timezone' => env('APP_TIMEZONE', 'America/Sao_Paulo'),
 
     /*
     |--------------------------------------------------------------------------

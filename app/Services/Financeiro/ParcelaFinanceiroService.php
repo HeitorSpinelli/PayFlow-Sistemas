@@ -4,6 +4,7 @@ namespace App\Services\Financeiro;
 
 use App\Models\Parcelas;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 
 class ParcelaFinanceiroService
 {
@@ -40,7 +41,7 @@ class ParcelaFinanceiroService
      * lançamento no sistema é feito depois do pagamento de fato (lançamento
      * retroativo).
      */
-    public function calcular(Parcelas $parcela, ?Carbon $dataPagamento = null): array
+    public function calcular(Parcelas $parcela, ?CarbonInterface $dataPagamento = null): array
     {
         $diasAtraso = $parcela->diasEmAtraso($dataPagamento);
         $valorOriginal = (float) $parcela->valor_parcela;
