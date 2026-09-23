@@ -15,7 +15,7 @@ class ExportacaoSeguradosService
         //Nome do arquivo = segurados + data atual + extensão .csv
         $fileName = 'Segurados-' . date('Y-m-d') . '.csv';
 
-        // Montada aqui, executada só dentro do callback via cursor() — com
+        // Montada aqui, executada só dentro do callback via lazy() — com
         // ->all() tudo ia para a memória antes da resposta começar a sair.
         $consulta = Segurado::query();
 
@@ -52,7 +52,7 @@ class ExportacaoSeguradosService
             ]);
 
             // Percorre todos os segurados e escreve cada um como uma linha no CSV
-            foreach ($consulta->cursor() as $segurado) {
+            foreach ($consulta->lazy() as $segurado) {
                 //escreverLinha escreve um array como uma linha CSV, separando os valores por vírgula
                 $this->escreverLinha($file, [
                     $segurado->id,

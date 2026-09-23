@@ -15,7 +15,7 @@ class ExportacaoApoliceService
         // Nome do arquivo = apolices + data atual + extensão .csv
         $fileName = 'Apolices-' . date('Y-m-d') . '.csv';
 
-        // Montada aqui, executada só dentro do callback via cursor() — com
+        // Montada aqui, executada só dentro do callback via lazy() — com
         // ->get() tudo ia para a memória antes da resposta começar a sair.
         $consulta = Apolice::with(['cliente', 'seguradora', 'ramo']);
 
@@ -55,7 +55,7 @@ class ExportacaoApoliceService
             ]);
 
             // Percorre cada apólice para preencher as linhas do CSV
-            foreach ($consulta->cursor() as $apolice) {
+            foreach ($consulta->lazy() as $apolice) {
                 $this->escreverLinha($file, [
                     $apolice->id,
                     $apolice->numero_apolice,

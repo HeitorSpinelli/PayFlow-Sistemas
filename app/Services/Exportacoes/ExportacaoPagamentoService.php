@@ -12,16 +12,58 @@ class ExportacaoPagamentoService
 {
     use EscreveLinhaCsv;
 
+    /**
+     * Traduz o estado da apólice para o relatório da contabilidade. Uma
+     * apólice arquivada (soft-deleted) continua tendo pagamentos válidos —
+     * o `motivo_cancelamento` é o que distingue uma renovação, em que o
+     * dinheiro do ciclo anterior é legítimo, de um cancelamento.
+     */
+    private function situacaoDaApolice(?Apolice $apolice): string
+    {
+        if (! $apolice) {
+            return 'Apólice não encontrada';
+        }
+
+        if (! $apolice->trashed()) {
+            return 'Vigente';
+        }
+
+        return match ($apolice->motivo_cancelamento) {
+            Apolice::MOTIVO_CANCELAMENTO_RENOVADA => 'Renovada',
+            Apolice::MOTIVO_CANCELAMENTO_ATRASO_PRIMEIRA_PARCELA => 'Cancelada — atraso da 1ª parcela',
+            Apolice::MOTIVO_CANCELAMENTO_SUSPENSAO_PROLONGADA => 'Cancelada — suspensão prolongada',
+            Apolice::MOTIVO_CANCELAMENTO_MANUAL => 'Cancelada — manual',
+            default => 'Cancelada',
+        };
+    }
+
     // StreamedResponse cria um fluxo de dados direto para o navegador baixar sem ocupar memória do servidor
-    public function exportarPagamentosCsv(): StreamedResponse
+    public function exportarPagamentosCsv(array $filtros = []): StreamedResponse
     {
         // Nome do arquivo = pagamentos + data atual + extensão .csv
         $fileName = 'Pagamentos-'.date('Y-m-d').'.csv';
 
         // A consulta é montada aqui mas só é EXECUTADA dentro do callback,
-        // via cursor(). Com ->get() o streaming não servia de nada: os
+        // via lazy(). Com ->get() o streaming não servia de nada: os
         // registros já estavam todos na memória antes da resposta começar.
-        $consulta = Pagamento::with(['apolice.cliente']);
+        //
+        // withTrashed() na apólice: o renovar() arquiva a apólice antiga mas
+        // preserva os pagamentos do ciclo anterior de propósito. Sem isso, a
+        // relação vinha null e o `?? 'Não informado'` mascarava a perda —
+        // receita confirmada saía no relatório da contabilidade sem cliente
+        // e sem número de apólice.
+        //
+        // scopeFilter é o MESMO filtro da listagem: o CSV precisa conter
+        // exatamente o que a tela mostrava quando o operador clicou.
+        // withTrashed nos DOIS níveis: a apólice E o cliente. Só na apólice
+        // não bastava — um segurado arquivado fazia a receita sair no
+        // relatório contábil com Cliente = "Não informado", exatamente o
+        // sintoma que o withTrashed da apólice existe para evitar.
+        $consulta = Pagamento::with([
+            'apolice' => fn ($q) => $q->withTrashed(),
+            'apolice.cliente' => fn ($q) => $q->withTrashed(),
+            'registradoPor',
+        ])->filter($filtros);
 
         // Cabeçalhos HTTP para o navegador identificar o arquivo CSV
         $headers = [
@@ -52,12 +94,24 @@ class ExportacaoPagamentoService
                 'Status',
                 'Observações',
                 'Data de Criação',
+                // Coluna nova: sem ela, um pagamento de apólice renovada ou
+                // cancelada era indistinguível de um de apólice vigente no
+                // arquivo que vai para a contabilidade.
+                'Situação da Apólice',
+                // A conferência contábil é exatamente o momento em que se
+                // pergunta "quem lançou isso?" — a coluna existe para que a
+                // resposta não dependa de consultar o banco.
+                'Registrado por',
             ]);
 
             // Percorre cada pagamento para preencher as linhas do CSV
-            // cursor() traz uma linha por vez do Postgres em vez de hidratar
-            // a coleção inteira — memória constante, independente do volume.
-            foreach ($consulta->cursor() as $pagamento) {
+            // lazy() e não cursor(): os dois mantêm memória constante, mas o
+            // cursor() hidrata um model por vez e resolve os relacionamentos
+            // individualmente — com o ->with() acima isso virava N+1 (medido:
+            // 59 consultas para 29 linhas). O lazy() percorre em blocos e
+            // aplica o eager loading por bloco, então a memória continua
+            // limitada e o número de consultas para de crescer com as linhas.
+            foreach ($consulta->lazy() as $pagamento) {
                 $this->escreverLinha($file, [
                     $pagamento->id,
                     $pagamento->apolice->cliente->nome_completo ?? 'Não informado', // Pega do relacionamento
@@ -69,6 +123,8 @@ class ExportacaoPagamentoService
                     $pagamento->status,
                     $pagamento->observacoes,
                     $pagamento->created_at ? $pagamento->created_at->format('d/m/Y H:i') : '',
+                    $this->situacaoDaApolice($pagamento->apolice),
+                    $pagamento->registradoPor->name ?? 'Sistema',
                 ]);
             }
 
