@@ -27,7 +27,13 @@ class AtualizarParcelasVencidas implements ShouldQueue
      */
     public function handle(): void
     {
-        Parcelas::where('status_pagamento', 'em_aberto')
+        // whereHas('apolice'): exige apólice viva. O renovar() arquiva a
+        // apólice antiga de propósito mas PRESERVA parcelas e pagamentos do
+        // ciclo anterior — sem este filtro, o job reescrevia todo dia as
+        // parcelas dessas apólices arquivadas. Os outros cinco consumidores
+        // de `parcelas` já se defendiam assim; este era o único que não.
+        Parcelas::whereHas('apolice')
+            ->where('status_pagamento', 'em_aberto')
             ->whereDate('data_vencimento', '<', now())
             ->update(['status_pagamento' => 'vencida']);
     }

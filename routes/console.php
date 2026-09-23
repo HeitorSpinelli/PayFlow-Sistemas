@@ -22,7 +22,15 @@ Schedule::command(AtualizarIndicadoresEconomicos::class)->dailyAt('06:30');
 
 // Roda antes do ProcessarAutomacoes: precisa marcar as parcelas vencidas
 // antes da automação de notificação de atraso rodar, senão ela não acha nada.
-Schedule::job(new AtualizarParcelasVencidas)->dailyAt('07:00');
+// onConnection('sync') é obrigatório aqui: QUEUE_CONNECTION=database e NÃO
+// existe worker no deploy (o Dockerfile sobe só o Apache; o `queue:listen` do
+// composer.json é do script `dev`, local). Sem isso, Schedule::job apenas
+// INSERE uma linha na tabela `jobs` que ninguém consome — o schedule:run
+// reportava sucesso todo dia e nenhuma parcela era marcada como vencida.
+// Com 'sync' a tarefa roda no próprio processo do scheduler, igual aos
+// Schedule::command vizinhos. Se algum dia entrar um worker de verdade no
+// deploy, basta remover esta chamada.
+Schedule::job((new AtualizarParcelasVencidas)->onConnection('sync'))->dailyAt('07:00');
 
 // Cancelamento por atraso da 1ª parcela (Lei 15.040/2024, art. 21) — sem
 // aviso prévio, diferente da suspensão de 30 dias da 2ª parcela em diante.
@@ -31,4 +39,6 @@ Schedule::job(new AtualizarParcelasVencidas)->dailyAt('07:00');
 Schedule::command(CancelarApolicesPorAtrasoDaPrimeiraParcela::class)->dailyAt('07:05');
 
 Schedule::command(VerificarInadimplenciaParcelas::class)->dailyAt('07:15');
-Schedule::job(new ProcessarAutomacoes)->dailyAt('08:00');
+// Mesmo motivo do AtualizarParcelasVencidas acima: sem 'sync' esta automação
+// nunca executava, e as notificações de vencimento/atraso nunca saíam.
+Schedule::job((new ProcessarAutomacoes)->onConnection('sync'))->dailyAt('08:00');
