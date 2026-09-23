@@ -15,8 +15,8 @@ interface NotificacaoModalProps {
 export default function NotificacaoModal({
     canal,
     onClose,
-    segurados,
-    tipos,
+    segurados = [],
+    tipos = [],
 }: NotificacaoModalProps) {
     const [busca, setBusca] = useState('');
     const [selecionados, setSelecionados] = useState<number[]>([]);
@@ -30,16 +30,18 @@ export default function NotificacaoModal({
     });
 
     const clientesFiltrados = useMemo(() => {
-        const termo = busca.trim().toLowerCase();
-        if (!termo) return segurados;
+    if (!segurados) return []; // Guard against undefined/null
+    
+    const termo = busca.trim().toLowerCase();
+    if (!termo) return segurados;
 
         return segurados.filter(
             (segurado) =>
-                segurado.nome_completo.toLowerCase().includes(termo) ||
-                segurado.email.toLowerCase().includes(termo) ||
-                segurado.cpf_cnpj.toLowerCase().includes(termo),
+                segurado.nome_completo?.toLowerCase().includes(termo) ||
+                segurado.email?.toLowerCase().includes(termo) ||
+                segurado.cpf_cnpj?.toLowerCase().includes(termo),
         );
-    }, [busca]);
+    }, [busca, segurados]);
 
     const alternarCliente = (id: number) => {
         setSelecionados((prev) =>

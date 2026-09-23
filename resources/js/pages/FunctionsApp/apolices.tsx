@@ -42,14 +42,9 @@ interface PageProps {
     totalInativas?: number;
 }
 
-function formatarMoeda(valor: number | string) {
-    const numero = typeof valor === 'string' ? parseFloat(valor) : valor;
-    if (isNaN(numero)) return 'R$ 0,00';
-    return numero.toLocaleString('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-    });
-}
+import { 
+    formatarMoeda
+} from '@/utils/Masks';
 
 export default function Apolices({
     segurados,
@@ -198,52 +193,48 @@ export default function Apolices({
                     </Button>
                 </div>
 
-                {/* 2. Cards de Estatísticas com Glow / Efeito de Luz */}
+                {/* 2. Cards de Estatísticas — flat, sem glow/blur, só borda e cor */}
                 <div className="grid gap-4 sm:grid-cols-3">
-                    <div className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:border-emerald-500/30">
-                        <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl"></div>
-                        <div className="relative z-10 flex flex-col gap-1">
+                    <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-5 transition-colors hover:border-emerald-500/30">
+                        <div className="flex flex-col gap-1">
                             <span className="text-xs font-medium text-muted-foreground">
-                                Total de Apólices
+                                Total de Clientes
                             </span>
-                            <span className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                            <span className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
                                 {total}
                             </span>
                         </div>
-                        <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
-                            <UserRound className="size-6" />
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+                            <UserRound className="size-5" />
                         </div>
                     </div>
-                    <div className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:border-emerald-500/30">
-                        <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl"></div>
-                        <div className="relative z-10 flex flex-col gap-1">
+                    <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-5 transition-colors hover:border-emerald-500/30">
+                        <div className="flex flex-col gap-1">
                             <span className="text-xs font-medium text-muted-foreground">
-                                Apólices Ativas
+                                Clientes Ativos
                             </span>
-                            <span className="text-2xl font-bold tracking-tight text-emerald-500 sm:text-3xl">
+                            <span className="text-2xl font-semibold tracking-tight text-emerald-600 sm:text-3xl">
                                 {totalAtivas}
                             </span>
                         </div>
-                        <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
-                            <ScrollText className="size-6" />
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+                            <ScrollText className="size-5" />
                         </div>
                     </div>
-                    <div className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:border-rose-500/30">
-                        <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-rose-500/10 blur-3xl"></div>
-                        <div className="relative z-10 flex flex-col gap-1">
+                    <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-5 transition-colors hover:border-rose-500/30">
+                        <div className="flex flex-col gap-1">
                             <span className="text-xs font-medium text-muted-foreground">
-                                Apólices Inativas
+                                Inativos
                             </span>
-                            <span className="text-2xl font-bold tracking-tight text-rose-500 sm:text-3xl">
+                            <span className="text-2xl font-semibold tracking-tight text-rose-500 sm:text-3xl">
                                 {totalInativas}
                             </span>
                         </div>
-                        <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.2)]">
-                            <ScrollText className="size-6" />
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500">
+                            <ScrollText className="size-5" />
                         </div>
                     </div>
                 </div>
-
                 {/* 3. Seção da Tabela */}
                 <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
                     {/* Toolbar */}
