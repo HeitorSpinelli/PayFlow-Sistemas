@@ -249,13 +249,35 @@ class ImportacaoSeguradosService
     {
         $valor = preg_replace('/[^\d,.-]/', '', $valor);
 
-        if (str_contains($valor, ',') && str_contains($valor, '.')) {
-            $valor = str_replace('.', '', $valor);
-            $valor = str_replace(',', '.', $valor);
-        } elseif (str_contains($valor, ',')) {
-            $valor = str_replace(',', '.', $valor);
+        // Decide pelo separador MAIS À DIREITA, não por quais existem.
+        // A versão anterior tratava "tem vírgula e ponto" e "só vírgula", mas
+        // "só ponto" caía no caso implícito e era lido como decimal
+        // americano: "2.500" virava 2.5, ou seja, uma planilha em pt-BR com
+        // valores redondos importava parcelas MIL VEZES menores, em silêncio.
+        //
+        // A regra: se o último separador está a exatamente 2 dígitos do fim,
+        // ele é decimal; qualquer outro separador é de milhar. Caso contrário,
+        // todos são de milhar. Isso cobre "1.234,56", "1,234.56", "2.500",
+        // "2,500", "1.234.567" e "12,5" sem ambiguidade.
+        $posVirgula = strrpos($valor, ',');
+        $posPonto = strrpos($valor, '.');
+        $ultimoSeparador = max($posVirgula === false ? -1 : $posVirgula, $posPonto === false ? -1 : $posPonto);
+
+        if ($ultimoSeparador === -1) {
+            return (float) $valor;
         }
 
-        return (float) $valor;
+        $casasDepois = strlen($valor) - $ultimoSeparador - 1;
+
+        if ($casasDepois === 1 || $casasDepois === 2) {
+            // É separador decimal: tira todos os outros e normaliza para ponto.
+            $inteiro = preg_replace('/[^\d-]/', '', substr($valor, 0, $ultimoSeparador));
+            $decimais = substr($valor, $ultimoSeparador + 1);
+
+            return (float) ($inteiro.'.'.$decimais);
+        }
+
+        // Nenhum decimal: todo separador é de milhar.
+        return (float) preg_replace('/[^\d-]/', '', $valor);
     }
 }
