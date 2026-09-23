@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import {
+    AlertTriangle,
     Plus,
     ScrollText,
     Search,
-    MoreHorizontal,
+    Trash2,
     Download,
     Filter,
     Check,
@@ -13,13 +13,20 @@ import {
     ChevronRight,
     UserRound,
 } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { toast } from 'sonner';
+import PainelCliente from '@/components/clientes/painel-cliente';
+import CreateSeguradoModal from '@/components/modals/create-segurado-modal';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 
 import { formataCpfCnpj, removeMask, formataInputBusca } from '@/utils/Masks';
-
-import CreateSeguradoModal from '@/components/modals/create-segurado-modal';
-import SeguradoProfileModal from '@/components/modals/create-profile-modal';
 
 // Interface para o objeto de paginação do Laravel
 interface PaginatedSegurados {
@@ -47,10 +54,18 @@ export default function Clientes({
     totalAtivos = 0,
 }: PageProps) {
     const [openModal, setOpenModal] = useState(false);
-    const [openProfile, setOpenProfile] = useState(false);
     const [filtroAberto, setFiltroAberto] = useState(false);
-    const [exportarAberto, setExportarAberto] = useState(false);
-    const [seguradoSelecionado, setSeguradoSelecionado] = useState<any>(null);
+
+    // Estado para controlar o segurado selecionado e o segurado a ser excluído
+    const [seguradoSelecionadoId, setSeguradoSelecionadoId] = useState<
+        number | null
+    >(null);
+    const [seguradoParaExcluir, setSeguradoParaExcluir] = useState<any>(null);
+
+    
+    //find() retorna o primeiro elemento que satisfaz a condição, ou undefined se nenhum for encontrado. O operador ?? garante que, se find() retornar undefined, seguradoSelecionado será null.
+    const seguradoSelecionado =
+        segurados?.data?.find((segurado) => segurado.id === seguradoSelecionadoId) ?? null;
 
     const opcoesFiltro = ['Todos', 'Ativos', 'Inativos'];
 
@@ -97,6 +112,7 @@ export default function Clientes({
             } else {
                 params.delete('busca');
             }
+
             params.delete('page');
 
             router.get(
@@ -123,6 +139,7 @@ export default function Clientes({
         } else {
             params.delete('status');
         }
+
         params.delete('page'); // Reseta para a página 1 ao alterar o filtro
 
         // Dispara o filtro no Back-end via Inertia (Sem debounce)
@@ -137,9 +154,24 @@ export default function Clientes({
         );
     };
 
-    const abrirPerfil = (segurado: any) => {
-        setSeguradoSelecionado(segurado);
-        setOpenProfile(true);
+    const selecionarCliente = (segurado: any) => {
+        setSeguradoSelecionadoId(segurado.id);
+    };
+
+    const confirmarExclusao = () => {
+        if (!seguradoParaExcluir) {
+            return;
+        }
+
+        //{seguradoParaExcluir.id} é o ID do cliente a ser excluído, passado para a rota DELETE
+        //id pego pelo front-end, mas a exclusão é feita no back-end, que é quem realmente sabe se o cliente existe ou não.
+        router.delete(`/clientes/${seguradoParaExcluir.id}`, {
+            onError: () =>
+                toast.error('Erro ao excluir cliente. Tente novamente.'),
+            onFinish: () => {
+                setSeguradoParaExcluir(null);
+            },
+        });
     };
 
     // Tratamentos seguros para evitar NaN(Not a Number) caso os valores sejam undefined ou null
@@ -218,243 +250,264 @@ export default function Clientes({
                         </div>
                     </div>
                 </div>
-                {/* 3. Seção da Tabela */}
-                <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
-                    {/* Toolbar */}
-                    <div className="flex flex-col justify-between gap-4 border-b border-border/70 p-4 sm:p-5 lg:flex-row lg:items-center">
-                        <div>
-                            <h3 className="text-sm font-semibold">
-                                Lista de Clientes
-                            </h3>
-                            <p className="text-xs text-muted-foreground">
-                                {segurados?.total ?? 0} cliente(s) encontrado(s)
-                            </p>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2.5">
-                            <div className="relative">
-                                <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/60" />
-                                <Input
-                                    placeholder="Buscar por nome, CPF..."
-                                    className="h-10 w-full rounded-xl border border-border/70 bg-background pr-3 pl-9 text-sm transition-colors placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none sm:w-64"
-                                    value={seguradoPesquisado}
-                                    onChange={handleBuscaChange}
-                                />
+                {/* 3. Lista de clientes + painel do cliente selecionado, lado a lado */}
+                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_460px] lg:items-start">
+                    <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
+                        {/* Toolbar */}
+                        <div className="flex flex-col justify-between gap-4 border-b border-border/70 p-4 sm:p-5 lg:flex-row lg:items-center">
+                            <div>
+                                <h3 className="text-sm font-semibold">
+                                    Lista de Clientes
+                                </h3>
+                                <p className="text-xs text-muted-foreground">
+                                    {segurados?.total ?? 0} cliente(s)
+                                    encontrado(s)
+                                </p>
                             </div>
-                            {/* Dropdown de filtro por status */}
-                            <div className="relative">
-                                <button
-                                    onClick={() => {
-                                        setFiltroAberto(!filtroAberto);
-                                        setExportarAberto(false);
-                                    }}
-                                    className="inline-flex h-10 min-w-[120px] items-center justify-between gap-2 rounded-xl border border-border/70 bg-background px-3 text-sm font-medium transition-colors hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
-                                >
-                                    <span className="flex items-center gap-2">
-                                        <Filter className="size-4 text-muted-foreground/60" />
-                                        {filtroSelecionado}
-                                    </span>
-                                    <ChevronDown
-                                        className={`size-4 text-muted-foreground/60 transition-transform ${filtroAberto ? 'rotate-180' : ''}`}
+                            <div className="flex flex-wrap items-center gap-2.5">
+                                <div className="relative">
+                                    <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/60" />
+                                    <Input
+                                        placeholder="Buscar por nome, CPF..."
+                                        className="h-10 w-full rounded-xl border border-border/70 bg-background pr-3 pl-9 text-sm transition-colors placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:outline-none sm:w-64"
+                                        value={seguradoPesquisado}
+                                        onChange={handleBuscaChange}
                                     />
-                                </button>
+                                </div>
+                                {/* Dropdown de filtro por status */}
+                                <div className="relative">
+                                    <button
+                                        onClick={() =>
+                                            setFiltroAberto(!filtroAberto)
+                                        }
+                                        className="inline-flex h-10 min-w-[120px] items-center justify-between gap-2 rounded-xl border border-border/70 bg-background px-3 text-sm font-medium transition-colors hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            <Filter className="size-4 text-muted-foreground/60" />
+                                            {filtroSelecionado}
+                                        </span>
+                                        <ChevronDown
+                                            className={`size-4 text-muted-foreground/60 transition-transform ${filtroAberto ? 'rotate-180' : ''}`}
+                                        />
+                                    </button>
 
-                                {filtroAberto && (
-                                    /* Altere de 'right-0' para 'left-0' ou adicione max-w e posicionamento seguro */
-                                    <div className="absolute left-0 z-50 mt-2 w-40 overflow-hidden rounded-xl border border-border/70 bg-popover py-1.5 shadow-md">
-                                        {opcoesFiltro.map((opcao) => (
-                                            <button
-                                                key={opcao}
-                                                onClick={() =>
-                                                    handleFiltroChange(opcao)
-                                                }
-                                                className={`flex w-full cursor-pointer items-center justify-between px-3 py-2 text-sm transition-colors ${
-                                                    filtroSelecionado === opcao
-                                                        ? 'bg-emerald-500 font-medium text-white'
-                                                        : 'text-popover-foreground hover:bg-muted'
-                                                }`}
-                                            >
-                                                {opcao}
-                                                {filtroSelecionado ===
-                                                    opcao && (
-                                                    <Check className="size-4" />
-                                                )}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                            <a
-                                href="/clientes/exportar"
-                                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border/70 bg-background px-4 text-sm font-medium transition-colors hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
-                            >
-                                <Download className="size-4 text-muted-foreground/60" />
-                                Exportar
-                            </a>
-                        </div>
-                    </div>
-
-                    {/* Tabela de segurados */}
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="border-b border-border/70 text-muted-foreground">
-                                    <th className="h-11 px-4 text-left text-xs font-semibold tracking-wider uppercase">
-                                        ID
-                                    </th>
-                                    <th className="h-11 px-4 text-left text-xs font-semibold tracking-wider uppercase">
-                                        Cliente
-                                    </th>
-                                    <th className="h-11 px-4 text-left text-xs font-semibold tracking-wider uppercase">
-                                        CPF/CNPJ
-                                    </th>
-                                    <th className="h-11 px-4 text-left text-xs font-semibold tracking-wider uppercase">
-                                        Telefone/Celular
-                                    </th>
-                                    <th className="h-11 px-4 text-left text-xs font-semibold tracking-wider uppercase">
-                                        Localização
-                                    </th>
-                                    <th className="h-11 px-4 text-left text-xs font-semibold tracking-wider uppercase">
-                                        Status
-                                    </th>
-                                    <th className="h-11 px-4 text-right text-xs font-semibold tracking-wider uppercase">
-                                        Ações
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {!segurados?.data ||
-                                segurados.data.length === 0 ? (
-                                    <tr>
-                                        <td
-                                            colSpan={7}
-                                            className="h-24 px-4 text-center text-muted-foreground"
-                                        >
-                                            Nenhum cliente encontrado.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    segurados?.data?.map((segurado) => (
-                                        <tr
-                                            key={segurado.id}
-                                            className="border-b border-border/70 transition-colors hover:bg-muted/[0.12]"
-                                        >
-                                            <td className="px-4 py-3.5 font-mono text-xs text-muted-foreground">
-                                                #
-                                                {String(segurado.id).padStart(
-                                                    4,
-                                                    '0',
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3.5 font-medium text-foreground">
-                                                {segurado.nome_completo}
-                                            </td>
-                                            <td className="px-4 py-3.5 text-muted-foreground">
-                                                {segurado.cpf_cnpj
-                                                    ? formataCpfCnpj(
-                                                          segurado.cpf_cnpj,
-                                                      )
-                                                    : '-'}
-                                            </td>
-                                            <td className="px-4 py-3.5 text-muted-foreground">
-                                                {segurado.celular_whatsapp ||
-                                                    segurado.telefone ||
-                                                    '-'}
-                                            </td>
-                                            <td className="px-4 py-3.5 text-muted-foreground">
-                                                {segurado.cidade} -{' '}
-                                                {segurado.estado}
-                                            </td>
-                                            <td className="px-4 py-3.5">
-                                                <span
-                                                    className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-semibold capitalize ${
-                                                        segurado.status ===
-                                                        'Ativo'
-                                                            ? 'bg-emerald-500/10 text-emerald-500'
-                                                            : 'bg-rose-500/10 text-rose-500'
+                                    {filtroAberto && (
+                                        /* Altere de 'right-0' para 'left-0' ou adicione max-w e posicionamento seguro */
+                                        <div className="absolute left-0 z-50 mt-2 w-40 overflow-hidden rounded-xl border border-border/70 bg-popover py-1.5 shadow-md">
+                                            {opcoesFiltro.map((opcao) => (
+                                                <button
+                                                    key={opcao}
+                                                    onClick={() =>
+                                                        handleFiltroChange(
+                                                            opcao,
+                                                        )
+                                                    }
+                                                    className={`flex w-full cursor-pointer items-center justify-between px-3 py-2 text-sm transition-colors ${
+                                                        filtroSelecionado ===
+                                                        opcao
+                                                            ? 'bg-emerald-500 font-medium text-white'
+                                                            : 'text-popover-foreground hover:bg-muted'
                                                     }`}
                                                 >
-                                                    {segurado.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3.5 text-right">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() =>
-                                                        abrirPerfil(segurado)
-                                                    }
-                                                    className="h-8 w-8 rounded-xl border-border/70 p-0 hover:border-emerald-500/40"
-                                                >
-                                                    <MoreHorizontal className="size-4" />
-                                                </Button>
+                                                    {opcao}
+                                                    {filtroSelecionado ===
+                                                        opcao && (
+                                                        <Check className="size-4" />
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <a
+                                    href="/clientes/exportar"
+                                    className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border/70 bg-background px-4 text-sm font-medium transition-colors hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
+                                >
+                                    <Download className="size-4 text-muted-foreground/60" />
+                                    Exportar
+                                </a>
+                            </div>
+                        </div>
+
+                        {/* Tabela de segurados */}
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b border-border/70 text-muted-foreground">
+                                        <th className="h-11 px-4 text-left text-xs font-semibold tracking-wider uppercase">
+                                            ID
+                                        </th>
+                                        <th className="h-11 px-4 text-left text-xs font-semibold tracking-wider uppercase">
+                                            Cliente
+                                        </th>
+                                        <th className="h-11 px-4 text-left text-xs font-semibold tracking-wider uppercase">
+                                            CPF/CNPJ
+                                        </th>
+                                        <th className="h-11 px-4 text-left text-xs font-semibold tracking-wider uppercase">
+                                            Telefone/Celular
+                                        </th>
+                                        <th className="h-11 px-4 text-left text-xs font-semibold tracking-wider uppercase">
+                                            Localização
+                                        </th>
+                                        <th className="h-11 px-4 text-left text-xs font-semibold tracking-wider uppercase">
+                                            Status
+                                        </th>
+                                        <th className="h-11 px-4 text-right text-xs font-semibold tracking-wider uppercase">
+                                            Ações
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {!segurados?.data ||
+                                    segurados.data.length === 0 ? (
+                                        <tr>
+                                            <td
+                                                colSpan={7}
+                                                className="h-24 px-4 text-center text-muted-foreground"
+                                            >
+                                                Nenhum cliente encontrado.
                                             </td>
                                         </tr>
-                                    ))
+                                    ) : (
+                                        segurados?.data?.map((segurado) => (
+                                            <tr
+                                                key={segurado.id}
+                                                onClick={() =>
+                                                    selecionarCliente(segurado)
+                                                }
+                                                className={`cursor-pointer border-b border-border/70 transition-colors hover:bg-muted/[0.12] ${
+                                                    seguradoSelecionado?.id ===
+                                                    segurado.id
+                                                        ? 'bg-emerald-500/5'
+                                                        : ''
+                                                }`}
+                                            >
+                                                <td className="px-4 py-3.5 font-mono text-xs text-muted-foreground">
+                                                    #
+                                                    {String(
+                                                        segurado.id,
+                                                    ).padStart(4, '0')}
+                                                </td>
+                                                <td className="px-4 py-3.5 font-medium text-foreground">
+                                                    {segurado.nome_completo}
+                                                </td>
+                                                <td className="px-4 py-3.5 text-muted-foreground">
+                                                    {segurado.cpf_cnpj
+                                                        ? formataCpfCnpj(
+                                                              segurado.cpf_cnpj,
+                                                          )
+                                                        : '-'}
+                                                </td>
+                                                <td className="px-4 py-3.5 text-muted-foreground">
+                                                    {segurado.celular_whatsapp ||
+                                                        segurado.telefone ||
+                                                        '-'}
+                                                </td>
+                                                <td className="px-4 py-3.5 text-muted-foreground">
+                                                    {segurado.cidade} -{' '}
+                                                    {segurado.estado}
+                                                </td>
+                                                <td className="px-4 py-3.5">
+                                                    <span
+                                                        className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-semibold capitalize ${
+                                                            segurado.status ===
+                                                            'Ativo'
+                                                                ? 'bg-emerald-500/10 text-emerald-500'
+                                                                : 'bg-rose-500/10 text-rose-500'
+                                                        }`}
+                                                    >
+                                                        {segurado.status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3.5 text-right">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setSeguradoParaExcluir(
+                                                                segurado,
+                                                            );
+                                                        }}
+                                                        className="h-8 w-8 rounded-xl border-border/70 p-0 text-muted-foreground hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-500"
+                                                    >
+                                                        <Trash2 className="size-4" />
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* 4. Paginação */}
+                        <div className="flex flex-col gap-4 border-t border-border/70 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                            <div className="text-xs text-muted-foreground">
+                                Mostrando{' '}
+                                <span className="font-semibold text-foreground">
+                                    {segurados?.from ?? 0}
+                                </span>{' '}
+                                até{' '}
+                                <span className="font-semibold text-foreground">
+                                    {segurados?.to ?? 0}
+                                </span>{' '}
+                                de{' '}
+                                <span className="font-semibold text-foreground">
+                                    {segurados?.total ?? 0}
+                                </span>{' '}
+                                resultados
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                {/* Botão Anterior */}
+                                {segurados?.prev_page_url ? (
+                                    <Link
+                                        href={segurados.prev_page_url}
+                                        preserveScroll
+                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium transition-colors hover:border-emerald-500/40 hover:bg-muted/50"
+                                    >
+                                        <ChevronLeft className="size-3.5" />
+                                        Anterior
+                                    </Link>
+                                ) : (
+                                    <button
+                                        disabled
+                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                                    >
+                                        <ChevronLeft className="size-3.5" />
+                                        Anterior
+                                    </button>
                                 )}
-                            </tbody>
-                        </table>
-                    </div>
 
-                    {/* 4. Paginação */}
-                    <div className="flex flex-col gap-4 border-t border-border/70 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-                        <div className="text-xs text-muted-foreground">
-                            Mostrando{' '}
-                            <span className="font-semibold text-foreground">
-                                {segurados?.from ?? 0}
-                            </span>{' '}
-                            até{' '}
-                            <span className="font-semibold text-foreground">
-                                {segurados?.to ?? 0}
-                            </span>{' '}
-                            de{' '}
-                            <span className="font-semibold text-foreground">
-                                {segurados?.total ?? 0}
-                            </span>{' '}
-                            resultados
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            {/* Botão Anterior */}
-                            {segurados?.prev_page_url ? (
-                                <Link
-                                    href={segurados.prev_page_url}
-                                    preserveScroll
-                                    className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium transition-colors hover:border-emerald-500/40 hover:bg-muted/50"
-                                >
-                                    <ChevronLeft className="size-3.5" />
-                                    Anterior
-                                </Link>
-                            ) : (
-                                <button
-                                    disabled
-                                    className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-                                >
-                                    <ChevronLeft className="size-3.5" />
-                                    Anterior
-                                </button>
-                            )}
-
-                            {/* Botão Próxima */}
-                            {segurados?.next_page_url ? (
-                                <Link
-                                    href={segurados.next_page_url}
-                                    preserveScroll
-                                    className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium transition-colors hover:border-emerald-500/40 hover:bg-muted/50"
-                                >
-                                    Próxima
-                                    <ChevronRight className="size-3.5" />
-                                </Link>
-                            ) : (
-                                <button
-                                    disabled
-                                    className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-                                >
-                                    Próxima
-                                    <ChevronRight className="size-3.5" />
-                                </button>
-                            )}
+                                {/* Botão Próxima */}
+                                {segurados?.next_page_url ? (
+                                    <Link
+                                        href={segurados.next_page_url}
+                                        preserveScroll
+                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium transition-colors hover:border-emerald-500/40 hover:bg-muted/50"
+                                    >
+                                        Próxima
+                                        <ChevronRight className="size-3.5" />
+                                    </Link>
+                                ) : (
+                                    <button
+                                        disabled
+                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                                    >
+                                        Próxima
+                                        <ChevronRight className="size-3.5" />
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
+
+                    <PainelCliente
+                        key={seguradoSelecionado?.id ?? 'vazio'}
+                        segurado={seguradoSelecionado}
+                        onExcluir={setSeguradoParaExcluir}
+                    />
                 </div>
             </div>
 
@@ -465,14 +518,43 @@ export default function Clientes({
                 setOpen={setOpenModal}
             />
 
-            {/* seguradoSelecionado diferente de null abre o modal de perfil para cada um */}
-            {seguradoSelecionado && (
-                <SeguradoProfileModal
-                    open={openProfile}
-                    setOpen={setOpenProfile}
-                    segurado={seguradoSelecionado}
-                />
-            )}
+            <Dialog
+                open={!!seguradoParaExcluir}
+                onOpenChange={(open) => !open && setSeguradoParaExcluir(null)}
+            >
+                <DialogContent className="rounded-2xl border-border/70 sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-lg font-bold">
+                            <AlertTriangle className="size-5 text-rose-500" />
+                            Excluir cliente
+                        </DialogTitle>
+                    </DialogHeader>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                        Tem certeza que deseja excluir o cliente{' '}
+                        <span className="font-semibold text-foreground">
+                            {seguradoParaExcluir?.nome_completo}
+                        </span>
+                        ? Todos os dados vinculados a este segurado serão
+                        desativados.
+                    </p>
+                    <div className="mt-2 flex justify-end gap-2">
+                        <Button
+                            variant="outline"
+                            className="rounded-xl"
+                            onClick={() => setSeguradoParaExcluir(null)}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            onClick={confirmarExclusao}
+                            className="rounded-xl bg-rose-500 text-white shadow-lg shadow-rose-500/25 hover:bg-rose-600"
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Confirmar exclusão
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }

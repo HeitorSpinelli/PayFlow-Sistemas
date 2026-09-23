@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Concerns;
 
 use App\Models\Ramo;
+use App\Rules\CpfValido;
 
 /**
  * Regras de validação dos dados extras de veículo/residência, compartilhadas
@@ -125,7 +126,7 @@ trait ValidaDadosPorCategoriaDeRamo
             // Beneficiários: lista de pelo menos 1, cada um com seus próprios campos
             'beneficiarios' => 'required|array|min:1',
             'beneficiarios.*.nome_completo' => 'required|string|max:255',
-            'beneficiarios.*.cpf' => 'required|string|max:20',
+            'beneficiarios.*.cpf' => ['required', 'string', 'max:20', new CpfValido],
             'beneficiarios.*.data_nascimento' => 'required|date',
             'beneficiarios.*.parentesco' => 'required|string|in:conjuge,filho,pai,mae,irmao,outro',
             'beneficiarios.*.percentual_indenizacao' => 'required|numeric|min:0.01|max:100',

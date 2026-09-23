@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\CnpjValido;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -25,7 +26,7 @@ class UpdateSeguradoraRequest extends FormRequest
         return [
             'nome_fantasia' => 'required|string|max:255',
             'razao_social' => 'nullable|string|max:255',
-            'cnpj' => 'required|string|max:20|unique:seguradoras,cnpj,'.$this->route('id'),
+            'cnpj' => ['required', 'string', 'max:20', new CnpjValido, 'unique:seguradoras,cnpj,'.$this->route('id')],
             'contato_nome' => 'nullable|string|max:255',
             'email_suporte' => 'nullable|email|max:255',
         ];
