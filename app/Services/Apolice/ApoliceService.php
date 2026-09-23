@@ -15,6 +15,7 @@ use App\Models\Segurado;
 use App\Models\Seguradora;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ApoliceService
 {
@@ -184,7 +185,13 @@ class ApoliceService
     {
         try {
             DB::transaction(function () use ($id, $motivo) {
-                $apolice = Apolice::findOrFail($id);
+                // lockForUpdate na apólice ANTES de tocar em parcelas e
+                // pagamentos: é a mesma ordem que o PagamentoService usa
+                // (apólice -> parcela). Sem isso, este método adquiria os
+                // locks na ordem inversa e um cancelamento concorrente com um
+                // registro de pagamento travava um no outro (SQLSTATE 40P01).
+                $apolice = Apolice::whereKey($id)->lockForUpdate()->firstOrFail();
+
                 foreach ($apolice->parcelas as $parcela) {
                     $parcela->delete();
                 }
@@ -194,8 +201,13 @@ class ApoliceService
                 $apolice->update(['motivo_cancelamento' => $motivo]);
                 $apolice->delete();
             });
-        } catch (\Exception $e) {
-            throw new \Exception('Erro ao excluir apólice: '.$e->getMessage());
+        } catch (\Throwable $e) {
+            // Sem concatenar $e->getMessage(): a mensagem do Postgres traz
+            // nome de tabela, nome de constraint e a LINHA INTEIRA que falhou
+            // (inclusive colunas que o usuário não deveria ver). Vai para o
+            // log, não para a tela.
+            Log::error('Erro ao excluir apólice', ['id' => $id, 'erro' => $e->getMessage()]);
+            throw new \Exception('Não foi possível excluir a apólice. Tente novamente ou contate o suporte.');
         }
     }
 
@@ -233,8 +245,17 @@ class ApoliceService
 
                 $this->limparDadosDaCategoriaErrada($apolice, $ramo?->categoria);
             });
-        } catch (\Exception $e) {
-            throw new \Exception('Erro ao atualizar apólice: '.$e->getMessage());
+        } catch (\Throwable $e) {
+            // A mensagem do sincronizarParcelas é escrita para o usuário —
+            // passa direto. Qualquer outra coisa vai para o log: concatenar
+            // $e->getMessage() vazava nome de tabela, nome de constraint e a
+            // linha inteira que o Postgres recusou.
+            if (str_starts_with($e->getMessage(), 'O prêmio informado não cobre')) {
+                throw new \Exception($e->getMessage());
+            }
+
+            Log::error('Erro ao atualizar apólice', ['id' => $id, 'erro' => $e->getMessage()]);
+            throw new \Exception('Não foi possível atualizar a apólice. Tente novamente ou contate o suporte.');
         }
     }
 
@@ -268,9 +289,30 @@ class ApoliceService
         $novosValores = null;
 
         if (isset($data['valor_premio_total'])) {
-            $totalJaPago = $apolice->parcelas()->where('status_pagamento', 'paga')->sum('valor_parcela');
-            $saldoRestante = round($data['valor_premio_total'] - $totalJaPago, 2);
+            $totalJaPago = (float) $apolice->parcelas()->where('status_pagamento', 'paga')->sum('valor_parcela');
+            $saldoRestante = round((float) $data['valor_premio_total'] - $totalJaPago, 2);
             $quantidadeNaoPagas = $parcelasNaoPagas->count();
+
+            // Sem este piso, reduzir o prêmio abaixo do que já foi pago
+            // gerava parcelas NEGATIVAS (e o calcular() devolvia multa e
+            // juros negativos: desconto por estar atrasado). Já o saldo
+            // exatamente zero gerava parcelas de R$ 0,00 que o CHECK
+            // `pagamentos.valor > 0` torna impossíveis de quitar — a parcela
+            // ficava impagável para sempre, virava vencida, suspendia a
+            // apólice e caía no cancelamento automático em 30 dias.
+            //
+            // A mensagem é de negócio de propósito: antes o usuário recebia a
+            // violação de CHECK crua do Postgres.
+            $minimoExigido = round($totalJaPago + ($quantidadeNaoPagas * 0.01), 2);
+
+            if ($saldoRestante < ($quantidadeNaoPagas * 0.01)) {
+                throw new \Exception(
+                    'O prêmio informado não cobre o que já foi pago nesta apólice. '.
+                    'Com '.$quantidadeNaoPagas.' parcela(s) ainda em aberto, o mínimo é '.
+                    'R$ '.number_format($minimoExigido, 2, ',', '.').'.'
+                );
+            }
+
             $valorPorParcela = round($saldoRestante / $quantidadeNaoPagas, 2);
 
             $novosValores = [];
