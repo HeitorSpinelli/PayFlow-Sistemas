@@ -150,6 +150,30 @@ class VerificarInadimplenciaParcelas extends Command
                 continue;
             }
 
+            // A flag `suspensa_em` não é prova de que a dívida ainda existe —
+            // é só um registro de quando a suspensão começou. Vários caminhos
+            // zeram o atraso sem limpá-la: editar a apólice (o
+            // sincronizarParcelas() empurra os vencimentos das parcelas não
+            // pagas para o futuro), a importação de CSV escrevendo
+            // status_pagamento direto, ou uma corrida entre dois pagamentos
+            // simultâneos em que nenhuma das transações enxerga a outra.
+            // Sem esta checagem, qualquer um desses cancela uma apólice
+            // quitada 30 dias depois. Conferir a dívida aqui torna o comando
+            // autocorretivo, em vez de depender de todo caminho de escrita
+            // lembrar de limpar a flag.
+            $aindaAtrasada = $apolice->parcelas()
+                ->where('numero_parcela', '>=', 2)
+                ->where('status_pagamento', '!=', 'paga')
+                ->where('data_vencimento', '<', now()->startOfDay())
+                ->exists();
+
+            if (! $aindaAtrasada) {
+                $apolice->update(['suspensa_em' => null]);
+                $this->info("Apólice #{$apolice->numero_apolice} reativada — não há mais parcela em atraso.");
+
+                continue;
+            }
+
             try {
                 $apoliceService->destroy($apolice->id, Apolice::MOTIVO_CANCELAMENTO_SUSPENSAO_PROLONGADA);
                 $this->info("Apólice #{$apolice->numero_apolice} cancelada — suspensa há mais de ".self::DIAS_PARA_CANCELAMENTO.' dias.');

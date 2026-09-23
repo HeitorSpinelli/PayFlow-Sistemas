@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Apolice;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -20,7 +21,24 @@ class Pagamento extends Model
         'forma_pagamento',
         'status',
         'observacoes',
+        // Preenchidos SEMPRE pelo PagamentoService a partir de auth()->id(),
+        // nunca a partir do request — estão no $fillable só porque o service
+        // usa create()/update() em massa. O Form Request não valida esses
+        // campos, então um POST que os enviasse seria descartado pelo
+        // validated() antes de chegar aqui.
+        'registrado_por',
+        'estornado_por',
     ];
+
+    public function registradoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'registrado_por');
+    }
+
+    public function estornadoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'estornado_por');
+    }
 
     public function apolice(): BelongsTo
     {

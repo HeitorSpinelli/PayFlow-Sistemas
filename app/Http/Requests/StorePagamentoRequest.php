@@ -19,7 +19,15 @@ class StorePagamentoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'apolice_id' => 'required|integer|exists:apolices,id',
+            // whereNull('deleted_at'): a regra `exists` consulta a tabela
+            // CRUA e aceitava apólice arquivada (renovada/cancelada). Isso
+            // deixava registrar pagamento numa apólice que nem aparece na
+            // interface, e estourava mais adiante no service.
+            'apolice_id' => [
+                'required',
+                'integer',
+                Rule::exists('apolices', 'id')->whereNull('deleted_at'),
+            ],
             'parcela' => [
                 'required',
                 'integer',
@@ -39,7 +47,11 @@ class StorePagamentoRequest extends FormRequest
             'data_pagamento' => 'required|date|before_or_equal:today',
             'forma_pagamento' => 'required|string|in:boleto,pix,cartão,débito',
             'status' => 'required|string|in:confirmado',
-            'observacoes' => 'nullable|string',
+            // max:2000 — o campo é texto livre gravado em coluna `text`, que
+            // no Postgres não tem teto. Sem limite, um POST direto grava
+            // megabytes por requisição: enche o banco, estoura a memória de
+            // quem exporta o CSV e trava a tela que renderiza a observação.
+            'observacoes' => 'nullable|string|max:2000',
         ];
     }
 

@@ -11,6 +11,7 @@ use App\Services\Exportacoes\ExportacaoPagamentoService;
 use App\Services\Financeiro\ParcelaFinanceiroService;
 use App\Services\Pagamento\PagamentoService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class pagamentoController extends Controller
 {
@@ -45,18 +46,64 @@ class pagamentoController extends Controller
         // Mostra só 1 linha por cliente (o pagamento mais recente entre todas
         // as parcelas/apólices dele) na listagem principal; o restante fica
         // disponível no histórico do cliente, aberto pelo menu de 3 pontos
-        $idsPagamentosRecentes = Pagamento::query()
-            ->join('apolices', 'apolices.id', '=', 'pagamentos.apolice_id')
-            ->orderBy('apolices.cliente_id')
-            ->orderByDesc('pagamentos.data_pagamento')
-            ->orderByDesc('pagamentos.id')
-            ->get(['apolices.cliente_id', 'pagamentos.id'])
-            ->unique('cliente_id')
-            ->pluck('id');
+        // DISTINCT ON é específico do Postgres: devolve a PRIMEIRA linha de
+        // cada grupo segundo o ORDER BY, ou seja, já entrega só o pagamento
+        // mais recente de cada cliente. Antes isso era feito com ->get() +
+        // ->unique('cliente_id') em PHP, o que carregava TODOS os pagamentos
+        // da base na memória a cada abertura da tela para descartar quase
+        // todos (medido: 29 linhas carregadas para produzir 7, metade do
+        // tempo total da página).
+        //
+        // O whereNull('apolices.deleted_at') é a correção do bug: o join cru
+        // não aplica o escopo de SoftDeletes, então pagamentos de apólices
+        // arquivadas entravam na disputa, venciam por serem mais recentes, e
+        // a linha renderizava vazia (cliente "—", apólice "—") enquanto o
+        // pagamento da apólice VIGENTE sumia da tela.
+        // Os filtros entram AQUI DENTRO, antes do DISTINCT ON — não depois.
+        // Aplicados depois, eles filtravam dentro dos 7 "mais recentes" em vez
+        // de dentro dos 29 pagamentos: um cliente que pagou em pix mas cujo
+        // último pagamento foi boleto sumia do filtro "Pix". O correto é
+        // escolher o pagamento mais recente DE CADA CLIENTE já dentro do
+        // conjunto filtrado.
+        $busca = trim((string) $request->input('busca', ''));
+        $formaPagamento = trim((string) $request->input('forma_pagamento', ''));
 
-        $pagamentos = Pagamento::with('apolice.cliente')
+        $condicoes = [
+            'pagamentos.deleted_at is null',
+            'apolices.deleted_at is null',
+        ];
+        $bindings = [];
+
+        if ($formaPagamento !== '') {
+            $condicoes[] = 'pagamentos.forma_pagamento = ?';
+            $bindings[] = $formaPagamento;
+        }
+
+        if ($busca !== '') {
+            // ilike = LIKE sem diferenciar maiúsculas (específico do Postgres).
+            // Mesmos três campos do scopeFilter, para a tela e a busca
+            // concordarem.
+            $condicoes[] = '(segurados.nome_completo ilike ? or segurados.cpf_cnpj ilike ? or apolices.numero_apolice ilike ?)';
+            $termo = '%'.$busca.'%';
+            $bindings = array_merge($bindings, [$termo, $termo, $termo]);
+        }
+
+        $idsPagamentosRecentes = collect(DB::select(
+            'select distinct on (apolices.cliente_id) pagamentos.id
+               from pagamentos
+               join apolices on apolices.id = pagamentos.apolice_id
+               join segurados on segurados.id = apolices.cliente_id
+              where '.implode(' and ', $condicoes).'
+              order by apolices.cliente_id,
+                       pagamentos.data_pagamento desc,
+                       pagamentos.id desc',
+            $bindings
+        ))->pluck('id');
+
+        // registradoPor no eager load: sem ele, o ->through() abaixo dispara
+        // uma query por linha para resolver o nome do operador (N+1).
+        $pagamentos = Pagamento::with(['apolice.cliente', 'registradoPor'])
             ->whereIn('id', $idsPagamentosRecentes)
-            ->filter($request->all())
             ->paginate(10)
             ->withQueryString()
             ->through(function ($pagamento) {
@@ -72,6 +119,10 @@ class pagamentoController extends Controller
                     'forma_pagamento' => $pagamento->forma_pagamento,
                     'status' => $pagamento->status,
                     'observacoes' => $pagamento->observacoes,
+                    // Auditoria que ninguém enxerga não inibe nada: o valor
+                    // de uma trilha está em ser visível na hora da conferência,
+                    // não só consultável no banco depois do problema.
+                    'registrado_por' => $pagamento->registradoPor->name ?? null,
                 ];
             });
 
@@ -128,9 +179,12 @@ class pagamentoController extends Controller
         );
     }
 
-    public function exportar(ExportacaoPagamentoService $exportacaoService)
+    public function exportar(Request $request, ExportacaoPagamentoService $exportacaoService)
     {
-        return $exportacaoService->exportarPagamentosCsv();
+        // Repassa os filtros da tela: sem isso, o operador filtrava por
+        // "Maria", via 1 resultado, clicava em Exportar e baixava a base
+        // inteira achando que era o extrato dela.
+        return $exportacaoService->exportarPagamentosCsv($request->only(['busca', 'forma_pagamento']));
     }
 
     public function exportarPorApolice(int $apoliceId, ExportacaoPagamentoService $exportacaoService)
