@@ -90,7 +90,7 @@ export default function CreatePagamentoModal({
     segurados,
     apolices,
 }: any) {
-    const { data, setData, post, reset, clearErrors, errors } = useForm({
+    const { data, setData, post, reset, clearErrors, errors, processing } = useForm({
         segurado_id: '',
         apolice_id: '',
         parcela: '',
@@ -134,9 +134,15 @@ export default function CreatePagamentoModal({
 
         return (segurados ?? [])
             .filter((s: any) => {
+                // includes e não startsWith: "Silva" precisa achar "Maria
+                // Silva". Com o prefixo, a tela dizia "Nenhum segurado
+                // encontrado. Cadastre o cliente..." para cliente que já
+                // existe — convidando o operador a criar uma duplicata. É
+                // também o mesmo comportamento do filtro da lista, que no
+                // backend usa ilike '%termo%'.
                 const nomeBate = s.nome_completo
                     ?.toLowerCase()
-                    .startsWith(termo);
+                    .includes(termo);
                 // só compara por número se o usuário realmente digitou algum número
                 const cpfBate =
                     numerosTermo.length > 0 &&
@@ -292,8 +298,14 @@ export default function CreatePagamentoModal({
         }
 
         post('/pagamentos', {
+            // Sem toast.success aqui: o Inertia trata uma resposta com flash
+            // de ERRO como visita bem-sucedida (é um redirect 302, não um
+            // erro HTTP), então este callback rodava mesmo quando o backend
+            // rejeitava — mostrando um toast verde junto com o vermelho do
+            // layout, fechando o modal e apagando o que o operador digitou.
+            // O AppSidebarLayout já exibe sucesso e erro a partir do flash.
+            // Mesmo motivo pelo qual create-profile-modal.tsx removeu o dele.
             onSuccess: () => {
-                toast.success('Pagamento registrado com sucesso!');
                 reset();
                 clearErrors();
                 setBuscaSegurado('');
@@ -621,10 +633,11 @@ export default function CreatePagamentoModal({
                                             </label>
                                             {!data.valor_manual && (
                                                 <p className="text-xs text-muted-foreground">
-                                                    Valor calculado
-                                                    automaticamente com multa e
-                                                    juros, se houver atraso, na
-                                                    data de pagamento informada.
+                                                    Prévia calculada para hoje,
+                                                    com multa e juros se houver
+                                                    atraso. O valor gravado é
+                                                    recalculado na data de
+                                                    pagamento informada.
                                                 </p>
                                             )}
                                             {(errors as any).valor && (
@@ -740,12 +753,18 @@ export default function CreatePagamentoModal({
                     >
                         Cancelar
                     </Button>
+                    {/* disabled={processing}: sem isso, um duplo clique numa
+                        conexão lenta disparava dois POSTs. O banco barra o
+                        segundo pelo índice único, mas o operador via o toast
+                        de sucesso e logo em seguida um de erro, sem saber se
+                        tinha gravado. */}
                     <Button
                         onClick={handleSubmit}
-                        className="rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-600"
+                        disabled={processing}
+                        className="rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-600 disabled:opacity-60"
                     >
                         <Check className="mr-2 size-4" />
-                        Registrar pagamento
+                        {processing ? 'Registrando…' : 'Registrar pagamento'}
                     </Button>
                 </div>
             </DialogContent>

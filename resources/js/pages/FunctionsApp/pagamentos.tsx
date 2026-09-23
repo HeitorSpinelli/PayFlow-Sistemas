@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     Search,
@@ -14,7 +14,6 @@ import {
     Trash2,
 } from 'lucide-react';
 import { useState, useRef } from 'react';
-import { toast } from 'sonner';
 import CreatePagamentoModal from '@/components/modals/create-pagamentos-modal';
 import PainelClientePagamentos from '@/components/pagamentos/painel-cliente';
 import { Button } from '@/components/ui/button';
@@ -58,6 +57,14 @@ export default function Pagamentos({
     segurados,
     apolices,
 }: PageProps) {
+    // A rota pagamentos.destroy exige `can:is-admin`. Sem esconder o botão,
+    // o operador comum clicava na lixeira, confirmava no diálogo e só então
+    // levava um 403 — mesmo padrão já usado no modal de perfil de apólice.
+    const { auth } = usePage().props as unknown as {
+        auth: { user: { role: string } };
+    };
+    const isAdmin = auth?.user?.role === 'admin';
+
     const [openModal, setOpenModal] = useState(false);
     const [filtroAberto, setFiltroAberto] = useState(false);
     // Cliente selecionado alimenta o painel da coluna direita — não é mais
@@ -71,7 +78,6 @@ export default function Pagamentos({
     >(null);
     const [pagamentoParaExcluir, setPagamentoParaExcluir] = useState<any>(null);
 
-    const opcoesFiltro = ['Todos'];
 
     // Lê os parâmetros atuais da URL para inicializar os estados corretamente
     const urlParams =
@@ -80,7 +86,24 @@ export default function Pagamentos({
             : new URLSearchParams();
 
     const [busca, setBusca] = useState(urlParams.get('busca') || '');
-    const [filtroSelecionado, setFiltroSelecionado] = useState('Todos');
+
+    // Os valores precisam casar com o `in:` de StorePagamentoRequest e com o
+    // que scopeFilter compara no banco — por isso o rótulo exibido é separado
+    // do valor enviado (o banco guarda "cartão" minúsculo, com acento).
+    const opcoesFiltroForma = [
+        { rotulo: 'Todos', valor: '' },
+        { rotulo: 'Boleto', valor: 'boleto' },
+        { rotulo: 'Pix', valor: 'pix' },
+        { rotulo: 'Cartão', valor: 'cartão' },
+        { rotulo: 'Débito', valor: 'débito' },
+    ];
+
+    const [filtroSelecionado, setFiltroSelecionado] = useState(
+        () =>
+            opcoesFiltroForma.find(
+                (o) => o.valor === (urlParams.get('forma_pagamento') || ''),
+            )?.rotulo ?? 'Todos',
+    );
 
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -116,9 +139,30 @@ export default function Pagamentos({
         }, 500);
     };
 
-    const handleFiltroChange = (opcao: string) => {
-        setFiltroSelecionado(opcao);
+    // Antes isto só fechava o menu: o filtro era um controle morto na tela,
+    // embora Pagamento::scopeFilter já soubesse filtrar por forma_pagamento.
+    // Agora navega igual à busca, resetando a página (senão o usuário fica
+    // numa página 3 que não existe mais no resultado filtrado).
+    const handleFiltroChange = (rotulo: string) => {
+        setFiltroSelecionado(rotulo);
         setFiltroAberto(false);
+
+        const valor =
+            opcoesFiltroForma.find((o) => o.rotulo === rotulo)?.valor ?? '';
+        const params = new URLSearchParams(window.location.search);
+
+        if (valor !== '') {
+            params.set('forma_pagamento', valor);
+        } else {
+            params.delete('forma_pagamento');
+        }
+        params.delete('page');
+
+        router.get(
+            window.location.pathname,
+            Object.fromEntries(params.entries()),
+            { preserveState: true, preserveScroll: true, replace: true },
+        );
     };
 
     const selecionarCliente = (pagamento: any) => {
@@ -134,10 +178,12 @@ export default function Pagamentos({
             return;
         }
 
+        // Sem toast aqui: o controller responde com redirect 302 + flash,
+        // e o Inertia trata isso como visita bem-sucedida mesmo quando o
+        // flash é de ERRO — então o onSuccess disparava um toast verde
+        // "excluído com sucesso" junto do toast vermelho do layout. É o
+        // mesmo motivo pelo qual o create-pagamentos-modal removeu o dele.
         router.delete(`/pagamentos/${pagamentoParaExcluir.id}`, {
-            onSuccess: () => toast.success('Pagamento excluído com sucesso!'),
-            onError: () =>
-                toast.error('Erro ao excluir pagamento. Tente novamente.'),
             onFinish: () => setPagamentoParaExcluir(null),
         });
     };
@@ -234,9 +280,15 @@ export default function Pagamentos({
                                 <h3 className="text-sm font-bold">
                                     Lista de Pagamentos
                                 </h3>
+                                {/* "cliente(s)" e não "pagamento(s)": o
+                                    controller reduz a listagem a uma linha por
+                                    cliente (o pagamento mais recente dele), e
+                                    o rótulo antigo não batia com o card
+                                    "Pagamentos Confirmados" logo acima. */}
                                 <p className="text-xs text-muted-foreground">
-                                    {pagamentos?.total ?? 0} pagamento(s)
-                                    encontrado(s)
+                                    {pagamentos?.total ?? 0} cliente(s) com
+                                    pagamento registrado — exibindo o mais
+                                    recente de cada um
                                 </p>
                             </div>
                             <div className="flex flex-wrap items-center gap-2.5">
@@ -269,24 +321,24 @@ export default function Pagamentos({
 
                                     {filtroAberto && (
                                         <div className="absolute left-0 z-50 mt-2 w-40 overflow-hidden rounded-xl border border-border/70 bg-popover py-1.5 shadow-xl">
-                                            {opcoesFiltro.map((opcao) => (
+                                            {opcoesFiltroForma.map((opcao) => (
                                                 <button
-                                                    key={opcao}
+                                                    key={opcao.rotulo}
                                                     onClick={() =>
                                                         handleFiltroChange(
-                                                            opcao,
+                                                            opcao.rotulo,
                                                         )
                                                     }
                                                     className={`flex w-full cursor-pointer items-center justify-between px-3 py-2 text-sm transition-colors ${
                                                         filtroSelecionado ===
-                                                        opcao
+                                                        opcao.rotulo
                                                             ? 'bg-emerald-500 font-medium text-white'
                                                             : 'text-popover-foreground hover:bg-muted'
                                                     }`}
                                                 >
-                                                    {opcao}
+                                                    {opcao.rotulo}
                                                     {filtroSelecionado ===
-                                                        opcao && (
+                                                        opcao.rotulo && (
                                                         <Check className="size-4" />
                                                     )}
                                                 </button>
@@ -295,8 +347,12 @@ export default function Pagamentos({
                                     )}
                                 </div>
 
+                                {/* Repassa busca e filtro ativos: o link fixo
+                                    baixava a base inteira mesmo com a tela
+                                    filtrada, e o operador achava que estava
+                                    exportando o que via. */}
                                 <a
-                                    href="/pagamentos/exportar"
+                                    href={`/pagamentos/exportar${typeof window !== 'undefined' ? window.location.search : ''}`}
                                     className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border/70 bg-background px-4 text-sm font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
                                 >
                                     <Download className="size-4 text-muted-foreground/60" />
@@ -331,6 +387,12 @@ export default function Pagamentos({
                                         <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
                                             Status
                                         </th>
+                                        {/* A trilha de auditoria (registrado_por)
+                                            só servia no CSV. O valor dela está em
+                                            ser visível na hora da conferência. */}
+                                        <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
+                                            Registrado por
+                                        </th>
                                         <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
                                             Ações
                                         </th>
@@ -341,7 +403,7 @@ export default function Pagamentos({
                                     pagamentos.data.length === 0 ? (
                                         <tr>
                                             <td
-                                                colSpan={8}
+                                                colSpan={9}
                                                 className="h-24 px-4 text-center text-muted-foreground"
                                             >
                                                 Nenhum pagamento encontrado.
@@ -390,20 +452,29 @@ export default function Pagamentos({
                                                         {p.status}
                                                     </span>
                                                 </td>
+                                                <td className="px-4 py-3.5 text-muted-foreground">
+                                                    {p.registrado_por ?? (
+                                                        <span className="text-muted-foreground/60 italic">
+                                                            Sistema
+                                                        </span>
+                                                    )}
+                                                </td>
                                                 <td className="px-4 py-3.5 text-left">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setPagamentoParaExcluir(
-                                                                p,
-                                                            );
-                                                        }}
-                                                        className="h-8 w-8 rounded-lg p-0 text-muted-foreground hover:bg-red-500/10 hover:text-red-500"
-                                                    >
-                                                        <Trash2 className="size-4" />
-                                                    </Button>
+                                                    {isAdmin && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setPagamentoParaExcluir(
+                                                                    p,
+                                                                );
+                                                            }}
+                                                            className="h-8 w-8 rounded-lg p-0 text-muted-foreground hover:bg-red-500/10 hover:text-red-500"
+                                                        >
+                                                            <Trash2 className="size-4" />
+                                                        </Button>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))

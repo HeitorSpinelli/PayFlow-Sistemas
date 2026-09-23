@@ -87,10 +87,20 @@ Route::middleware(['auth', 'verified', 'throttle:web-actions'])->group(function 
     Route::prefix('pagamentos')->group(function () {
         Route::get('/', [pagamentoController::class, 'show'])->name('pagamentos');
         Route::post('/', [pagamentoController::class, 'store']);
-        Route::delete('/{id}', [pagamentoController::class, 'destroy'])->name('pagamentos.destroy');
+        // Estornar um pagamento é reversão financeira: reabre a parcela e, se
+        // ela já estiver vencida, suspende a apólice na hora — colocando-a na
+        // trilha do cancelamento automático em 30 dias. É o mesmo peso das
+        // ações de apólice que já exigem admin, então exige aqui também.
+        Route::delete('/{id}', [pagamentoController::class, 'destroy'])->middleware('can:is-admin')->name('pagamentos.destroy');
         Route::get('/exportar', [pagamentoController::class, 'exportar']);
-        Route::get('/cliente/{clienteId}', [pagamentoController::class, 'porCliente']);
-        Route::get('/apolice/{apoliceId}/exportar', [pagamentoController::class, 'exportarPorApolice']);
+        // whereNumber: sem isso, /pagamentos/cliente/abc entrega a string ao
+        // parâmetro tipado `int` do controller e estoura TypeError — que é
+        // \Error, escapa de todos os catches e vira 500. Com a restrição, o
+        // roteador simplesmente não casa a rota e devolve 404.
+        // Também fecha /cliente/1.5, que era coagido para 1 e devolvia 200
+        // com o histórico de OUTRO cliente.
+        Route::get('/cliente/{clienteId}', [pagamentoController::class, 'porCliente'])->whereNumber('clienteId');
+        Route::get('/apolice/{apoliceId}/exportar', [pagamentoController::class, 'exportarPorApolice'])->whereNumber('apoliceId');
     });
 
     // Módulo: Agenda

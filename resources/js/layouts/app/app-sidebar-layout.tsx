@@ -7,11 +7,17 @@ import { usePage } from '@inertiajs/react';
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 
+// A index signature é exigida pelo `usePage<T>()`: o Inertia tipa as props
+// da página como um dicionário aberto (qualquer página pode mandar props
+// próprias além das compartilhadas), e um objeto fechado não satisfaz essa
+// restrição. Sem ela o tsc acusava "Index signature for type 'string' is
+// missing in type 'FlashProps'".
 interface FlashProps {
     flash?: {
         success?: string | null;
         error?: string | null;
     };
+    [key: string]: unknown;
 }
 
 export default function AppSidebarLayout({
