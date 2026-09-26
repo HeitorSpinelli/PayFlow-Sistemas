@@ -90,11 +90,15 @@ class ApoliceService
         }
     }
 
-    // Função para buscar os segurados cadastrados no banco, selecionando apenas os campos id, nome_completo e cpf_cnpj
+    // Função para buscar os segurados cadastrados no banco, pro autocomplete
+    // de cliente do formulário de Apólice — inclui tipo_pessoa porque o
+    // frontend usa esse campo pra decidir o rótulo "CPF" ou "CNPJ" no
+    // resultado da busca (sem ele, undefined !== 'pf' e todo mundo aparecia
+    // como CNPJ, até cliente pessoa física).
     public function buscar()
     {
         try {
-            return Segurado::select('id', 'nome_completo', 'cpf_cnpj')->get();
+            return Segurado::select('id', 'nome_completo', 'cpf_cnpj', 'tipo_pessoa')->get();
         } catch (\Exception $e) {
             throw new \Exception('Erro ao buscar segurados: '.$e->getMessage());
         }

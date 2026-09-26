@@ -62,10 +62,11 @@ export default function Clientes({
     >(null);
     const [seguradoParaExcluir, setSeguradoParaExcluir] = useState<any>(null);
 
-    
     //find() retorna o primeiro elemento que satisfaz a condição, ou undefined se nenhum for encontrado. O operador ?? garante que, se find() retornar undefined, seguradoSelecionado será null.
     const seguradoSelecionado =
-        segurados?.data?.find((segurado) => segurado.id === seguradoSelecionadoId) ?? null;
+        segurados?.data?.find(
+            (segurado) => segurado.id === seguradoSelecionadoId,
+        ) ?? null;
 
     const opcoesFiltro = ['Todos', 'Ativos', 'Inativos'];
 
@@ -236,16 +237,16 @@ export default function Clientes({
                             <ScrollText className="size-5" />
                         </div>
                     </div>
-                    <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-5 transition-colors hover:border-rose-500/30">
+                    <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-5 transition-colors hover:border-muted-foreground/30">
                         <div className="flex flex-col gap-1">
                             <span className="text-xs font-medium text-muted-foreground">
                                 Inativos
                             </span>
-                            <span className="text-2xl font-semibold tracking-tight text-rose-500 sm:text-3xl">
+                            <span className="text-2xl font-semibold tracking-tight text-muted-foreground sm:text-3xl">
                                 {totalInativosSegurados}
                             </span>
                         </div>
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted text-muted-foreground">
                             <ScrollText className="size-5" />
                         </div>
                     </div>
@@ -413,7 +414,7 @@ export default function Clientes({
                                                             segurado.status ===
                                                             'Ativo'
                                                                 ? 'bg-emerald-500/10 text-emerald-500'
-                                                                : 'bg-rose-500/10 text-rose-500'
+                                                                : 'bg-muted text-muted-foreground'
                                                         }`}
                                                     >
                                                         {segurado.status}

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import {
     ArrowRight,
@@ -15,11 +14,12 @@ import {
     Settings,
     XCircle,
 } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { Segurado, Automacao } from '@/types/notificacoes';
-import NotificacaoModal from '@/components/modals/create-notificacao-modal';
 import ConfigNotificacaoModal from '@/components/modals/configuracoes-notificacoes-modal';
+import NotificacaoModal from '@/components/modals/create-notificacao-modal';
+import { Button } from '@/components/ui/button';
+import type { Segurado, Automacao } from '@/types/notificacoes';
 
 type Canal = 'email' | 'whatsapp';
 type StatusNotificacao = 'enviado' | 'pendente' | 'falha';
@@ -29,6 +29,7 @@ interface NotificacaoItem {
     canal: string;
     mensagem: string;
     status: string;
+    erro: string | null;
     data_envio: string;
     segurado: { nome_completo: string };
     tipo_notificacao: { nome_notificacao: string } | null;
@@ -116,10 +117,22 @@ export default function Notificacoes({
         page?: number;
     }) => {
         const query: Record<string, string> = {};
-        if (params.canal) query.canal = params.canal;
-        if (params.status) query.status = params.status;
-        if (params.busca) query.busca = params.busca;
-        if (params.page) query.page = String(params.page);
+
+        if (params.canal) {
+            query.canal = params.canal;
+        }
+
+        if (params.status) {
+            query.status = params.status;
+        }
+
+        if (params.busca) {
+            query.busca = params.busca;
+        }
+
+        if (params.page) {
+            query.page = String(params.page);
+        }
 
         router.get('/notificacoes/filtrar', query, {
             preserveState: true,
@@ -432,6 +445,7 @@ export default function Notificacoes({
                                         const CanalIcon =
                                             CANAL_CONFIG[item.canal as Canal]
                                                 ?.icon;
+
                                         return (
                                             <tr
                                                 key={item.id}
@@ -474,7 +488,14 @@ export default function Notificacoes({
                                                 </td>
                                                 <td className="px-5 py-3.5">
                                                     <span
-                                                        className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${STATUS_CONFIG[statusKey]?.badge ?? ''}`}
+                                                        title={
+                                                            statusKey ===
+                                                                'falha' &&
+                                                            item.erro
+                                                                ? item.erro
+                                                                : undefined
+                                                        }
+                                                        className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${statusKey === 'falha' && item.erro ? 'cursor-help' : ''} ${STATUS_CONFIG[statusKey]?.badge ?? ''}`}
                                                     >
                                                         {STATUS_CONFIG[
                                                             statusKey

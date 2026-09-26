@@ -14,7 +14,7 @@ import {
     Trash2,
     X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,6 +35,8 @@ import {
     formatarDataBR,
     formataCpfCnpj,
     aplicarMascaraCEP,
+    formatarMoeda,
+    valorDigitadoParaNumero,
 } from '@/utils/Masks';
 
 type Modo = 'visualizar' | 'editar' | 'excluir';
@@ -314,19 +316,41 @@ export default function CreateApoliceProfileModal({
         (ramo: any) => String(ramo.id) === String(data.ramo_id),
     )?.categoria;
 
-    // Troca de ramo limpa os dados extras do ramo anterior (ex: sair de um
-    // ramo de veículo pra um residencial não deve arrastar placa/chassi) —
-    // mesmo comportamento do modal de criação (handleRamoChange).
+    // Rastreia a categoria a que os dados em data.veiculo/residencia/vida/
+    // empresarial pertencem no momento (inicializado a partir da apólice
+    // sendo editada, no efeito abaixo). Usado por handleRamoChange pra só
+    // zerar os dados extras quando a categoria muda de verdade — trocar de
+    // ramo mantendo a mesma categoria não deveria apagar o que já estava
+    // preenchido (achado num teste exploratório: apagava tudo sem aviso).
+    // É um ref, não um state: nunca precisa disparar re-render, só é lido
+    // dentro de handleRamoChange — e mutar um ref dentro do efeito de resync
+    // abaixo não entra no alerta do eslint contra setState em efeito.
+    const categoriaDosDadosExtrasRef = useRef<string | null>(null);
+
+    // Só zera os dados extras quando a CATEGORIA do ramo realmente muda (ex:
+    // sair de um ramo de veículo pra um residencial não deve arrastar placa/
+    // chassi) — mesma lógica do modal de criação.
     const handleRamoChange = (v: string) => {
+        const novaCategoria =
+            ramos?.find((ramo: any) => String(ramo.id) === String(v))
+                ?.categoria ?? null;
+        const categoriaMudou =
+            novaCategoria !== categoriaDosDadosExtrasRef.current;
+
         setData((prev: any) => ({
             ...prev,
             ramo_id: v,
-            veiculo: DADOS_VEICULO_INICIAL,
-            residencia: DADOS_RESIDENCIA_INICIAL,
-            vida: DADOS_VIDA_INICIAL,
-            beneficiarios: [BENEFICIARIO_INICIAL],
-            empresarial: DADOS_EMPRESARIAL_INICIAL,
+            ...(categoriaMudou
+                ? {
+                      veiculo: DADOS_VEICULO_INICIAL,
+                      residencia: DADOS_RESIDENCIA_INICIAL,
+                      vida: DADOS_VIDA_INICIAL,
+                      beneficiarios: [BENEFICIARIO_INICIAL],
+                      empresarial: DADOS_EMPRESARIAL_INICIAL,
+                  }
+                : {}),
         }));
+        categoriaDosDadosExtrasRef.current = novaCategoria;
     };
 
     const atualizarVeiculo = (campo: string, valor: any) =>
@@ -378,6 +402,10 @@ export default function CreateApoliceProfileModal({
     useEffect(() => {
         if (apolice) {
             setData(mapApoliceParaFormulario(apolice));
+            categoriaDosDadosExtrasRef.current =
+                ramos?.find(
+                    (ramo: any) => String(ramo.id) === String(apolice.ramo_id),
+                )?.categoria ?? null;
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [apolice, open]);
@@ -396,7 +424,12 @@ export default function CreateApoliceProfileModal({
     const cancelarEdicao = () => {
         if (apolice) {
             setData(mapApoliceParaFormulario(apolice));
+            categoriaDosDadosExtrasRef.current =
+                ramos?.find(
+                    (ramo: any) => String(ramo.id) === String(apolice.ramo_id),
+                )?.categoria ?? null;
         }
+
         setModo('visualizar');
     };
 
@@ -407,7 +440,10 @@ export default function CreateApoliceProfileModal({
     // falha de validação), esse onSuccess disparava mesmo quando o backend
     // tinha rejeitado a ação, mostrando "sucesso" ao lado do erro real.
     const salvarEdicao = () => {
-        if (!apolice) return;
+        if (!apolice) {
+            return;
+        }
+
         put(`/apolices/${apolice.id}`, {
             onSuccess: () => fechar(),
             onError: () => toast.error('Verifique os dados enviados.'),
@@ -446,7 +482,9 @@ export default function CreateApoliceProfileModal({
         });
     };
 
-    if (!apolice) return null;
+    if (!apolice) {
+        return null;
+    }
 
     const tituloBreadcrumb =
         modo === 'editar'
@@ -1031,17 +1069,32 @@ export default function CreateApoliceProfileModal({
                                     <div className="grid gap-4 sm:grid-cols-2">
                                         <div className="space-y-2">
                                             <label className="text-sm leading-none font-medium">
-                                                Valor do prêmio total
+                                                Valor do prêmio total (R$)
                                             </label>
                                             <Input
-                                                value={data.valor_premio_total}
+                                                type="text"
+                                                inputMode="numeric"
+                                                placeholder="0,00"
+                                                value={
+                                                    data.valor_premio_total &&
+                                                    Number(
+                                                        data.valor_premio_total,
+                                                    ) > 0
+                                                        ? formatarMoeda(
+                                                              Number(
+                                                                  data.valor_premio_total,
+                                                              ),
+                                                          )
+                                                        : ''
+                                                }
                                                 onChange={(e) =>
                                                     setData(
                                                         'valor_premio_total',
-                                                        e.target.value,
+                                                        valorDigitadoParaNumero(
+                                                            e.target.value,
+                                                        ).toFixed(2),
                                                     )
                                                 }
-                                                type="number"
                                                 className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                             />
                                             {errors.valor_premio_total && (
@@ -1052,17 +1105,32 @@ export default function CreateApoliceProfileModal({
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-sm leading-none font-medium">
-                                                Valor de cobertura
+                                                Valor de cobertura (R$)
                                             </label>
                                             <Input
-                                                value={data.valor_cobertura}
+                                                type="text"
+                                                inputMode="numeric"
+                                                placeholder="0,00"
+                                                value={
+                                                    data.valor_cobertura &&
+                                                    Number(
+                                                        data.valor_cobertura,
+                                                    ) > 0
+                                                        ? formatarMoeda(
+                                                              Number(
+                                                                  data.valor_cobertura,
+                                                              ),
+                                                          )
+                                                        : ''
+                                                }
                                                 onChange={(e) =>
                                                     setData(
                                                         'valor_cobertura',
-                                                        e.target.value,
+                                                        valorDigitadoParaNumero(
+                                                            e.target.value,
+                                                        ).toFixed(2),
                                                     )
                                                 }
-                                                type="number"
                                                 className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                             />
                                             {errors.valor_cobertura && (
@@ -2040,18 +2108,33 @@ export default function CreateApoliceProfileModal({
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-sm leading-none font-medium">
-                                                    Capital segurado
+                                                    Capital segurado (R$)
                                                 </label>
                                                 <Input
-                                                    type="number"
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    placeholder="0,00"
                                                     value={
                                                         data.vida
-                                                            .capital_segurado
+                                                            .capital_segurado &&
+                                                        Number(
+                                                            data.vida
+                                                                .capital_segurado,
+                                                        ) > 0
+                                                            ? formatarMoeda(
+                                                                  Number(
+                                                                      data.vida
+                                                                          .capital_segurado,
+                                                                  ),
+                                                              )
+                                                            : ''
                                                     }
                                                     onChange={(e) =>
                                                         atualizarVida(
                                                             'capital_segurado',
-                                                            e.target.value,
+                                                            valorDigitadoParaNumero(
+                                                                e.target.value,
+                                                            ).toFixed(2),
                                                         )
                                                     }
                                                     className="h-10 rounded-xl border border-border/70 bg-background"
@@ -2452,17 +2535,34 @@ export default function CreateApoliceProfileModal({
                                             <div className="space-y-2">
                                                 <label className="text-sm leading-none font-medium">
                                                     Valor do patrimônio segurado
+                                                    (R$)
                                                 </label>
                                                 <Input
-                                                    type="number"
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    placeholder="0,00"
                                                     value={
                                                         data.empresarial
-                                                            .valor_patrimonio_segurado
+                                                            .valor_patrimonio_segurado &&
+                                                        Number(
+                                                            data.empresarial
+                                                                .valor_patrimonio_segurado,
+                                                        ) > 0
+                                                            ? formatarMoeda(
+                                                                  Number(
+                                                                      data
+                                                                          .empresarial
+                                                                          .valor_patrimonio_segurado,
+                                                                  ),
+                                                              )
+                                                            : ''
                                                     }
                                                     onChange={(e) =>
                                                         atualizarEmpresarial(
                                                             'valor_patrimonio_segurado',
-                                                            e.target.value,
+                                                            valorDigitadoParaNumero(
+                                                                e.target.value,
+                                                            ).toFixed(2),
                                                         )
                                                     }
                                                     className="h-10 rounded-xl border border-border/70 bg-background"
@@ -2481,18 +2581,34 @@ export default function CreateApoliceProfileModal({
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-sm leading-none font-medium">
-                                                    Faturamento anual
+                                                    Faturamento anual (R$)
                                                 </label>
                                                 <Input
-                                                    type="number"
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    placeholder="0,00"
                                                     value={
                                                         data.empresarial
-                                                            .faturamento_anual
+                                                            .faturamento_anual &&
+                                                        Number(
+                                                            data.empresarial
+                                                                .faturamento_anual,
+                                                        ) > 0
+                                                            ? formatarMoeda(
+                                                                  Number(
+                                                                      data
+                                                                          .empresarial
+                                                                          .faturamento_anual,
+                                                                  ),
+                                                              )
+                                                            : ''
                                                     }
                                                     onChange={(e) =>
                                                         atualizarEmpresarial(
                                                             'faturamento_anual',
-                                                            e.target.value,
+                                                            valorDigitadoParaNumero(
+                                                                e.target.value,
+                                                            ).toFixed(2),
                                                         )
                                                     }
                                                     className="h-10 rounded-xl border border-border/70 bg-background"

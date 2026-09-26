@@ -37,7 +37,11 @@ class NotificacaoService
                 ]);
             } catch (\Exception $e) {
                 Log::error('Falha ao enviar notificação para segurado #'.$seguradoId.': '.$e->getMessage());
-                $notificacao->update(['status' => 'Falha']);
+                // Antes só o log guardava o motivo — quem via a tela via
+                // "Falha" sem nenhuma pista de por quê (achado em teste
+                // exploratório). Guardar aqui também deixa o motivo visível
+                // sem precisar acessar o servidor.
+                $notificacao->update(['status' => 'Falha', 'erro' => $e->getMessage()]);
             }
         }
     }

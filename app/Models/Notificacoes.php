@@ -16,7 +16,8 @@ class Notificacoes extends Model
         'mensagem',
         'data_envio',
         'data_agendamento',
-        'status'
+        'status',
+        'erro',
     ];
 
     // Relacionamento com o usuário que enviou
@@ -31,7 +32,8 @@ class Notificacoes extends Model
         return $this->belongsTo(Segurado::class, 'segurado_id');
     }
 
-    public function tipoNotificacao(){
+    public function tipoNotificacao()
+    {
         return $this->belongsTo(TipoNotificacao::class, 'tipo_notificacao_id');
     }
 }

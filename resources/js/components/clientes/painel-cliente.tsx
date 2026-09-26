@@ -109,8 +109,8 @@ export default function PainelCliente({
 
     const salvarEdicao = () => {
         if (!segurado) {
-return;
-}
+            return;
+        }
 
         put(`/clientes/${segurado.id}`, {
             onSuccess: () => setModo('visualizar'),
@@ -156,7 +156,7 @@ return;
                             className={`mt-1 inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold tracking-wide ${
                                 segurado?.status === 'Ativo'
                                     ? 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-600'
-                                    : 'border border-rose-500/20 bg-rose-500/10 text-rose-500'
+                                    : 'border border-border/70 bg-muted text-muted-foreground'
                             }`}
                         >
                             {segurado?.status}
