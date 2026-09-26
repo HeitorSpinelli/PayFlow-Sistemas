@@ -13,7 +13,7 @@ class ExportacaoSeguradosService
     public function exportarSeguradosCsv(): StreamedResponse
     {
         //Nome do arquivo = segurados + data atual + extensão .csv
-        $fileName = 'Segurados-' . date('Y-m-d') . '.csv';
+        $fileName = 'Segurados-' . date('d-m-Y') . '.csv';
 
         // Montada aqui, executada só dentro do callback via lazy() — com
         // ->all() tudo ia para a memória antes da resposta começar a sair.
