@@ -13,6 +13,7 @@ use App\Http\Controllers\SeguradoController;
 use App\Http\Controllers\SeguradoraController;
 use App\Http\Controllers\TipoNotificacoesController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\DininhoController;
 use App\Models\Automacao;
 use App\Models\Notificacoes;
 use App\Models\Segurado;
@@ -52,6 +53,9 @@ Route::post('/configuracao-inicial', [ConfiguracaoInicialController::class, 'sto
 
 Route::middleware(['auth', 'verified', 'throttle:web-actions'])->group(function () {
 
+    Route::post('/dininho/perguntar', [DininhoController::class, 'pergunta'])
+    ->middleware('throttle:10,1');
+    
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
