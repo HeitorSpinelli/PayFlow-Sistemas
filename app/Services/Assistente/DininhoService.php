@@ -15,8 +15,11 @@ class DininhoService
 
         try {
             $response = Http::withHeaders([
+                //x-goog-api-key é a chave de API do Google Cloud para acessar o modelo Gemini
                 'x-goog-api-key' => $chave,
+                //Content-Type é o tipo de conteúdo da requisição, que é JSON
                 'Content-Type' => 'application/json',
+                //Vai fazer uma requisição do tipo post nesse link usando o content passado do front e o system prompt
             ])->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent', [
                 'contents' => [
                     ['parts' => [['text' => $mensagem]]],
