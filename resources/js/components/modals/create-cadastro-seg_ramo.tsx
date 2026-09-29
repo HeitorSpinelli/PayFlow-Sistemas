@@ -1,9 +1,15 @@
+import { useForm } from '@inertiajs/react';
+import { Building2, ChevronRight, FileText, Plus, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import {
     Select,
     SelectContent,
@@ -11,21 +17,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useState } from 'react';
-import { useForm } from '@inertiajs/react';
-import { toast } from 'sonner';
-import {
-    X,
-    Plus,
-    Building2,
-    ChevronRight,
-    FileText,
-    Phone,
-    Mail,
-    Hash,
-} from 'lucide-react';
 
 // Categoria decide quais dados extras a apólice desse ramo vai exigir no
 // cadastro (placa/chassi para veículo, endereço do imóvel para residencial).
@@ -61,7 +52,11 @@ function Section({ icon, title, description, children }: any) {
     );
 }
 
-export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
+export default function CreateSeguradoraRamoModal({
+    open,
+    setOpen,
+    nomeInicial,
+}: any) {
     const [ramos, setRamos] = useState<RamoNovo[]>([]);
     const [novoRamo, setNovoRamo] = useState('');
     const [novaCategoria, setNovaCategoria] = useState('');
@@ -75,14 +70,29 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
         ramos: [] as RamoNovo[],
     });
 
+    // Preenche o nome fantasia quando o modal chega com uma sugestão pronta
+    // (vindo do alerta de "seguradora não encontrada" da tela de Importar).
+    useEffect(() => {
+        if (open && nomeInicial) {
+            setData('nome_fantasia', nomeInicial);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open, nomeInicial]);
+
     const adicionarRamo = () => {
-        if (!novoRamo.trim()) return;
-        if (!novaCategoria) {
-            toast.error('Selecione a categoria do ramo.');
+        if (!novoRamo.trim()) {
             return;
         }
+
+        if (!novaCategoria) {
+            toast.error('Selecione a categoria do ramo.');
+
+            return;
+        }
+
         if (ramos.some((r) => r.nome_ramo === novoRamo.trim())) {
             toast.error('Ramo já adicionado!');
+
             return;
         }
 
@@ -216,10 +226,10 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
                                     className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                 />
                                 {errors.razao_social && (
-                                        <span className="text-xs font-medium text-rose-500">
-                                            {errors.razao_social}
-                                        </span>
-                                    )}
+                                    <span className="text-xs font-medium text-rose-500">
+                                        {errors.razao_social}
+                                    </span>
+                                )}
                             </div>
 
                             <div className="grid gap-4 sm:grid-cols-2">
@@ -277,10 +287,10 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
                                     className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                 />
                                 {errors.email_suporte && (
-                                        <span className="text-xs font-medium text-rose-500">
-                                            {errors.email_suporte}
-                                        </span>
-                                    )}
+                                    <span className="text-xs font-medium text-rose-500">
+                                        {errors.email_suporte}
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </Section>
@@ -329,10 +339,10 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
                                     <Plus className="h-4 w-4" />
                                 </Button>
                                 {errors.ramos && (
-                                        <span className="text-xs font-medium text-rose-500">
-                                            {errors.ramos}
-                                        </span>
-                                    )}
+                                    <span className="text-xs font-medium text-rose-500">
+                                        {errors.ramos}
+                                    </span>
+                                )}
                             </div>
 
                             {ramos.length > 0 && (
@@ -368,7 +378,6 @@ export default function CreateSeguradoraRamoModal({ open, setOpen }: any) {
                                         </div>
                                     ))}
                                 </div>
-
                             )}
 
                             {ramos.length === 0 && (

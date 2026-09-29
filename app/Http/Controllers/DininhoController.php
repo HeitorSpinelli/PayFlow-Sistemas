@@ -16,12 +16,17 @@ class DininhoController extends Controller
 
     public function pergunta(Request $request)
     {
-        $request->validate([
+        $dados = $request->validate([
             'pergunta' => 'required|string|max:1000',
+            'historico' => 'sometimes|array|max:20',
+            'historico.*.autor' => 'required_with:historico|in:usuario,dininho',
+            'historico.*.texto' => 'required_with:historico|string|max:1000',
         ]);
 
-        $pergunta = $request->input('pergunta');
-        $resposta = $this->dininhoService->perguntar($pergunta);
+        $resposta = $this->dininhoService->perguntar(
+            $dados['pergunta'],
+            $dados['historico'] ?? []
+        );
 
         return response()->json(['resposta' => $resposta]);
     }

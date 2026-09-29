@@ -1,9 +1,9 @@
-import { useState } from 'react';
 import { Head } from '@inertiajs/react';
 import { Building2, ChevronRight, FileText, Mail, Plus } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import CreateSeguradoraRamoModal from '@/components/modals/create-cadastro-seg_ramo';
-import { Button } from '@/components/ui/button';
 import CreateProfileSeguradoraModal from '@/components/modals/create-profileSeguradora-modal';
+import { Button } from '@/components/ui/button';
 
 interface Ramo {
     id: number;
@@ -25,10 +25,44 @@ interface Props {
     seguradoras?: Seguradora[];
 }
 
+// Lê a sugestão de nome vinda da tela de Importar Dados: quando uma linha da
+// planilha referencia uma seguradora que ainda não existe, o alerta de lá
+// manda o usuário pra cá com "?nova_seguradora=Nome". Calculado como
+// inicializador de estado (não em useEffect) pra já nascer com o modal
+// aberto, sem um primeiro render "fechado" piscando antes.
+function lerNomeSugeridoDaUrl(): string | undefined {
+    if (typeof window === 'undefined') {
+        return undefined;
+    }
+
+    return (
+        new URLSearchParams(window.location.search).get('nova_seguradora') ??
+        undefined
+    );
+}
+
 export default function Seguradoras({ seguradoras = [] }: Props) {
     // Estados independentes para cada modal
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [nomeSugerido, setNomeSugerido] = useState<string | undefined>(
+        lerNomeSugeridoDaUrl,
+    );
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(
+        () => lerNomeSugeridoDaUrl() !== undefined,
+    );
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+    // Só limpa a query string (efeito puro sobre o histórico do navegador,
+    // sem tocar em estado do React) pra um F5 não reabrir o modal de novo.
+    useEffect(() => {
+        if (!nomeSugerido) {
+            return;
+        }
+
+        const url = new URL(window.location.href);
+        url.searchParams.delete('nova_seguradora');
+        window.history.replaceState({}, '', url.toString());
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Guarda só o ID selecionado, não uma cópia da seguradora — a seguradora
     // exibida é sempre derivada do prop `seguradoras` atual. Sem isso, depois
@@ -75,7 +109,10 @@ export default function Seguradoras({ seguradoras = [] }: Props) {
                         </p>
                     </div>
                     <Button
-                        onClick={() => setIsCreateModalOpen(true)}
+                        onClick={() => {
+                            setNomeSugerido(undefined);
+                            setIsCreateModalOpen(true);
+                        }}
                         className="h-11 rounded-xl bg-emerald-500 px-5 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
                     >
                         <Plus className="mr-2 size-4" />
@@ -168,6 +205,7 @@ export default function Seguradoras({ seguradoras = [] }: Props) {
             <CreateSeguradoraRamoModal
                 open={isCreateModalOpen}
                 setOpen={setIsCreateModalOpen}
+                nomeInicial={nomeSugerido}
             />
 
             {/* Modal de Perfil / Edição / Exclusão */}

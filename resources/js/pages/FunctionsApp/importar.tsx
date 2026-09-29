@@ -1,8 +1,7 @@
-import { useCallback, useRef, useState } from 'react';
-import type { ChangeEvent, DragEvent, KeyboardEvent } from 'react';
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
+    Building2,
     ChevronRight,
     CircleCheck,
     Download,
@@ -14,7 +13,17 @@ import {
     Upload,
     X,
 } from 'lucide-react';
+import { useCallback, useRef, useState } from 'react';
+import type { ChangeEvent, DragEvent, KeyboardEvent } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 
 /* ------------------------------------------------------------------ */
 /* Tipos                                                              */
@@ -32,6 +41,11 @@ interface ImportResumo {
     total: number;
     importados: number;
     erros: string[];
+    seguradorasFaltantes: string[];
+}
+
+interface AuthUser {
+    role?: string;
 }
 
 /* ------------------------------------------------------------------ */
@@ -81,8 +95,14 @@ const REQUISITOS = [
 /* ------------------------------------------------------------------ */
 
 function formatarTamanho(bytes: number) {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    if (bytes < 1024) {
+        return `${bytes} B`;
+    }
+
+    if (bytes < 1024 * 1024) {
+        return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
@@ -93,13 +113,18 @@ function formatarTamanho(bytes: number) {
 export default function ImportarDados() {
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const { props } = usePage<{ importResumo?: ImportResumo }>();
+    const { props } = usePage<{
+        importResumo?: ImportResumo;
+        auth?: { user?: AuthUser | null };
+    }>();
+    const isAdmin = props.auth?.user?.role === 'admin';
 
-    const { data, setData, post, processing, progress, errors, reset } = useForm<{
-        arquivo: File | null;
-    }>({
-        arquivo: null,
-    });
+    const { data, setData, post, processing, progress, errors, reset } =
+        useForm<{
+            arquivo: File | null;
+        }>({
+            arquivo: null,
+        });
 
     const [estado, setEstado] = useState<EstadoArquivo>('vazio');
     const [arquivo, setArquivo] = useState<ArquivoInfo | null>(null);
@@ -113,10 +138,14 @@ export default function ImportarDados() {
     const processarArquivo = useCallback(
         (file: File) => {
             const nomeValido = file.name.toLowerCase().endsWith('.csv');
+
             if (!nomeValido) {
-                setErroLocal('Esse arquivo não é uma planilha .csv. Selecione um arquivo válido.');
+                setErroLocal(
+                    'Esse arquivo não é uma planilha .csv. Selecione um arquivo válido.',
+                );
                 setEstado('erro');
                 setArquivo(null);
+
                 return;
             }
 
@@ -137,7 +166,9 @@ export default function ImportarDados() {
                 setData('arquivo', file);
             };
             reader.onerror = () => {
-                setErroLocal('Não foi possível ler o arquivo. Tente novamente.');
+                setErroLocal(
+                    'Não foi possível ler o arquivo. Tente novamente.',
+                );
                 setEstado('erro');
             };
             reader.readAsText(file);
@@ -147,7 +178,11 @@ export default function ImportarDados() {
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) processarArquivo(file);
+
+        if (file) {
+            processarArquivo(file);
+        }
+
         e.target.value = '';
     };
 
@@ -155,7 +190,10 @@ export default function ImportarDados() {
         e.preventDefault();
         setArrastando(false);
         const file = e.dataTransfer.files?.[0];
-        if (file) processarArquivo(file);
+
+        if (file) {
+            processarArquivo(file);
+        }
     };
 
     const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -173,7 +211,9 @@ export default function ImportarDados() {
     };
 
     const confirmarImportacao = () => {
-        if (!data.arquivo) return;
+        if (!data.arquivo) {
+            return;
+        }
 
         post('/importar-dados', {
             forceFormData: true,
@@ -185,6 +225,24 @@ export default function ImportarDados() {
     };
 
     const resumo = props.importResumo;
+
+    const [modalSeguradorasAberto, setModalSeguradorasAberto] = useState(false);
+
+    // Sempre que chega um resumo novo (nova submissão do formulário) com
+    // seguradora(s) não encontrada(s), abre o alerta sozinho — o usuário não
+    // precisa garimpar a lista de erros pra descobrir que basta cadastrar a
+    // seguradora antes de tentar de novo. Ajustado durante a renderização
+    // (não em useEffect) seguindo o padrão do React pra "reagir a uma prop
+    // que mudou" sem o flash de um primeiro render com o modal fechado.
+    const [ultimoResumoVisto, setUltimoResumoVisto] = useState(resumo);
+
+    if (resumo !== ultimoResumoVisto) {
+        setUltimoResumoVisto(resumo);
+
+        if (resumo && resumo.seguradorasFaltantes.length > 0) {
+            setModalSeguradorasAberto(true);
+        }
+    }
 
     return (
         <>
@@ -213,7 +271,8 @@ export default function ImportarDados() {
                         Importar Dados
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        Traga sua base de clientes e apólices direto de uma planilha .csv
+                        Traga sua base de clientes e apólices direto de uma
+                        planilha .csv
                     </p>
                 </div>
 
@@ -261,7 +320,8 @@ export default function ImportarDados() {
                                         Arraste sua planilha aqui
                                     </p>
                                     <p className="mt-1 text-sm text-muted-foreground">
-                                        ou clique no botão abaixo para escolher um arquivo .csv
+                                        ou clique no botão abaixo para escolher
+                                        um arquivo .csv
                                     </p>
                                 </div>
 
@@ -298,7 +358,8 @@ export default function ImportarDados() {
                                         Arquivo pronto para importar
                                     </p>
                                     <p className="mt-1 text-sm text-muted-foreground">
-                                        Confira as informações abaixo antes de confirmar
+                                        Confira as informações abaixo antes de
+                                        confirmar
                                     </p>
                                 </div>
 
@@ -334,11 +395,14 @@ export default function ImportarDados() {
                                         <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                                             <div
                                                 className="h-full rounded-full bg-emerald-500 transition-all"
-                                                style={{ width: `${progress?.percentage ?? 0}%` }}
+                                                style={{
+                                                    width: `${progress?.percentage ?? 0}%`,
+                                                }}
                                             />
                                         </div>
                                         <p className="mt-1.5 text-xs font-semibold text-muted-foreground">
-                                            Enviando… {progress?.percentage ?? 0}%
+                                            Enviando…{' '}
+                                            {progress?.percentage ?? 0}%
                                         </p>
                                     </div>
                                 )}
@@ -357,7 +421,9 @@ export default function ImportarDados() {
                                         className="h-11 rounded-xl bg-emerald-500 px-8 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                         <Sparkles className="mr-2 size-4" />
-                                        {processing ? 'Importando…' : 'Confirmar importação'}
+                                        {processing
+                                            ? 'Importando…'
+                                            : 'Confirmar importação'}
                                     </Button>
                                     <Button
                                         onClick={abrirSeletorDeArquivo}
@@ -377,8 +443,8 @@ export default function ImportarDados() {
                                 <div className="mb-3 flex items-center gap-2">
                                     <CircleCheck className="size-4 text-emerald-600" />
                                     <p className="text-sm font-bold text-foreground">
-                                        {resumo.importados} de {resumo.total} linha(s) importada(s)
-                                        com sucesso
+                                        {resumo.importados} de {resumo.total}{' '}
+                                        linha(s) importada(s) com sucesso
                                     </p>
                                 </div>
 
@@ -386,12 +452,16 @@ export default function ImportarDados() {
                                     <div className="mt-3">
                                         <p className="mb-2 flex items-center gap-1.5 text-xs font-bold text-red-600">
                                             <TriangleAlert className="size-3.5" />
-                                            {resumo.erros.length} linha(s) com problema
+                                            {resumo.erros.length} linha(s) com
+                                            problema
                                         </p>
                                         <div className="max-h-40 overflow-y-auto rounded-xl border border-red-500/20 bg-red-500/5">
                                             <ul className="divide-y divide-red-500/10 text-xs text-red-700">
                                                 {resumo.erros.map((msg, i) => (
-                                                    <li key={i} className="px-3 py-2">
+                                                    <li
+                                                        key={i}
+                                                        className="px-3 py-2"
+                                                    >
                                                         {msg}
                                                     </li>
                                                 ))}
@@ -415,8 +485,8 @@ export default function ImportarDados() {
                                 </p>
                             </div>
                             <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
-                                Baixe o modelo oficial com as colunas já formatadas para evitar
-                                erros na importação.
+                                Baixe o modelo oficial com as colunas já
+                                formatadas para evitar erros na importação.
                             </p>
                             <a href="/modelos/clientes-modelo.csv" download>
                                 <Button
@@ -467,6 +537,7 @@ export default function ImportarDados() {
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
                         {PASSOS_TUTORIAL.map((passo, idx) => {
                             const Icon = passo.icon;
+
                             return (
                                 <div
                                     key={passo.numero}
@@ -497,6 +568,76 @@ export default function ImportarDados() {
                     </div>
                 </div>
             </div>
+
+            {/* Alerta: seguradora(s) da planilha ainda não cadastrada(s) */}
+            <Dialog
+                open={modalSeguradorasAberto}
+                onOpenChange={setModalSeguradorasAberto}
+            >
+                <DialogContent className="max-w-md rounded-2xl">
+                    <DialogHeader>
+                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 text-amber-600">
+                            <Building2 className="size-6" />
+                        </div>
+                        <DialogTitle className="text-center">
+                            {resumo && resumo.seguradorasFaltantes.length === 1
+                                ? 'Seguradora não cadastrada'
+                                : 'Seguradoras não cadastradas'}
+                        </DialogTitle>
+                        <DialogDescription className="text-center">
+                            {resumo && resumo.seguradorasFaltantes.length === 1
+                                ? 'A seguradora abaixo não foi encontrada, então as linhas que a referenciam não foram importadas:'
+                                : 'As seguradoras abaixo não foram encontradas, então as linhas que as referenciam não foram importadas:'}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <ul className="flex flex-col gap-2">
+                        {resumo?.seguradorasFaltantes.map((nome) => (
+                            <li
+                                key={nome}
+                                className="flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/40 px-3 py-2"
+                            >
+                                <span className="truncate text-sm font-semibold text-foreground">
+                                    {nome}
+                                </span>
+                                {isAdmin && (
+                                    <Link
+                                        href={`/seguradoras?nova_seguradora=${encodeURIComponent(nome)}`}
+                                    >
+                                        <Button
+                                            size="sm"
+                                            className="h-8 shrink-0 rounded-lg bg-emerald-500 px-3 text-xs font-bold text-white hover:bg-emerald-600"
+                                        >
+                                            Cadastrar agora
+                                        </Button>
+                                    </Link>
+                                )}
+                            </li>
+                        ))}
+                    </ul>
+
+                    {!isAdmin && (
+                        <p className="text-xs text-muted-foreground">
+                            Peça a um administrador para cadastrar{' '}
+                            {resumo && resumo.seguradorasFaltantes.length === 1
+                                ? 'essa seguradora'
+                                : 'essas seguradoras'}{' '}
+                            em Seguradoras e Ramos e depois importe novamente
+                            essas linhas.
+                        </p>
+                    )}
+
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setModalSeguradorasAberto(false)}
+                            className="rounded-xl"
+                        >
+                            Fechar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }
