@@ -50,7 +50,6 @@ interface Props {
     automacoes: Automacao[];
     totalHoje: number;
     totalEnviados: number;
-    totalPendentes: number;
     totalFalhas: number;
 }
 
@@ -98,7 +97,6 @@ export default function Notificacoes({
     automacoes,
     totalHoje,
     totalEnviados,
-    totalPendentes,
     totalFalhas,
 }: Props) {
     const [aba, setAba] = useState<'historico' | 'automacoes'>('historico');
@@ -226,19 +224,6 @@ export default function Notificacoes({
                     <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
                         <div>
                             <p className="text-xs font-semibold text-muted-foreground">
-                                Pendentes
-                            </p>
-                            <p className="mt-1 text-2xl font-bold text-amber-500">
-                                {totalPendentes}
-                            </p>
-                        </div>
-                        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500">
-                            <Clock className="size-5" />
-                        </span>
-                    </div>
-                    <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
-                        <div>
-                            <p className="text-xs font-semibold text-muted-foreground">
                                 Falhas
                             </p>
                             <p className="mt-1 text-2xl font-bold text-red-500">
@@ -263,7 +248,7 @@ export default function Notificacoes({
                             <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-sky-300 to-sky-600 shadow-2xl shadow-sky-500/40 transition-transform duration-300 group-hover:scale-105">
                                 <Mail
                                     className="size-9 text-white"
-                                    strokeWidth={1.75}
+                                    strokeWidth={2}
                                 />
                             </div>
                         </div>

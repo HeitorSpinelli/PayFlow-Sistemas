@@ -54,7 +54,7 @@ Route::post('/configuracao-inicial', [ConfiguracaoInicialController::class, 'sto
 Route::middleware(['auth', 'verified', 'throttle:web-actions'])->group(function () {
 
     Route::post('/dininho/perguntar', [DininhoController::class, 'pergunta'])
-    ->middleware('throttle:10,1');
+    ->middleware('throttle:4,1');
     
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
