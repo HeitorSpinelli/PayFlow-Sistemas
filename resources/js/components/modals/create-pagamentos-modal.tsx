@@ -23,7 +23,6 @@ import {
     FileText,
     Landmark,
     Search,
-    UserRound,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -34,16 +33,38 @@ import {
     valorDigitadoParaNumero,
 } from '@/utils/Masks';
 
-function Section({ icon, title, description, children }: any) {
+// Bloco numerado do formulário. O preenchimento segue uma ordem real
+// (segurado → apólice → valor → observações), então a numeração informa
+// o caminho; o check indica que a etapa já está resolvida.
+function Section({
+    step,
+    icon,
+    done,
+    title,
+    description,
+    className = '',
+    children,
+}: any) {
     return (
-        <section className="rounded-2xl border border-border/70 bg-muted/[0.18] p-4 sm:p-5">
+        <section
+            className={`flex flex-col rounded-2xl border border-border/70 bg-background p-5 shadow-sm ${className}`}
+        >
             <div className="mb-5 flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
-                    {icon}
+                <span
+                    className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
+                        done
+                            ? 'bg-emerald-500 text-white'
+                            : 'bg-muted text-muted-foreground'
+                    }`}
+                    aria-hidden="true"
+                >
+                    {done ? <Check className="size-3.5" /> : (step ?? icon)}
                 </span>
-                <div>
-                    <h3 className="text-sm font-bold">{title}</h3>
-                    <p className="text-xs text-muted-foreground">
+                <div className="min-w-0">
+                    <h3 className="text-sm leading-tight font-semibold tracking-tight">
+                        {title}
+                    </h3>
+                    <p className="mt-0.5 text-xs leading-tight text-muted-foreground">
                         {description}
                     </p>
                 </div>
@@ -53,11 +74,32 @@ function Section({ icon, title, description, children }: any) {
     );
 }
 
+function FieldError({ message }: { message?: string }) {
+    if (!message) return null;
+
+    return (
+        <p role="alert" className="text-xs font-medium text-rose-500">
+            {message}
+        </p>
+    );
+}
+
+const labelClass = 'text-sm leading-none font-medium';
+
 const inputClass =
-    'h-10 w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none';
+    'h-10 w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-xs transition-[border-color,box-shadow] placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:border-emerald-500/60 focus-visible:ring-4 focus-visible:ring-emerald-500/15 focus-visible:outline-none';
 
 const selectTriggerClass =
-    'h-10 w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all hover:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none';
+    'h-10 w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-xs transition-[border-color,box-shadow] hover:border-emerald-500/40 focus:border-emerald-500/60 focus:ring-4 focus:ring-emerald-500/15 focus:outline-none disabled:cursor-not-allowed disabled:bg-muted/40';
+
+// Iniciais para o avatar da lista de sugestões (primeiro e último nome)
+function iniciais(nome?: string) {
+    const partes = (nome ?? '').trim().split(/\s+/).filter(Boolean);
+    if (partes.length === 0) return '?';
+    if (partes.length === 1) return partes[0][0].toUpperCase();
+
+    return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase();
+}
 
 // Símbolo do Pix — versão simplificada (não é o logotipo oficial do Bacen)
 function PixIcon({ className }: { className?: string }) {
@@ -90,23 +132,24 @@ export default function CreatePagamentoModal({
     segurados,
     apolices,
 }: any) {
-    const { data, setData, post, reset, clearErrors, errors, processing } = useForm({
-        segurado_id: '',
-        apolice_id: '',
-        parcela: '',
-        valor: '',
-        // Quando false (padrão), o backend calcula o valor final sozinho
-        // (parcela + multa/juros pela data de pagamento informada) e ignora
-        // o que estiver no campo. Só quando o operador marca "ajustar valor
-        // manualmente" é que o valor digitado prevalece — antes o backend
-        // tentava adivinhar isso pela diferença numérica, e errava sempre
-        // que a data de pagamento era retroativa.
-        valor_manual: false as boolean,
-        data_pagamento: '',
-        forma_pagamento: '',
-        status: 'confirmado', // pagamento já nasce confirmado ao ser registrado
-        observacoes: '',
-    });
+    const { data, setData, post, reset, clearErrors, errors, processing } =
+        useForm({
+            segurado_id: '',
+            apolice_id: '',
+            parcela: '',
+            valor: '',
+            // Quando false (padrão), o backend calcula o valor final sozinho
+            // (parcela + multa/juros pela data de pagamento informada) e ignora
+            // o que estiver no campo. Só quando o operador marca "ajustar valor
+            // manualmente" é que o valor digitado prevalece — antes o backend
+            // tentava adivinhar isso pela diferença numérica, e errava sempre
+            // que a data de pagamento era retroativa.
+            valor_manual: false as boolean,
+            data_pagamento: '',
+            forma_pagamento: '',
+            status: 'confirmado', // pagamento já nasce confirmado ao ser registrado
+            observacoes: '',
+        });
 
     // Texto digitado no campo de busca de segurado
     const [buscaSegurado, setBuscaSegurado] = useState('');
@@ -140,9 +183,7 @@ export default function CreatePagamentoModal({
                 // existe — convidando o operador a criar uma duplicata. É
                 // também o mesmo comportamento do filtro da lista, que no
                 // backend usa ilike '%termo%'.
-                const nomeBate = s.nome_completo
-                    ?.toLowerCase()
-                    .includes(termo);
+                const nomeBate = s.nome_completo?.toLowerCase().includes(termo);
                 // só compara por número se o usuário realmente digitou algum número
                 const cpfBate =
                     numerosTermo.length > 0 &&
@@ -320,9 +361,6 @@ export default function CreatePagamentoModal({
         });
     };
 
-    const btnClass =
-        'flex items-center gap-1.5 h-10 px-3 rounded-xl border border-border/70 bg-background text-sm font-medium text-foreground shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50';
-
     // Ícone representativo de cada forma de pagamento
     const iconesFormaPagamento: Record<string, any> = {
         Boleto: Barcode,
@@ -363,239 +401,248 @@ export default function CreatePagamentoModal({
                     </p>
                 </DialogHeader>
 
-                <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8">
-                    <div className="grid gap-6 sm:grid-cols-2">
-                        <div className="space-y-6">
-                            <Section
-                                icon={<UserRound className="h-4 w-4" />}
-                                title="Segurado"
-                                description="Cliente responsável pelo pagamento"
-                            >
-                                <div className="space-y-2" ref={wrapperRef}>
-                                    <label className="text-sm leading-none font-medium">
-                                        Segurado *
-                                    </label>
-                                    <div className="relative">
-                                        <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/60" />
-                                        <Input
-                                            placeholder="Digite o nome, CPF ou CNPJ do segurado"
-                                            className={`${inputClass} pl-9`}
-                                            value={buscaSegurado}
-                                            onChange={(e) => {
-                                                setBuscaSegurado(
-                                                    e.target.value,
-                                                );
-                                                setSugestoesAbertas(true);
-                                                // se o usuário editar o texto, invalida a seleção anterior
-                                                if (data.segurado_id) {
-                                                    setData('segurado_id', '');
-                                                    setData('apolice_id', '');
-                                                    setData('parcela', '');
-                                                    setData('valor', '');
-                                                }
-                                            }}
-                                            onFocus={() =>
-                                                setSugestoesAbertas(
-                                                    buscaSegurado.trim()
-                                                        .length > 0,
-                                                )
+                <div className="min-h-0 flex-1 overflow-y-auto bg-muted/30 px-6 py-6 sm:px-8">
+                    <div className="grid gap-5 md:grid-cols-2">
+                        <Section
+                            className="md:col-start-1"
+                            step={1}
+                            done={!!data.segurado_id}
+                            title="Segurado"
+                            description="Cliente responsável pelo pagamento"
+                        >
+                            <div className="space-y-2" ref={wrapperRef}>
+                                <label className={labelClass}>Segurado *</label>
+                                <div className="relative">
+                                    <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/60" />
+                                    <Input
+                                        placeholder="Nome, CPF ou CNPJ do segurado"
+                                        className={`${inputClass} pl-9`}
+                                        value={buscaSegurado}
+                                        onChange={(e) => {
+                                            setBuscaSegurado(e.target.value);
+                                            setSugestoesAbertas(true);
+                                            // se o usuário editar o texto, invalida a seleção anterior
+                                            if (data.segurado_id) {
+                                                setData('segurado_id', '');
+                                                setData('apolice_id', '');
+                                                setData('parcela', '');
+                                                setData('valor', '');
                                             }
-                                        />
+                                        }}
+                                        onFocus={() =>
+                                            setSugestoesAbertas(
+                                                buscaSegurado.trim().length > 0,
+                                            )
+                                        }
+                                    />
 
-                                        {/* Lista de sugestões — só aparece com texto digitado e sem segurado já escolhido */}
-                                        {sugestoesAbertas &&
-                                            sugestoes.length > 0 &&
-                                            !data.segurado_id && (
-                                                <div className="absolute right-0 left-0 z-50 mt-1 max-h-56 overflow-hidden overflow-y-auto rounded-xl border border-border/70 bg-popover py-1.5 shadow-xl">
-                                                    {sugestoes.map((s: any) => (
-                                                        <button
-                                                            key={s.id}
-                                                            type="button"
-                                                            onClick={() =>
-                                                                selecionarSegurado(
-                                                                    s,
-                                                                )
-                                                            }
-                                                            className="flex w-full flex-col items-start px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
-                                                        >
-                                                            <span className="font-medium text-popover-foreground">
+                                    {/* Lista de sugestões — só aparece com texto digitado e sem segurado já escolhido */}
+                                    {sugestoesAbertas &&
+                                        sugestoes.length > 0 &&
+                                        !data.segurado_id && (
+                                            <div className="absolute right-0 left-0 z-50 mt-1.5 max-h-60 overflow-hidden overflow-y-auto rounded-xl border border-border/70 bg-popover p-1 shadow-xl">
+                                                {sugestoes.map((s: any) => (
+                                                    <button
+                                                        key={s.id}
+                                                        type="button"
+                                                        onClick={() =>
+                                                            selecionarSegurado(
+                                                                s,
+                                                            )
+                                                        }
+                                                        className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+                                                    >
+                                                        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                                                            {iniciais(
+                                                                s.nome_completo,
+                                                            )}
+                                                        </span>
+                                                        <span className="flex min-w-0 flex-col">
+                                                            <span className="truncate font-medium text-popover-foreground">
                                                                 {
                                                                     s.nome_completo
                                                                 }
                                                             </span>
-                                                            <span className="text-xs text-muted-foreground">
+                                                            <span className="text-xs text-muted-foreground tabular-nums">
                                                                 {formataCpfCnpj(
                                                                     s.cpf_cnpj ??
                                                                         '',
                                                                 )}
                                                             </span>
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            )}
-
-                                        {/* Mensagem quando não encontra nada */}
-                                        {sugestoesAbertas &&
-                                            buscaSegurado.trim() &&
-                                            sugestoes.length === 0 &&
-                                            !data.segurado_id && (
-                                                <div className="absolute right-0 left-0 z-50 mt-1 rounded-xl border border-border/70 bg-popover px-3 py-2 text-sm text-muted-foreground shadow-xl">
-                                                    Nenhum segurado encontrado.
-                                                    Cadastre o cliente antes
-                                                    de registrar o pagamento.
-                                                </div>
-                                            )}
-                                    </div>
-
-                                    {data.segurado_id && (
-                                        <p className="flex items-center gap-1 text-xs font-medium text-emerald-600">
-                                            <Check className="size-3.5" />
-                                            Segurado selecionado
-                                        </p>
-                                    )}
-                                    {(errors as any).segurado_id && (
-                                        <span className="text-xs font-medium text-rose-500">
-                                            {(errors as any).segurado_id}
-                                        </span>
-                                    )}
-                                </div>
-                            </Section>
-
-                            <Section
-                                icon={<CreditCard className="h-4 w-4" />}
-                                title="Apólice e parcela"
-                                description="Referência do pagamento"
-                            >
-                                <div className="grid gap-4 sm:grid-cols-2">
-                                    <div className="space-y-2">
-                                        <label className="text-sm leading-none font-medium">
-                                            Apólice *
-                                        </label>
-                                        <Select
-                                            value={data.apolice_id}
-                                            onValueChange={(v) =>
-                                                setData('apolice_id', v)
-                                            }
-                                            disabled={!data.segurado_id}
-                                        >
-                                            <SelectTrigger
-                                                className={selectTriggerClass}
-                                            >
-                                                <SelectValue
-                                                    placeholder={
-                                                        data.segurado_id
-                                                            ? 'Selecione'
-                                                            : 'Escolha um segurado'
-                                                    }
-                                                />
-                                            </SelectTrigger>
-                                            <SelectContent className="rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-md">
-                                                {apolicesDoSegurado.length ===
-                                                    0 && (
-                                                    <div className="px-3 py-2 text-sm text-muted-foreground">
-                                                        Nenhuma apólice para
-                                                        esse segurado. Cadastre
-                                                        uma apólice antes de
-                                                        registrar o pagamento.
-                                                    </div>
-                                                )}
-                                                {apolicesDoSegurado.map(
-                                                    (a: any) => (
-                                                        <SelectItem
-                                                            key={a.id}
-                                                            value={String(a.id)}
-                                                            className="cursor-pointer rounded-lg"
-                                                        >
-                                                            {a.numero_apolice}
-                                                        </SelectItem>
-                                                    ),
-                                                )}
-                                            </SelectContent>
-                                        </Select>
-                                        {(errors as any).apolice_id && (
-                                            <span className="text-xs font-medium text-rose-500">
-                                                {(errors as any).apolice_id}
-                                            </span>
+                                                        </span>
+                                                    </button>
+                                                ))}
+                                            </div>
                                         )}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm leading-none font-medium">
-                                            Parcela *
-                                        </label>
-                                        <Select
-                                            value={data.parcela}
-                                            onValueChange={(v) =>
-                                                setData('parcela', v)
-                                            }
-                                            disabled={!data.apolice_id}
+
+                                    {/* Mensagem quando não encontra nada */}
+                                    {sugestoesAbertas &&
+                                        buscaSegurado.trim() &&
+                                        sugestoes.length === 0 &&
+                                        !data.segurado_id && (
+                                            <div className="absolute right-0 left-0 z-50 mt-1.5 rounded-xl border border-border/70 bg-popover px-3.5 py-3 text-sm leading-relaxed text-muted-foreground shadow-xl">
+                                                Nenhum segurado encontrado.
+                                                Cadastre o cliente antes de
+                                                registrar o pagamento.
+                                            </div>
+                                        )}
+                                </div>
+
+                                {data.segurado_id && (
+                                    <p className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                                        <Check className="size-3.5" />
+                                        Segurado selecionado
+                                    </p>
+                                )}
+                                <FieldError
+                                    message={(errors as any).segurado_id}
+                                />
+                            </div>
+                        </Section>
+                        <Section
+                            className="md:col-start-1"
+                            step={2}
+                            done={!!data.apolice_id && !!data.parcela}
+                            title="Apólice e parcela"
+                            description="Referência do pagamento"
+                        >
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                    <label className={labelClass}>
+                                        Apólice *
+                                    </label>
+                                    <Select
+                                        value={data.apolice_id}
+                                        onValueChange={(v) =>
+                                            setData('apolice_id', v)
+                                        }
+                                        disabled={!data.segurado_id}
+                                    >
+                                        <SelectTrigger
+                                            className={selectTriggerClass}
                                         >
-                                            <SelectTrigger
-                                                className={selectTriggerClass}
-                                            >
-                                                <SelectValue placeholder="Selecione" />
-                                            </SelectTrigger>
-                                            <SelectContent className="rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-md">
-                                                {Array.from(
-                                                    {
-                                                        length: totalParcelasApolice,
-                                                    },
-                                                    (_, i) => i + 1,
-                                                ).map((n) => {
-                                                    const jaRegistrada =
-                                                        parcelasJaRegistradas.includes(
-                                                            n,
-                                                        );
-                                                    return (
-                                                        <SelectItem
-                                                            key={n}
-                                                            value={String(n)}
-                                                            disabled={
-                                                                jaRegistrada
-                                                            }
-                                                            className="cursor-pointer rounded-lg data-[disabled]:cursor-not-allowed data-[disabled]:opacity-40"
-                                                        >
-                                                            {n}ª Parcela
-                                                            {jaRegistrada &&
-                                                                ' — já paga'}
-                                                        </SelectItem>
+                                            <SelectValue
+                                                placeholder={
+                                                    data.segurado_id
+                                                        ? 'Selecione'
+                                                        : 'Escolha um segurado'
+                                                }
+                                            />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-md">
+                                            {apolicesDoSegurado.length ===
+                                                0 && (
+                                                <div className="px-3 py-2 text-sm text-muted-foreground">
+                                                    Nenhuma apólice para esse
+                                                    segurado. Cadastre uma
+                                                    apólice antes de registrar o
+                                                    pagamento.
+                                                </div>
+                                            )}
+                                            {apolicesDoSegurado.map(
+                                                (a: any) => (
+                                                    <SelectItem
+                                                        key={a.id}
+                                                        value={String(a.id)}
+                                                        className="cursor-pointer rounded-lg"
+                                                    >
+                                                        {a.numero_apolice}
+                                                    </SelectItem>
+                                                ),
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                    <FieldError
+                                        message={(errors as any).apolice_id}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className={labelClass}>
+                                        Parcela *
+                                    </label>
+                                    <Select
+                                        value={data.parcela}
+                                        onValueChange={(v) =>
+                                            setData('parcela', v)
+                                        }
+                                        disabled={!data.apolice_id}
+                                    >
+                                        <SelectTrigger
+                                            className={selectTriggerClass}
+                                        >
+                                            <SelectValue placeholder="Selecione" />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-md">
+                                            {Array.from(
+                                                {
+                                                    length: totalParcelasApolice,
+                                                },
+                                                (_, i) => i + 1,
+                                            ).map((n) => {
+                                                const jaRegistrada =
+                                                    parcelasJaRegistradas.includes(
+                                                        n,
                                                     );
-                                                })}
-                                            </SelectContent>
-                                        </Select>
-                                        {(errors as any).parcela && (
-                                            <span className="text-xs font-medium text-rose-500">
-                                                {(errors as any).parcela}
-                                            </span>
-                                        )}
-                                        {data.apolice_id && (
-                                            <p className="text-xs text-muted-foreground">
-                                                Parcela e valor preenchidos
-                                                automaticamente — ajuste se
-                                                necessário.
-                                            </p>
-                                        )}
-                                    </div>
+                                                return (
+                                                    <SelectItem
+                                                        key={n}
+                                                        value={String(n)}
+                                                        disabled={jaRegistrada}
+                                                        className="cursor-pointer rounded-lg data-[disabled]:cursor-not-allowed data-[disabled]:opacity-40"
+                                                    >
+                                                        {n}ª Parcela
+                                                        {jaRegistrada &&
+                                                            ' — já paga'}
+                                                    </SelectItem>
+                                                );
+                                            })}
+                                        </SelectContent>
+                                    </Select>
+                                    <FieldError
+                                        message={(errors as any).parcela}
+                                    />
                                 </div>
-                            </Section>
-                        </div>
+                            </div>
+                            {data.apolice_id && (
+                                <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+                                    Parcela e valor preenchidos automaticamente
+                                    — ajuste se necessário.
+                                </p>
+                            )}
+                        </Section>
 
-                        <div className="space-y-6">
-                            <Section
-                                icon={<CreditCard className="h-4 w-4" />}
-                                title="Valores e pagamento"
-                                description="Valor pago e forma utilizada"
-                            >
-                                <div className="space-y-4">
-                                    <div className="grid gap-4 sm:grid-cols-2">
-                                        <div className="space-y-2">
-                                            <label className="text-sm leading-none font-medium">
-                                                Valor (R$) *
-                                            </label>
+                        <Section
+                            className="md:col-start-2 md:row-span-2 md:row-start-1"
+                            step={3}
+                            done={
+                                !!data.valor &&
+                                Number(data.valor) > 0 &&
+                                !!data.data_pagamento &&
+                                !!data.forma_pagamento
+                            }
+                            title="Valores e pagamento"
+                            description="Valor pago e forma utilizada"
+                        >
+                            <div className="space-y-5">
+                                {/* Valor e data na mesma linha, com altura idêntica pra alinhar */}
+                                <div className="grid items-start gap-4 sm:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <label className={labelClass}>
+                                            Valor (R$) *
+                                        </label>
+                                        <div className="relative">
+                                            <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm font-medium text-muted-foreground">
+                                                R$
+                                            </span>
                                             <Input
                                                 type="text"
                                                 inputMode="numeric"
                                                 placeholder="0,00"
-                                                className={`${inputClass} ${!data.valor_manual ? 'opacity-60' : ''}`}
+                                                className={`${inputClass} pl-9 font-semibold tabular-nums ${
+                                                    !data.valor_manual
+                                                        ? 'cursor-not-allowed border-dashed bg-muted/50 text-muted-foreground'
+                                                        : ''
+                                                }`}
                                                 readOnly={!data.valor_manual}
                                                 value={
                                                     data.valor &&
@@ -616,152 +663,154 @@ export default function CreatePagamentoModal({
                                                     )
                                                 }
                                             />
-                                            <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={data.valor_manual}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'valor_manual',
-                                                            e.target.checked,
-                                                        )
-                                                    }
-                                                    className="size-3.5 accent-emerald-500"
-                                                />
-                                                Ajustar valor manualmente
-                                                (desconto negociado)
-                                            </label>
-                                            {!data.valor_manual && (
-                                                <p className="text-xs text-muted-foreground">
-                                                    Prévia calculada para hoje,
-                                                    com multa e juros se houver
-                                                    atraso. O valor gravado é
-                                                    recalculado na data de
-                                                    pagamento informada.
-                                                </p>
-                                            )}
-                                            {(errors as any).valor && (
-                                                <span className="text-xs font-medium text-rose-500">
-                                                    {(errors as any).valor}
-                                                </span>
-                                            )}
                                         </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm leading-none font-medium">
-                                                Data do pagamento *
-                                            </label>
-                                            <Input
-                                                type="date"
-                                                max={
-                                                    new Date()
-                                                        .toISOString()
-                                                        .split('T')[0]
-                                                }
-                                                className={inputClass}
-                                                value={data.data_pagamento}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        'data_pagamento',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                            />
-                                            {(errors as any).data_pagamento && (
-                                                <span className="text-xs font-medium text-rose-500">
-                                                    {
-                                                        (errors as any)
-                                                            .data_pagamento
-                                                    }
-                                                </span>
-                                            )}
-                                        </div>
+                                        <FieldError
+                                            message={(errors as any).valor}
+                                        />
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-sm leading-none font-medium">
-                                            Forma de pagamento *
+                                        <label className={labelClass}>
+                                            Data do pagamento *
                                         </label>
-                                        <div className="flex flex-wrap gap-2">
-                                            {[
-                                                'Boleto',
-                                                'Pix',
-                                                'Cartão',
-                                                'Débito',
-                                            ].map((forma) => {
-                                                const Icone =
-                                                    iconesFormaPagamento[forma];
-                                                const ativo =
-                                                    data.forma_pagamento ===
-                                                    forma.toLowerCase();
-                                                return (
-                                                    <button
-                                                        key={forma}
-                                                        type="button"
-                                                        onClick={() =>
-                                                            setData(
-                                                                'forma_pagamento',
-                                                                forma.toLowerCase(),
-                                                            )
-                                                        }
-                                                        className={btnClass}
-                                                    >
-                                                        <Icone className="size-4" />
-                                                        {forma}
-                                                        {ativo && (
-                                                            <Check className="size-3.5" />
-                                                        )}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                        {(errors as any).forma_pagamento && (
-                                            <span className="text-xs font-medium text-rose-500">
-                                                {
-                                                    (errors as any)
-                                                        .forma_pagamento
-                                                }
-                                            </span>
-                                        )}
+                                        <Input
+                                            type="date"
+                                            max={
+                                                new Date()
+                                                    .toISOString()
+                                                    .split('T')[0]
+                                            }
+                                            className={inputClass}
+                                            value={data.data_pagamento}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'data_pagamento',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                        <FieldError
+                                            message={
+                                                (errors as any).data_pagamento
+                                            }
+                                        />
                                     </div>
                                 </div>
-                            </Section>
 
-                            <Section
-                                icon={<FileText className="h-4 w-4" />}
-                                title="Observações"
-                                description="Anotações adicionais sobre o pagamento"
-                            >
-                                <textarea
-                                    rows={3}
-                                    placeholder="Informações adicionais..."
-                                    value={data.observacoes}
-                                    onChange={(e) =>
-                                        setData('observacoes', e.target.value)
-                                    }
-                                    className={`${inputClass} h-auto resize-none`}
-                                />
-                            </Section>
-                        </div>
+                                {/* Opção de ajuste manual + explicação, em largura total */}
+                                <div className="space-y-2">
+                                    <label className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-border/70 bg-muted/30 px-3 py-2.5 text-sm transition-colors hover:border-emerald-500/40 has-[:checked]:border-emerald-500/50 has-[:checked]:bg-emerald-500/10">
+                                        <input
+                                            type="checkbox"
+                                            checked={data.valor_manual}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'valor_manual',
+                                                    e.target.checked,
+                                                )
+                                            }
+                                            className="size-4 shrink-0 accent-emerald-500"
+                                        />
+                                        <span className="font-medium">
+                                            Ajustar valor manualmente
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">
+                                            (desconto negociado)
+                                        </span>
+                                    </label>
+                                    {!data.valor_manual && (
+                                        <p className="text-xs leading-relaxed text-muted-foreground">
+                                            Prévia calculada para hoje, com
+                                            multa e juros se houver atraso. O
+                                            valor gravado é recalculado na data
+                                            de pagamento informada.
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className={labelClass}>
+                                        Forma de pagamento *
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {[
+                                            'Boleto',
+                                            'Pix',
+                                            'Cartão',
+                                            'Débito',
+                                        ].map((forma) => {
+                                            const Icone =
+                                                iconesFormaPagamento[forma];
+                                            const ativo =
+                                                data.forma_pagamento ===
+                                                forma.toLowerCase();
+                                            return (
+                                                <button
+                                                    key={forma}
+                                                    type="button"
+                                                    aria-pressed={ativo}
+                                                    onClick={() =>
+                                                        setData(
+                                                            'forma_pagamento',
+                                                            forma.toLowerCase(),
+                                                        )
+                                                    }
+                                                    className={`flex h-11 items-center gap-2.5 rounded-xl border px-3 text-sm font-medium transition-colors focus-visible:ring-4 focus-visible:ring-emerald-500/15 focus-visible:outline-none ${
+                                                        ativo
+                                                            ? 'border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                                                            : 'border-border/70 bg-background text-foreground hover:border-emerald-500/40 hover:bg-muted/50'
+                                                    }`}
+                                                >
+                                                    <Icone className="size-5 shrink-0" />
+                                                    {forma}
+                                                    {ativo && (
+                                                        <Check className="ml-auto size-4" />
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <FieldError
+                                        message={
+                                            (errors as any).forma_pagamento
+                                        }
+                                    />
+                                </div>
+                            </div>
+                        </Section>
+
+                        <Section
+                            className="md:col-span-2"
+                            icon={<FileText className="size-3.5" />}
+                            done={!!data.observacoes.trim()}
+                            title="Observações"
+                            description="Anotações adicionais (opcional)"
+                        >
+                            <textarea
+                                rows={5}
+                                placeholder="Informações adicionais..."
+                                value={data.observacoes}
+                                onChange={(e) =>
+                                    setData('observacoes', e.target.value)
+                                }
+                                className={`${inputClass} min-h-36 flex-1 resize-none leading-relaxed`}
+                            />
+                        </Section>
                     </div>
                 </div>
 
                 <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border/70 bg-background px-6 py-4 sm:px-8">
                     <Button
                         variant="outline"
-                        className="rounded-xl"
+                        className="h-10 rounded-xl px-5"
                         onClick={() => setOpen(false)}
                     >
                         Cancelar
                     </Button>
-                    {/* disabled={processing}: sem isso, um duplo clique numa
-                        conexão lenta disparava dois POSTs. O banco barra o
-                        segundo pelo índice único, mas o operador via o toast
-                        de sucesso e logo em seguida um de erro, sem saber se
-                        tinha gravado. */}
                     <Button
                         onClick={handleSubmit}
                         disabled={processing}
-                        className="rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-600 disabled:opacity-60"
+                        className="h-10 rounded-xl bg-emerald-500 px-5 text-white shadow-sm hover:bg-emerald-600 disabled:opacity-60"
                     >
                         <Check className="mr-2 size-4" />
                         {processing ? 'Registrando…' : 'Registrar pagamento'}
