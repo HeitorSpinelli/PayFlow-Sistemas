@@ -1,4 +1,5 @@
 import { useForm } from '@inertiajs/react';
+import { formataCnpj, formatarTelefone } from '../../utils/Masks';
 import { Building2, ChevronRight, FileText, Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -240,9 +241,14 @@ export default function CreateSeguradoraRamoModal({
                                     <Input
                                         value={data.cnpj}
                                         onChange={(e) =>
-                                            setData('cnpj', e.target.value)
+                                            setData(
+                                                'cnpj',
+                                                formataCnpj(e.target.value),
+                                            )
                                         }
                                         placeholder="00.000.000/0000-00"
+                                        maxLength={18}
+                                        inputMode="numeric"
                                         className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                     />
                                     {errors.cnpj && (
@@ -251,6 +257,7 @@ export default function CreateSeguradoraRamoModal({
                                         </span>
                                     )}
                                 </div>
+
                                 <div className="space-y-2">
                                     <label className="text-sm leading-none font-medium">
                                         Contato
@@ -260,10 +267,12 @@ export default function CreateSeguradoraRamoModal({
                                         onChange={(e) =>
                                             setData(
                                                 'contato_nome',
-                                                e.target.value,
+                                                formatarTelefone(e.target.value),
                                             )
                                         }
-                                        placeholder="Nome do contato"
+                                        placeholder="(xx)xxxxx-xxxx"
+                                        maxLength={14}
+                                        inputMode="numeric"
                                         className="h-10 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-emerald-500/40 focus-visible:ring-4 focus-visible:ring-emerald-500/10 focus-visible:outline-none"
                                     />
                                     {errors.contato_nome && (

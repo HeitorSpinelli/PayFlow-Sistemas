@@ -34,6 +34,36 @@ export const formataCpfCnpj = (value: string): string => {
 };
 
 /**
+ * Aplica máscara de CPF: 000.000.000-00
+ * Use quando o tipo de pessoa já é conhecido (pessoa física). Diferente do
+ * formataCpfCnpj, não "adivinha" pelo tamanho, então nunca troca de máscara
+ * no meio da digitação.
+ */
+export const formataCpf = (value: string): string => {
+    const d = value.replace(/\D/g, '').slice(0, 11);
+
+    if (d.length <= 3) return d;
+    if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`;
+    if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
+    return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+};
+
+/**
+ * Aplica máscara de CNPJ: 00.000.000/0000-00
+ * Use quando o tipo de pessoa já é conhecido (pessoa jurídica).
+ */
+export const formataCnpj = (value: string): string => {
+    const d = value.replace(/\D/g, '').slice(0, 14);
+
+    if (d.length <= 2) return d;
+    if (d.length <= 5) return `${d.slice(0, 2)}.${d.slice(2)}`;
+    if (d.length <= 8) return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5)}`;
+    if (d.length <= 12)
+        return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8)}`;
+    return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
+};
+
+/**
  * Remove os pontos, traços e barras para deixar apenas números limpos.
  */
 export const removeMask = (value: string): string => {
@@ -91,6 +121,10 @@ export const formatarTelefone = (valor: string): string => {
     let num = valor.replace(/\D/g, '');
     num = num.substring(0, 11);
 
+    // Sem nenhum número sobrando (ex: sobrou só o "(" depois de apagar),
+    // devolve vazio — senão o campo nunca conseguia ser limpo.
+    if (!num) return '';
+
     if (num.length <= 2) {
         return `(${num}`;
     }
@@ -102,6 +136,19 @@ export const formatarTelefone = (valor: string): string => {
     }
     return `(${num.substring(0, 2)}) ${num.substring(2, 7)}-${num.substring(7)}`;
 };
+
+/**
+ * Aplica máscara de telefone fixo: (00) 0000-0000 (máximo 10 números)
+ */
+export const formatarTelefoneFixo = (valor: string): string => {
+    const d = valor.replace(/\D/g, '').slice(0, 10);
+
+    if (!d) return '';
+    if (d.length <= 2) return `(${d}`;
+    if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+};
+
 export const formatarMoeda = (valor: number) =>
     new Intl.NumberFormat('pt-BR', {
         minimumFractionDigits: 2,
@@ -124,9 +171,12 @@ export const valorDigitadoParaNumero = (valor: string): number => {
     
     import { 
     aplicarMascaraCEP, 
-    formataCpfCnpj, 
+    formataCpfCnpj,
+    formataCpf,
+    formataCnpj,
     formatarDataBR, 
-    formatarTelefone, 
+    formatarTelefone,
+    formatarTelefoneFixo,
     formatarLocalizacao 
 } from '@/utils/Masks';
 
