@@ -1,56 +1,56 @@
 @import 'tailwindcss';
-
+ 
 @import 'tw-animate-css';
-
+ 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-
+ 
 @custom-variant dark (&:is(.dark *));
-
+ 
 @theme {
     --font-sans:
         'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
-
+ 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
     --radius-sm: calc(var(--radius) - 4px);
-
+ 
     --color-background: var(--background);
     --color-foreground: var(--foreground);
-
+ 
     --color-card: var(--card);
     --color-card-foreground: var(--card-foreground);
-
+ 
     --color-popover: var(--popover);
     --color-popover-foreground: var(--popover-foreground);
-
+ 
     --color-primary: var(--primary);
     --color-primary-foreground: var(--primary-foreground);
-
+ 
     --color-secondary: var(--secondary);
     --color-secondary-foreground: var(--secondary-foreground);
-
+ 
     --color-muted: var(--muted);
     --color-muted-foreground: var(--muted-foreground);
-
+ 
     --color-accent: var(--accent);
     --color-accent-foreground: var(--accent-foreground);
-
+ 
     --color-destructive: var(--destructive);
     --color-destructive-foreground: var(--destructive-foreground);
-
+ 
     --color-border: var(--border);
     --color-input: var(--input);
     --color-ring: var(--ring);
-
+ 
     --color-chart-1: var(--chart-1);
     --color-chart-2: var(--chart-2);
     --color-chart-3: var(--chart-3);
     --color-chart-4: var(--chart-4);
     --color-chart-5: var(--chart-5);
-
+ 
     --color-sidebar: var(--sidebar);
     --color-sidebar-foreground: var(--sidebar-foreground);
     --color-sidebar-primary: var(--sidebar-primary);
@@ -60,54 +60,54 @@
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
 }
-
+ 
 :root {
-    /* Fundo com a cor exata escolhida */
-    --background: #c8cbcf;
-    --foreground: oklch(0.145 0 0);
-
-    /* Card também escurecido, mas ainda mais claro que o fundo */
-    --card: oklch(0.94 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(0.94 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-
-    --secondary: oklch(0.86 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.86 0 0);
-    --muted-foreground: oklch(0.4 0 0);
-    --accent: oklch(0.86 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-
+    /* Off-white quente (creme): o leve tom amarelado é o que não cansa a vista */
+    --background: oklch(0.97 0.007 95);
+    --foreground: oklch(0.22 0.008 70);
+ 
+    /* Cards um pouco mais claros que o fundo, mas sem ser branco puro */
+    --card: oklch(0.99 0.004 95);
+    --card-foreground: oklch(0.22 0.008 70);
+    --popover: oklch(0.99 0.004 95);
+    --popover-foreground: oklch(0.22 0.008 70);
+ 
+    --primary: oklch(0.24 0.008 70);
+    --primary-foreground: oklch(0.98 0.005 95);
+ 
+    --secondary: oklch(0.94 0.008 95);
+    --secondary-foreground: oklch(0.24 0.008 70);
+    --muted: oklch(0.94 0.008 95);
+    --muted-foreground: oklch(0.48 0.01 80);
+    --accent: oklch(0.94 0.008 95);
+    --accent-foreground: oklch(0.24 0.008 70);
+ 
     --destructive: oklch(0.577 0.245 27.325);
     --destructive-foreground: oklch(0.577 0.245 27.325);
-
-    /* Bordas escuras de verdade */
-    --border: oklch(0.72 0 0);
-    --input: oklch(0.72 0 0);
-    --ring: oklch(0.6 0 0);
-
+ 
+    /* Bordas bem definidas, também com tom quente */
+    --border: oklch(0.76 0.012 90);
+    --input: oklch(0.76 0.012 90);
+    --ring: oklch(0.65 0.015 90);
+ 
     --chart-1: oklch(0.646 0.222 41.116);
     --chart-2: oklch(0.6 0.118 184.704);
     --chart-3: oklch(0.398 0.07 227.392);
     --chart-4: oklch(0.828 0.189 84.429);
     --chart-5: oklch(0.769 0.188 70.08);
-
+ 
     --radius: 0.625rem;
-
-    --sidebar: oklch(0.86 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.82 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.72 0 0);
-    --sidebar-ring: oklch(0.6 0 0);
+ 
+    --sidebar: oklch(0.945 0.008 95);
+    --sidebar-foreground: oklch(0.22 0.008 70);
+    --sidebar-primary: oklch(0.24 0.008 70);
+    --sidebar-primary-foreground: oklch(0.98 0.005 95);
+    --sidebar-accent: oklch(0.915 0.01 95);
+    --sidebar-accent-foreground: oklch(0.24 0.008 70);
+    --sidebar-border: oklch(0.76 0.012 90);
+    --sidebar-ring: oklch(0.65 0.015 90);
 }
-
+ 
 .dark {
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
@@ -142,17 +142,17 @@
     --sidebar-border: oklch(0.269 0 0);
     --sidebar-ring: oklch(0.439 0 0);
 }
-
+ 
 @layer base {
     * {
         @apply border-border;
     }
-
+ 
     body {
         @apply bg-background text-foreground;
     }
 }
-
+ 
 /* Rolagem fina e discreta para listas internas de card (ex: dashboard) —
    troca a barra grossa padrão do navegador por uma linha fina que usa a
    cor de borda do tema, mantendo consistência em claro/escuro. */
@@ -161,20 +161,20 @@
         scrollbar-width: thin;
         scrollbar-color: var(--border) transparent;
     }
-
+ 
     .scroll-fina::-webkit-scrollbar {
         width: 6px;
     }
-
+ 
     .scroll-fina::-webkit-scrollbar-track {
         background: transparent;
     }
-
+ 
     .scroll-fina::-webkit-scrollbar-thumb {
         background-color: var(--border);
         border-radius: 999px;
     }
-
+ 
     .scroll-fina::-webkit-scrollbar-thumb:hover {
         background-color: var(--muted-foreground);
     }
