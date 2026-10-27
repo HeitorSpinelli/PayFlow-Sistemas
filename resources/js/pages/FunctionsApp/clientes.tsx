@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import {
     AlertTriangle,
     Plus,
+    Printer,
     ScrollText,
     Search,
     Trash2,
@@ -420,7 +421,24 @@ export default function Clientes({
                                                         {segurado.status}
                                                     </span>
                                                 </td>
-                                                <td className="px-4 py-3.5 text-right">
+                                                <td className="flex items-center justify-end gap-1.5 px-4 py-3.5 text-right">
+                                                    {/* Ficha abre numa aba própria (Blade, fora do
+                                                        Inertia) que já chama o diálogo de impressão. */}
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        title="Imprimir ficha do segurado"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            window.open(
+                                                                `/clientes/${segurado.id}/ficha`,
+                                                                '_blank',
+                                                            );
+                                                        }}
+                                                        className="h-8 w-8 rounded-xl border-border/70 p-0 text-muted-foreground hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-600"
+                                                    >
+                                                        <Printer className="size-4" />
+                                                    </Button>
                                                     <Button
                                                         variant="outline"
                                                         size="sm"

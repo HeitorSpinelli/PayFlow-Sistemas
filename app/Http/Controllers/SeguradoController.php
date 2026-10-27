@@ -92,6 +92,47 @@ class SeguradoController extends Controller
         }
     }
 
+    public function ficha(int $id)
+    {
+        // Página Blade simples (não Inertia), aberta numa aba própria e já
+        // pronta para impressão — mesmo esquema do cupom de parcela.
+        $segurado = Segurado::with([
+            'apolices' => fn ($q) => $q->orderByDesc('fim_vigencia'),
+            'apolices.seguradora',
+            'apolices.ramo',
+            'apolices.parcelas',
+        ])->findOrFail($id);
+
+        // Mesma regra de status de parcela do CSV e do cupom: atrasada é a
+        // não paga com vencimento já passado.
+        $apolices = $segurado->apolices->map(function ($apolice) {
+            $pagas = $apolice->parcelas->where('status_pagamento', 'paga')->count();
+            $atrasadas = $apolice->parcelas
+                ->filter(fn ($p) => $p->status_pagamento !== 'paga' && $p->diasEmAtraso() > 0)
+                ->count();
+
+            return [
+                'numero' => $apolice->numero_apolice,
+                'seguradora' => $apolice->seguradora->nome_fantasia ?? '—',
+                'ramo' => $apolice->ramo->nome_ramo ?? '—',
+                'inicio' => $apolice->inicio_vigencia,
+                'fim' => $apolice->fim_vigencia,
+                'status' => $apolice->status_vigencia,
+                'premio' => (float) $apolice->valor_premio_total,
+                'total_parcelas' => $apolice->quantidade_parcelas ?: $apolice->parcelas->count(),
+                'pagas' => $pagas,
+                'atrasadas' => $atrasadas,
+            ];
+        });
+
+        return view('fichas.segurado', [
+            'segurado' => $segurado,
+            'apolices' => $apolices,
+            'vigentes' => $apolices->where('status', 'Vigente')->count(),
+            'atrasadas' => $apolices->sum('atrasadas'),
+        ]);
+    }
+
     public function exportar(ExportacaoSeguradosService $exportacaoService)
     {
         return $exportacaoService->exportarSeguradosCsv();

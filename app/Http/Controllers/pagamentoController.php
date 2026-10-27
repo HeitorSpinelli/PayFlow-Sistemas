@@ -172,6 +172,43 @@ class pagamentoController extends Controller
         }
     }
 
+    public function cupom(int $id)
+    {
+        // Página Blade simples (não Inertia): é aberta numa aba própria e vai
+        // direto para o diálogo de impressão, sem layout/sidebar do app.
+        $pagamento = Pagamento::with(['apolice.cliente', 'apolice.seguradora', 'apolice.parcelas' => fn ($q) => $q->orderBy('numero_parcela')])
+            ->findOrFail($id);
+
+        $apolice = $pagamento->apolice;
+
+        abort_if(! $apolice, 404);
+
+        // Mesma regra de status do CSV (ExportacaoPagamentoService) e do modal
+        // do frontend: atrasada é a não paga com vencimento já passado.
+        $parcelas = $apolice->parcelas->map(function ($parcela) {
+            $paga = $parcela->status_pagamento === 'paga';
+            $atrasada = ! $paga && $parcela->diasEmAtraso() > 0;
+
+            return [
+                'numero' => $parcela->numero_parcela,
+                'valor' => (float) $parcela->valor_parcela,
+                'vencimento' => $parcela->data_vencimento,
+                'data_pagamento' => $parcela->data_pagamento,
+                'status' => $paga ? 'Paga' : ($atrasada ? 'Atrasada' : 'A vencer'),
+            ];
+        });
+
+        return view('cupons.parcela', [
+            'pagamento' => $pagamento,
+            'apolice' => $apolice,
+            'cliente' => $apolice->cliente,
+            'parcelas' => $parcelas,
+            'parcelaDestaque' => $parcelas->firstWhere('numero', $pagamento->parcela),
+            'totalParcelas' => $apolice->quantidade_parcelas ?: $parcelas->count(),
+            'pagas' => $parcelas->where('status', 'Paga')->count(),
+        ]);
+    }
+
     public function porCliente(int $clienteId)
     {
         return response()->json(

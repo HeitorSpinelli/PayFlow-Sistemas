@@ -66,6 +66,7 @@ Route::middleware(['auth', 'verified', 'throttle:web-actions'])->group(function 
         Route::put('/{id}', [SeguradoController::class, 'update'])->name('clientes.update');
         Route::delete('/{id}', [SeguradoController::class, 'destroy'])->name('clientes.destroy');
         Route::get('/exportar', [SeguradoController::class, 'exportar']);
+        Route::get('/{id}/ficha', [SeguradoController::class, 'ficha'])->whereNumber('id')->name('clientes.ficha');
         Route::patch('/restaurar/{id}', [SeguradoController::class, 'restaurar'])->name('segurados.restore');
     });
 
@@ -105,6 +106,7 @@ Route::middleware(['auth', 'verified', 'throttle:web-actions'])->group(function 
         // com o histórico de OUTRO cliente.
         Route::get('/cliente/{clienteId}', [pagamentoController::class, 'porCliente'])->whereNumber('clienteId');
         Route::get('/apolice/{apoliceId}/exportar', [pagamentoController::class, 'exportarPorApolice'])->whereNumber('apoliceId');
+        Route::get('/{id}/cupom', [pagamentoController::class, 'cupom'])->whereNumber('id')->name('pagamentos.cupom');
     });
 
     // Módulo: Agenda

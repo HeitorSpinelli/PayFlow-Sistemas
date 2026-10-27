@@ -11,6 +11,7 @@ import {
     ChevronRight,
     CircleCheck,
     DollarSign,
+    Printer,
     Trash2,
 } from 'lucide-react';
 import { useState, useRef } from 'react';
@@ -459,7 +460,24 @@ export default function Pagamentos({
                                                         </span>
                                                     )}
                                                 </td>
-                                                <td className="px-4 py-3.5 text-left">
+                                                <td className="flex items-center gap-1 px-4 py-3.5 text-left">
+                                                    {/* Cupom abre numa aba própria (Blade, fora do
+                                                        Inertia) que já chama o diálogo de impressão. */}
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        title="Imprimir cupom da parcela"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            window.open(
+                                                                `/pagamentos/${p.id}/cupom`,
+                                                                '_blank',
+                                                            );
+                                                        }}
+                                                        className="h-8 w-8 rounded-lg p-0 text-muted-foreground hover:bg-emerald-500/10 hover:text-emerald-600"
+                                                    >
+                                                        <Printer className="size-4" />
+                                                    </Button>
                                                     {isAdmin && (
                                                         <Button
                                                             variant="ghost"
