@@ -8,7 +8,8 @@ use Illuminate\Contracts\Validation\ValidationRule;
 
 /**
  * Impede que dois clientes tenham o mesmo e-mail (inclusive na lixeira).
- * Usado só na edição pelo painel do cliente (UpdateSeguradoRequest).
+ * Usado no cadastro (StoreSeguradoRequest, modal "Novo Cliente") e na edição
+ * pelo painel do cliente (UpdateSeguradoRequest).
  */
 class EmailSeguradoDisponivel implements ValidationRule
 {

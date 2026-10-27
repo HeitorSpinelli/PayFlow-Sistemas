@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Rules\CpfCnpjDisponivel;
 use App\Rules\CpfCnpjValido;
+use App\Rules\EmailSeguradoDisponivel;
 use Carbon\Carbon;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -52,7 +53,9 @@ class StoreSeguradoRequest extends FormRequest
                     }
                 },
             ],
-            'email' => 'required|email|max:255',
+            // Mesma regra da edição (UpdateSeguradoRequest): sem ela, o
+            // cadastro aceitava dois clientes com o mesmo e-mail.
+            'email' => ['required', 'email', 'max:255', new EmailSeguradoDisponivel],
             'telefone_fixo' => 'nullable|string|max:20',
             'celular_whatsapp' => 'required|string|max:20',
             'endereco' => 'required|string',
