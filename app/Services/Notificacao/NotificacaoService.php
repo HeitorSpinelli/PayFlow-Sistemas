@@ -19,8 +19,8 @@ class NotificacaoService
      * Envio do modal de notificação da tela Notificações: cria um registro por
      * segurado selecionado e envia o e-mail (NotificacaoMail). O status final
      * (Enviado/Falha, com o motivo) aparece no "Histórico de Notificações" e nos
-     * cards da tela. Obs.: o envio é sempre por e-mail, mesmo quando o canal
-     * gravado é outro.
+     * cards da tela. Ainda não há integração com WhatsApp: notificações nesse
+     * canal ficam como "Falha" com o motivo, em vez de saírem por e-mail.
      */
     public function criarEEnviar(array $data): void
     {
@@ -35,6 +35,18 @@ class NotificacaoService
                 'tipo_notificacao_id' => $data['tipo_notificacao_id'],
                 'status' => 'Pendente',
             ]);
+
+            // Antes caía no Mail::to() abaixo: o segurado recebia um e-mail e
+            // o histórico mostrava "WhatsApp — Enviado", uma mentira na tela.
+            if ($data['canal'] === 'whatsapp') {
+                $notificacao->update([
+                    'status' => 'Falha',
+                    'erro' => 'Envio por WhatsApp ainda não está disponível no sistema.',
+                ]);
+
+                continue;
+            }
+
             try {
                 $tipoNotificacao = TipoNotificacao::findOrFail($data['tipo_notificacao_id']);
                 Mail::to($segurado->email)->send(new NotificacaoMail(
