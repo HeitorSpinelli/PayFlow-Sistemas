@@ -125,14 +125,23 @@ export default function Notificacoes({
     // Abre/fecha o modal "Configurar" (tipos de notificação e automações).
     const [configAberto, setConfigAberto] = useState(false);
 
-    // Estados dos filtros do histórico
-    const [filtroCanal, setFiltroCanal] = useState('');
-    const [filtroStatus, setFiltroStatus] = useState('');
-    const [busca, setBusca] = useState('');
+    // Estados dos filtros do histórico. Começam com o que está na URL, para
+    // que um F5 com filtro aplicado mostre os selects batendo com a tabela.
+    const urlParams =
+        typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search)
+            : new URLSearchParams();
+    const [filtroCanal, setFiltroCanal] = useState(
+        urlParams.get('canal') || '',
+    );
+    const [filtroStatus, setFiltroStatus] = useState(
+        urlParams.get('status') || '',
+    );
+    const [busca, setBusca] = useState(urlParams.get('busca') || '');
 
     // Recarrega SÓ a tabela do histórico (only: ['notificacoes']) via
-    // GET /notificacoes/filtrar (NotificacoesController::filtrar), com os
-    // filtros de canal/status, a busca no texto da mensagem e a página.
+    // GET /notificacoes (NotificacoesController::index), com os filtros de
+    // canal/status, a busca no texto da mensagem e a página na query string.
     // Usada pelos filtros, pela busca e pelos botões de paginação.
     const buscarNotificacoes = (params: {
         canal?: string;
@@ -158,7 +167,7 @@ export default function Notificacoes({
             query.page = String(params.page);
         }
 
-        router.get('/notificacoes/filtrar', query, {
+        router.get('/notificacoes', query, {
             preserveState: true,
             preserveScroll: true,
             only: ['notificacoes'],

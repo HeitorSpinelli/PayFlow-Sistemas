@@ -14,10 +14,6 @@ use App\Http\Controllers\SeguradoraController;
 use App\Http\Controllers\TipoNotificacoesController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DininhoController;
-use App\Models\Automacao;
-use App\Models\Notificacoes;
-use App\Models\Segurado;
-use App\Models\TipoNotificacao;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
@@ -180,22 +176,10 @@ Route::middleware(['auth', 'can:is-admin', 'throttle:web-actions'])->group(funct
     // Módulo: Notificações
     // Tela Notificações (notificacoes.tsx): cards (hoje, enviados, pendentes,
     // falhas), "Histórico de Notificações", aba de automações e modal de envio.
-    // /filtrar recarrega só o histórico.
+    // Os filtros do histórico vão na query string do próprio GET /; /filtrar
+    // só redireciona para lá (URL antiga).
     Route::prefix('/notificacoes')->group(function () {
-        Route::get('/', function () {
-            return inertia('FunctionsApp/notificacoes', [
-                'totalHoje' => Notificacoes::whereDate('created_at', today())->count(),
-                'totalEnviados' => Notificacoes::where('status', 'Enviado')->count(),
-                'totalPendentes' => Notificacoes::where('status', 'Pendente')->count(),
-                'totalFalhas' => Notificacoes::where('status', 'Falha')->count(),
-                'tipos' => TipoNotificacao::all(),
-                // with('apolices'): Segurado::getStatusAttribute() reaproveita essa
-                // relação já carregada em vez de rodar uma query EXISTS por cliente.
-                'segurados' => Segurado::with('apolices')->get(),
-                'notificacoes' => Notificacoes::with(['tipoNotificacao', 'segurado'])->paginate(10),
-                'automacoes' => Automacao::with('tipoNotificacao')->get(),
-            ]);
-        })->name('notificacoes');
+        Route::get('/', [NotificacoesController::class, 'index'])->name('notificacoes');
         Route::post('/', [NotificacoesController::class, 'store']);
         Route::get('/filtrar', [NotificacoesController::class, 'filtrar']);
     });
