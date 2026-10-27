@@ -84,7 +84,7 @@ export default function CreateSeguradoraRamoModal({
     const [novaCategoria, setNovaCategoria] = useState('');
 
     // Formulário Inertia enviado no POST; `errors` mostra validação embaixo dos campos.
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, reset } = useForm({
         nome_fantasia: '',
         razao_social: '',
         cnpj: '',
@@ -154,18 +154,29 @@ export default function CreateSeguradoraRamoModal({
         setOpen(false);
     };
 
-    // Botão "Salvar": envia a seguradora com os ramos; sucesso fecha o modal,
-    // erro mostra toast vermelho.
+    // Botão "Salvar": envia a seguradora com os ramos; sucesso limpa e fecha o
+    // modal, erro mantém o que foi digitado e mostra toast vermelho.
     const salvar = () => {
         post('/seguradoras', {
-            onSuccess: () => {
-                toast.success('Segurado salvo com sucesso!', {
-                    position: 'top-right',
-                    style: {
-                        color: '#e0ebe4',
-                    },
-                });
-                setOpen(false);
+            // Sem toast.success aqui: o AppSidebarLayout já mostra o
+            // flash.success do controller (antes saíam dois, e este ainda
+            // dizia "Segurado"). A limpeza também só acontece aqui — antes
+            // rodava logo após o post(), sem esperar a resposta, e um erro de
+            // validação apagava tudo o que o operador tinha digitado.
+            onSuccess: (page) => {
+                const flash = page.props.flash as
+                    | { error?: string | null }
+                    | undefined;
+
+                // Erro de negócio volta como redirect + flash.error, que o
+                // Inertia trata como sucesso: o toast vermelho já sai pelo
+                // layout, só não limpa nem fecha.
+                if (flash?.error) {
+                    return;
+                }
+
+                reset();
+                fechar();
             },
             onError: () => {
                 toast.error('Falha ao salvar. Verifique os campos.', {
@@ -176,15 +187,6 @@ export default function CreateSeguradoraRamoModal({
                 });
             },
         });
-        const limparFormulario = {
-            nome_fantasia: '',
-            razao_social: '',
-            cnpj: '',
-            contato_nome: '',
-            email_suporte: '',
-            ramos: [] as RamoNovo[],
-        };
-        setData(limparFormulario);
     };
 
     return (
