@@ -377,7 +377,19 @@ export default function CreatePagamentoModal({
             // layout, fechando o modal e apagando o que o operador digitou.
             // O AppSidebarLayout já exibe sucesso e erro a partir do flash.
             // Mesmo motivo pelo qual create-profile-modal.tsx removeu o dele.
-            onSuccess: () => {
+            onSuccess: (page) => {
+                // Erro de negócio (exceção no PagamentoService) volta como
+                // flash.error num redirect 302, que ainda cai aqui. O toast
+                // vermelho já sai pelo layout; só não fecha nem limpa o modal,
+                // para o operador corrigir sem redigitar.
+                const flash = page.props.flash as
+                    | { error?: string | null }
+                    | undefined;
+
+                if (flash?.error) {
+                    return;
+                }
+
                 reset();
                 clearErrors();
                 setBuscaSegurado('');
