@@ -41,7 +41,7 @@ export default function NotificacaoModal({
     const [tipo, setTipo] = useState('');
     // Formulário Inertia usado só para o POST; `processing` desabilita o botão
     // Enviar enquanto a requisição roda.
-    const { data, setData, post, processing, errors } = useForm({
+    const { transform, post, processing } = useForm({
         segurado_ids: [] as number[],
         canal: '',
         mensagem: '',
@@ -93,10 +93,15 @@ export default function NotificacaoModal({
     // com tudo preenchido depois de enviar, sem nenhuma pista visual de que
     // um novo envio começaria do zero (risco de reenviar sem querer).
     const enviarNotificacao = () => {
-        setData('segurado_ids', selecionados);
-        setData('canal', canal ?? '');
-        setData('mensagem', mensagem);
-        setData('tipo_notificacao_id', tipo);
+        // transform em vez de setData: setData só atualiza o estado no próximo
+        // render, então o post() logo em seguida enviava o formulário ainda
+        // vazio e o primeiro clique em "Enviar" caía na validação.
+        transform(() => ({
+            segurado_ids: selecionados,
+            canal: canal ?? '',
+            mensagem,
+            tipo_notificacao_id: tipo,
+        }));
 
         post('/notificacoes', {
             onSuccess: () => {
