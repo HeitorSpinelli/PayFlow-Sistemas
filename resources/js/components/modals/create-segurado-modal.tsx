@@ -31,9 +31,26 @@ import {
     formatarTelefone,
 } from '@/utils/Masks';
 
+/**
+ * Modal "Novo Cliente" — aberto pelo botão "Novo Cliente" no topo da tela
+ * Clientes (pages/FunctionsApp/clientes.tsx); `open`/`setOpen` vêm de lá.
+ *
+ * Seções: Dados principais (PF/PJ, nome, razão social só PJ, CPF/CNPJ com
+ * máscara, data de nascimento/fundação), Contato (e-mail, WhatsApp, fixo),
+ * Localização (CEP com busca no ViaCEP, endereço, bairro, cidade, UF do IBGE)
+ * e Observações. Rodapé: Cancelar / Salvar.
+ *
+ * Salvar faz POST /clientes (SeguradoController::store + StoreSeguradoRequest,
+ * que valida CPF/CNPJ válido e não repetido, maioridade de PF etc.). Deu certo:
+ * fecha o modal e a lista de clientes recarrega com o novo cadastro (toast via
+ * flash global). Deu erro: toast vermelho e erros embaixo de cada campo.
+ */
 export default function CreateSeguradoModal({ open, setOpen }: any) {
+    // Botões PF/PJ do topo: mudam rótulos, máscara do documento e a data máxima permitida.
     const [tipoPessoa, setTipoPessoa] = useState('pf');
+    // Último valor de `open`, para detectar o fechamento (ver abaixo).
     const [openAnterior, setOpenAnterior] = useState(open);
+    // UFs do IBGE para o select Estado.
     const [estados, setEstados] = useState<any[]>([]);
 
     // Ajusta o estado durante a renderização em vez de num useEffect — evita
@@ -48,6 +65,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
         }
     }
 
+    // Rótulos dos campos conforme PF ou PJ.
     const isPF = tipoPessoa === 'pf';
     const labelNome = isPF ? 'Nome completo' : 'Nome fantasia';
     const labelDocumento = isPF ? 'CPF' : 'CNPJ';
@@ -63,6 +81,8 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
               .split('T')[0]
         : hoje.toISOString().split('T')[0];
 
+    // Formulário Inertia do cadastro; `errors` aparece embaixo dos campos e
+    // `processing` troca o botão Salvar para o estado de carregando.
     const { data, setData, post, processing, errors, reset, clearErrors } =
         useForm({
             tipo_pessoa: 'pf',
@@ -94,6 +114,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
         }
     }, [open]);
 
+    // Carrega as UFs do IBGE uma vez; se falhar, o select fica vazio.
     useEffect(() => {
         fetch(
             'https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome',
@@ -103,6 +124,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
             .catch(() => setEstados([]));
     }, []);
 
+    // Ao sair do campo CEP: com 8 dígitos, consulta o ViaCEP e preenche endereço, bairro, cidade e UF.
     const buscarCep = async (cep: string) => {
         const cepLimpo = cep.replace(/\D/g, '');
 
@@ -131,6 +153,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
         }
     };
 
+    // Botão "Salvar": envia o cadastro; fecha o modal se der certo.
     // O toast de sucesso não é mostrado aqui — o layout já mostra
     // automaticamente a partir da flash message do backend; chamar
     // toast.success aqui de novo duplicava o aviso a cada cliente cadastrado.
@@ -406,6 +429,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                         </Section>
                     </div>
 
+                    {/* Localização: CEP (busca ViaCEP), endereço, bairro, cidade e UF */}
                     <Section
                         icon={<MapPin className="h-4 w-4" />}
                         title="Localização"
@@ -535,6 +559,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                         </div>
                     </Section>
 
+                    {/* Observações livres */}
                     <Section
                         icon={<FileText className="h-4 w-4" />}
                         title="Observações"
@@ -556,6 +581,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                     </Section>
                 </div>
 
+                {/* Rodapé: aviso de obrigatórios + Cancelar / Salvar */}
                 <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-border/70 bg-background px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
                     <p className="text-xs text-muted-foreground">
                         Campos com{' '}

@@ -17,10 +17,21 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Regras de negócio de apólices: cadastro com geração de parcelas, edição,
+ * cancelamento, renovação, restauração, suspensão manual e os números/gráficos
+ * do Dashboard. Usado por ApolicesController, DashboardController,
+ * UserController (tela Administração), pagamentoController e SeguradoService.
+ */
 class ApoliceService
 {
     private const MESES_ABREV = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
+    /**
+     * Cria a apólice, gera as N parcelas mensais (vencimento = início da vigência
+     * + i meses) e os dados extras da categoria do ramo. Chamado pelo modal
+     * "Nova Apólice" da tela Apólices.
+     */
     public function store(array $data)
     {
         try {
@@ -72,6 +83,9 @@ class ApoliceService
      * Cria o registro extra (veículo/residência/vida+beneficiários/
      * empresarial) correspondente à categoria do ramo — usado só na criação,
      * onde ainda não existe nenhum registro extra prévio pra essa apólice.
+     *
+     * Usado por store(): é o que faz os campos de veículo/residência/vida/
+     * empresarial preenchidos no modal "Nova Apólice" serem salvos.
      */
     private function criarDadosExtras(Apolice $apolice, array $data, ?string $categoria): void
     {
@@ -95,6 +109,9 @@ class ApoliceService
     // frontend usa esse campo pra decidir o rótulo "CPF" ou "CNPJ" no
     // resultado da busca (sem ele, undefined !== 'pf' e todo mundo aparecia
     // como CNPJ, até cliente pessoa física).
+    /**
+     * Usado em ApolicesController::index() (prop 'segurados').
+     */
     public function buscar()
     {
         try {
@@ -104,6 +121,10 @@ class ApoliceService
         }
     }
 
+    /**
+     * Seguradoras (id e nome) para o select de seguradora dos modais de criar e
+     * editar apólice (prop 'seguradoras' da tela Apólices).
+     */
     public function buscarSeguradoras()
     {
         try {
@@ -113,6 +134,10 @@ class ApoliceService
         }
     }
 
+    /**
+     * Ramos (com categoria e seguradora) para o select de ramo dos modais de
+     * apólice — a categoria decide qual bloco de dados extras o modal mostra.
+     */
     public function buscarRamos()
     {
         try {
@@ -122,6 +147,11 @@ class ApoliceService
         }
     }
 
+    /**
+     * Tabela "Lista de Apólices" da tela Apólices: junta cliente, ramo e
+     * seguradora, aplica a busca (número, cliente, CPF/CNPJ, ramo, seguradora) e
+     * o filtro de status (Vigente / A Iniciar / Para Renovar), paginado de 10 em 10.
+     */
     public function buscarApolices(array $filters = [])
     {
         try {
@@ -185,6 +215,13 @@ class ApoliceService
         }
     }
 
+    /**
+     * Cancela a apólice: soft delete dela, das parcelas e dos pagamentos, gravando
+     * o motivo. Chamado pelo botão excluir do modal de perfil da apólice, pela
+     * exclusão de cliente (SeguradoService::destroy) e pelos comandos agendados
+     * de cancelamento automático. Resultado: aparece em "Apólices Canceladas"
+     * na tela Administração.
+     */
     public function destroy(int $id, string $motivo = Apolice::MOTIVO_CANCELAMENTO_MANUAL)
     {
         try {
@@ -215,6 +252,10 @@ class ApoliceService
         }
     }
 
+    /**
+     * Salva a edição feita no modal de perfil da apólice: dados da apólice,
+     * recálculo das parcelas em aberto e os dados extras da categoria do ramo.
+     */
     public function update(int $id, array $data)
     {
         try {
@@ -278,6 +319,9 @@ class ApoliceService
      * ignorava o que já tinha sido pago. A última parcela em aberto absorve
      * o resto do arredondamento, mesma regra de store()/renovar(), pra soma
      * de tudo (pago + em aberto) bater certinho com o prêmio total.
+     *
+     * Efeito na tela: valores/vencimentos das parcelas em aberto mudam no painel
+     * do cliente da tela Pagamentos, na Agenda e no Dashboard.
      */
     private function sincronizarParcelas(Apolice $apolice, array $data): void
     {
@@ -353,6 +397,9 @@ class ApoliceService
      * empresarial) que não corresponde mais à categoria válida informada.
      * Usado tanto por update() quanto por AlterarRamo() — os dois pontos
      * onde o ramo de uma apólice pode mudar.
+     *
+     * Efeito na tela: o modal de perfil da apólice deixa de mostrar dados de uma
+     * categoria que não é mais a do ramo.
      */
     private function limparDadosDaCategoriaErrada(Apolice $apolice, ?string $categoriaValida): void
     {
@@ -375,6 +422,9 @@ class ApoliceService
     }
 
     // Função para contar o total de apolices cadastradas no banco
+    /**
+     * Usado no card de total da tela Apólices.
+     */
     public function count()
     {
         try {
@@ -384,6 +434,11 @@ class ApoliceService
         }
     }
 
+    /**
+     * Troca o ramo da apólice e limpa os dados extras que não batem mais com a
+     * nova categoria. Chamado só por ApolicesController::updateRamo(), cuja rota
+     * hoje não é usada por nenhuma tela.
+     */
     public function AlterarRamo(int $apoliceId, int $novoRamoId)
     {
         try {
@@ -411,6 +466,8 @@ class ApoliceService
      * (motivo "renovada") — essas não são uma cancelação, são um ciclo
      * fechado com sucesso porque uma apólice nova assumiu a cobertura, então
      * não fazem sentido nesta lista de pendências administrativas.
+     *
+     * Tela Administração: seção "Apólices Canceladas" (botão restaurar).
      */
     public function listarCanceladas()
     {
@@ -428,6 +485,9 @@ class ApoliceService
      * Apólices com vigência já encerrada mas ainda não canceladas — candidatas
      * a renovação. Tem prioridade sobre "suspensa": uma apólice vencida não
      * tem mais o que "ativar", ela precisa de uma nova vigência.
+     *
+     * Tela Administração: seção "Apólices Vencidas" (botão renovar, que abre o
+     * modal "Renovar apólice").
      */
     public function listarVencidas()
     {
@@ -441,6 +501,8 @@ class ApoliceService
      * Apólices suspensas por atraso de parcela (2ª em diante) que ainda estão
      * dentro do prazo de vigência — excluímos as já vencidas porque essas
      * caem em listarVencidas() em vez desta lista.
+     *
+     * Tela Administração: seção "Apólices Inativas (Suspensas)" (botão ativar).
      */
     public function listarSuspensas()
     {
@@ -457,6 +519,8 @@ class ApoliceService
      * libera quando NENHUMA parcela em atraso resta. Aqui é uma decisão do
      * administrador (ex: cliente regularizou por fora do sistema), por isso
      * não checa parcelas em atraso antes de limpar suspensa_em.
+     *
+     * Botão "ativar" da seção "Apólices Inativas (Suspensas)" da tela Administração.
      */
     public function ativar(int $id): void
     {
@@ -475,6 +539,9 @@ class ApoliceService
      * cada ciclo de vigência separadamente depois. A apólice antiga fica
      * arquivada (soft-delete, motivo "renovada"): suas parcelas e pagamentos
      * NÃO são apagados, só a antiga deixa de aparecer como pendência.
+     *
+     * Chamado pelo modal "Renovar apólice" (seção "Apólices Vencidas" da tela
+     * Administração). Gera as parcelas da apólice nova com a mesma regra de store().
      */
     public function renovar(int $id, array $data): Apolice
     {
@@ -534,6 +601,8 @@ class ApoliceService
      * beneficiários/empresarial) da apólice antiga para a nova — o bem
      * segurado (o carro, o imóvel, a pessoa, a empresa) não muda numa
      * renovação, só o ciclo de vigência e os valores.
+     *
+     * Usado só por renovar().
      */
     private function copiarDadosExtras(Apolice $antiga, Apolice $nova, ?string $categoria): void
     {
@@ -566,6 +635,10 @@ class ApoliceService
      * Restaura uma apólice cancelada — só permitido para os motivos em
      * podeSerRestaurada() (exclusão manual ou suspensão prolongada). Ver
      * Apolice::podeSerRestaurada() para a regra completa.
+     *
+     * Botão restaurar da seção "Apólices Canceladas" da tela Administração;
+     * também é chamado ao restaurar um cliente da lixeira (SeguradoService::restore).
+     * Traz de volta parcelas e pagamentos que foram cancelados junto.
      */
     public function restore(int $id): void
     {
@@ -592,6 +665,11 @@ class ApoliceService
         }
     }
 
+    /**
+     * Quantos clientes têm pelo menos uma parcela não paga já vencida. Alimenta
+     * o card de clientes devedores do Dashboard e o card "Clientes com Pendência"
+     * da tela Pagamentos.
+     */
     public function contarClientesDevedores()
     {
         // != 'paga' (não só 'em_aberto') porque o job AtualizarParcelasVencidas
@@ -604,6 +682,10 @@ class ApoliceService
         })->count();
     }
 
+    /**
+     * Soma dos pagamentos confirmados no mês atual. Nenhuma tela usa este método
+     * hoje (só é citado num comentário de SeguradoService).
+     */
     public function receitaDoMes()
     {
         return Pagamento::where('status', 'confirmado')
@@ -612,6 +694,10 @@ class ApoliceService
             ->sum('valor');
     }
 
+    /**
+     * Quantas apólices estão vigentes hoje — card de ativas da tela Apólices (o
+     * card de inativas é o total menos este número).
+     */
     public function contarAtivas()
     {
         return Apolice::ativas()->count();
@@ -622,6 +708,9 @@ class ApoliceService
      * próximos $diasLimite dias — usado no card "Vencimentos próximos"
      * do dashboard. Prioriza as mais urgentes primeiro (data de
      * vencimento mais próxima/mais atrasada), limitado a $limite itens.
+     *
+     * Cada item vira uma linha da lista no Dashboard, com o selo
+     * "atrasado"/"pendente" e os dias.
      */
     public function vencimentosProximos(int $diasLimite = 15, int $limite = 10): array
     {
@@ -661,6 +750,8 @@ class ApoliceService
      * Receita (soma de pagamentos confirmados) agrupada por mês,
      * para os últimos $meses meses, incluindo o mês atual (parcial).
      * Meses sem nenhum pagamento aparecem com valor 0, não somem do array.
+     *
+     * Alimenta o gráfico de receita mensal do Dashboard.
      */
     public function receitaUltimosMeses(int $meses = 6): array
     {
@@ -702,6 +793,8 @@ class ApoliceService
     /**
      * Quantidade de apólices agrupada por ramo (tipo de seguro),
      * somando todas as seguradoras juntas — para o gráfico de pizza.
+     *
+     * Alimenta o gráfico de pizza "Tipos de seguro" do Dashboard.
      */
     public function distribuicaoPorRamo(): array
     {

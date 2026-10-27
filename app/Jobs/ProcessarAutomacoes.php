@@ -12,10 +12,19 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
+/**
+ * Job diário (08:00, routes/console.php) que executa as automações ativas
+ * cadastradas na tela Notificações. Cada disparo vira uma linha no
+ * "Histórico de Notificações" e um e-mail para o segurado.
+ */
 class ProcessarAutomacoes implements ShouldQueue
 {
     use Queueable;
 
+    /**
+     * Percorre as automações ativas (com tipo de notificação ativo) e chama o
+     * processador da condição de cada uma.
+     */
     public function handle(): void
     {
         $service = new NotificacaoService;
@@ -71,6 +80,10 @@ class ProcessarAutomacoes implements ShouldQueue
             ->exists();
     }
 
+    /**
+     * Dispara a notificação da automação para um segurado (via
+     * NotificacaoService::criarEEnviar), salvo se ele já recebeu esse tipo hoje.
+     */
     private function notificar(Automacao $automacao, NotificacaoService $service, Segurado $segurado): void
     {
         if ($this->jaNotificadoHoje($segurado->id, $automacao->tipo_notificacao_id)) {

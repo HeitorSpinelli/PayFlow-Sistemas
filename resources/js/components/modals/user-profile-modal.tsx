@@ -22,6 +22,9 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 
+/**
+ * Bloco visual com ícone, título e descrição que agrupa o conteúdo do modal.
+ */
 function Section({ icon, title, description, children }: any) {
     return (
         <section className="rounded-2xl border border-border/70 bg-muted/[0.18] p-4 sm:p-5">
@@ -41,6 +44,9 @@ function Section({ icon, title, description, children }: any) {
     );
 }
 
+/**
+ * Campo somente leitura (rótulo + valor); mostra "Não informado" quando vazio.
+ */
 function InfoField({ label, value }: { label: string; value?: string }) {
     return (
         <div className="rounded-xl border border-border/70 bg-background px-3 py-2.5 shadow-sm">
@@ -54,6 +60,7 @@ function InfoField({ label, value }: { label: string; value?: string }) {
     );
 }
 
+// Usuário do sistema como vem de UserController::index (prop `users`).
 interface User {
     id: number;
     name: string;
@@ -62,21 +69,48 @@ interface User {
     created_at?: string;
 }
 
+// `user` é o usuário clicado na lista; a tela de Administração só monta o
+// modal quando há um usuário selecionado.
 interface Props {
     open: boolean;
     setOpen: (open: boolean) => void;
     user: User | null;
 }
 
+// Mesmo modal tem duas "telas": 'visualizar' (dados + troca de cargo) e
+// 'excluir' (confirmação de exclusão, troca o corpo e os botões do rodapé).
 type Modo = 'visualizar' | 'excluir';
 
+/**
+ * Modal "Perfil do usuário" — aberto ao clicar num usuário na aba de
+ * usuários de Administração (pages/FunctionsApp/administracao.tsx, abrirPerfil).
+ *
+ * Modo 'visualizar':
+ *   - Dados do usuário: nome e e-mail (somente leitura).
+ *   - Permissões: select de cargo; "Salvar alterações" faz
+ *     PUT /administracao/usuarios/{id} (UserController::update), que bloqueia
+ *     rebaixar o último admin. Botão fica desabilitado se o cargo não mudou.
+ *   - Botão "Excluir usuário" (escondido para a própria conta logada) leva ao
+ *     modo 'excluir'.
+ * Modo 'excluir':
+ *   - Aviso de exclusão; "Confirmar exclusão" faz DELETE
+ *     /administracao/usuarios/{id} (UserController::destroy), que recusa
+ *     excluir a própria conta ou o último admin.
+ * O resultado (sucesso/erro) aparece como toast pelo flash global do layout, e
+ * a lista de Administração é recarregada pelo redirect back.
+ */
 export default function UserProfileModal({ open, setOpen, user }: Props) {
+    // Usuário logado — usado para esconder o botão de excluir a própria conta.
     const { auth } = usePage().props as unknown as {
         auth: { user: { id: number } };
     };
+    // Cargo escolhido no select (ainda não salvo).
     const [novoCargo, setNovoCargo] = useState(user?.role ?? 'user');
+    // Guarda o último `user` recebido, para detectar troca de usuário (ver abaixo).
     const [usuarioAnterior, setUsuarioAnterior] = useState(user);
+    // Qual "tela" do modal está visível: dados ou confirmação de exclusão.
     const [modo, setModo] = useState<Modo>('visualizar');
+    // true enquanto a requisição roda: desabilita botões e troca o texto para "Salvando..."/"Excluindo...".
     const [processing, setProcessing] = useState(false);
 
     // Ajusta o estado durante a renderização em vez de num useEffect — evita
@@ -90,13 +124,16 @@ export default function UserProfileModal({ open, setOpen, user }: Props) {
         setModo('visualizar');
     }
 
+    // true quando o perfil aberto é o do próprio usuário logado.
     const proprioUser = user?.id === auth.user.id;
 
+    // Fecha o modal e volta para o modo 'visualizar' (para a próxima abertura).
     const fechar = () => {
         setModo('visualizar');
         setOpen(false);
     };
 
+    // Botão "Salvar alterações": envia o novo cargo; fecha o modal se der certo.
     const salvarCargo = () => {
         if (!user) {
             return;
@@ -115,6 +152,7 @@ export default function UserProfileModal({ open, setOpen, user }: Props) {
         );
     };
 
+    // Botão "Confirmar exclusão": exclui o usuário; fecha o modal se der certo.
     // O toast de sucesso/erro já vem do listener global de flash message no
     // layout (ex.: "não é possível excluir o último administrador") — não
     // duplicamos aqui.
@@ -157,6 +195,7 @@ export default function UserProfileModal({ open, setOpen, user }: Props) {
                 </DialogHeader>
 
                 <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6 sm:px-8">
+                    {/* Corpo: confirmação de exclusão OU dados + permissões */}
                     {modo === 'excluir' ? (
                         <Section
                             icon={<AlertTriangle className="h-4 w-4" />}
@@ -253,6 +292,7 @@ export default function UserProfileModal({ open, setOpen, user }: Props) {
                 </div>
 
                 <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border/70 bg-background px-6 py-4 sm:px-8">
+                    {/* Rodapé: botões mudam conforme o modo */}
                     {modo === 'excluir' ? (
                         <>
                             <Button

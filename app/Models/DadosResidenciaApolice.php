@@ -5,6 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Dados extras de apólice residencial (imóvel segurado) — bloco "residência"
+ * dos modais de criar/editar apólice.
+ */
 class DadosResidenciaApolice extends Model
 {
     protected $table = 'dados_residencia_apolice';
@@ -31,6 +35,9 @@ class DadosResidenciaApolice extends Model
         'area_construida_m2' => 'decimal:2',
     ];
 
+    /**
+     * Apólice dona destes dados.
+     */
     public function apolice(): BelongsTo
     {
         return $this->belongsTo(Apolice::class, 'apolice_id');

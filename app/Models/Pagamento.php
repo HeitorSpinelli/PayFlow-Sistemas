@@ -9,6 +9,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Pagamento de uma parcela (tabela pagamentos). Linhas da tela Pagamentos,
+ * cupom impresso e CSVs. Soft delete = pagamento estornado.
+ */
 class Pagamento extends Model
 {
     use SoftDeletes;
@@ -30,21 +34,35 @@ class Pagamento extends Model
         'estornado_por',
     ];
 
+    /**
+     * Usuário que lançou o pagamento — coluna "Registrado por" da Lista de Pagamentos.
+     */
     public function registradoPor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'registrado_por');
     }
 
+    /**
+     * Usuário que estornou (excluiu) o pagamento.
+     */
     public function estornadoPor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'estornado_por');
     }
 
+    /**
+     * Apólice do pagamento.
+     */
     public function apolice(): BelongsTo
     {
         return $this->belongsTo(Apolice::class, 'apolice_id');
     }
 
+    /**
+     * Busca (cliente, CPF/CNPJ, número da apólice) e filtro de forma de
+     * pagamento. Usado no CSV do botão "Exportar" da tela Pagamentos; a tabela da
+     * tela aplica as mesmas condições em SQL direto (pagamentoController::show).
+     */
     public function scopeFilter(Builder $query, array $filters)
     {
         $query->when($filters['busca'] ?? null, function ($q, $busca) {

@@ -8,6 +8,11 @@ use App\Services\Apolice\ApoliceService;
 use App\Services\Exportacoes\ExportacaoApoliceService;
 use Illuminate\Http\Request;
 
+/**
+ * Controller do módulo Apólices: tela /apolices (apolices.tsx), modais de
+ * criar e de perfil da apólice, e as ações de cancelar/ativar/renovar/
+ * restaurar usadas na tela Administração.
+ */
 class ApolicesController extends Controller
 {
     // 1. Declarar service como propriedade
@@ -23,6 +28,12 @@ class ApolicesController extends Controller
     }
 
     // 3. Usar o service no método store
+    /**
+     * Cadastra uma apólice nova (e gera as parcelas dela) a partir do modal
+     * "Nova Apólice" (create-apolice-modal.tsx) da tela Apólices. O resultado
+     * aparece como toast (flash success/error) e a nova linha entra na tabela
+     * "Lista de Apólices".
+     */
     public function store(StoreApoliceRequest $request)
     {
         // Aqui a gente pega os dados do request, valida eles e depois chama o método store do service passando os dados validados
@@ -36,6 +47,12 @@ class ApolicesController extends Controller
         }
     }
 
+    /**
+     * Cancela (soft delete) a apólice pelo botão de excluir do modal de perfil
+     * da apólice (create-apolice-profile-modal.tsx), que pede a senha. Só admin
+     * (rota com can:is-admin). A apólice some da Lista de Apólices e passa a
+     * aparecer em "Apólices Canceladas" na tela Administração.
+     */
     public function destroy(Request $request, int $id)
     {
         // Exige a senha do usuário logado antes de cancelar a apólice — ação
@@ -60,6 +77,11 @@ class ApolicesController extends Controller
         }
     }
 
+    /**
+     * Salva a edição feita no modal de perfil da apólice (botão salvar). Também
+     * recalcula as parcelas ainda não pagas quando prêmio ou início da vigência
+     * mudam (ver ApoliceService::sincronizarParcelas()).
+     */
     public function update(UpdateApoliceRequest $request, int $id)
     {
         try {
@@ -72,6 +94,11 @@ class ApolicesController extends Controller
         }
     }
 
+    /**
+     * Troca só o ramo da apólice (PATCH /apolices/{id}/alterar-ramo). Hoje
+     * nenhuma tela chama esta rota — a troca de ramo é feita pela edição normal
+     * no modal de perfil da apólice.
+     */
     public function updateRamo(Request $request, int $id)
     {
         $request->validate([
@@ -87,6 +114,12 @@ class ApolicesController extends Controller
         }
     }
 
+    /**
+     * Alimenta a tela Apólices (/apolices): cards de resumo do topo (total,
+     * ativas, inativas), tabela "Lista de Apólices" paginada com busca e filtro
+     * de status, e as listas (segurados, seguradoras, ramos) usadas nos selects
+     * e no autocomplete dos modais de criar/editar apólice.
+     */
     public function index(Request $request)
     {
         // Passa a request inteira ou os filtros para o service
@@ -116,6 +149,10 @@ class ApolicesController extends Controller
         ]);
     }
 
+    /**
+     * Reativa manualmente uma apólice suspensa — botão da seção "Apólices
+     * Inativas (Suspensas)" da tela Administração. Só admin.
+     */
     public function ativar(int $id)
     {
         try {
@@ -127,6 +164,11 @@ class ApolicesController extends Controller
         }
     }
 
+    /**
+     * Renova uma apólice vencida pelo modal "Renovar apólice"
+     * (renovar-apolice-modal.tsx), aberto na seção "Apólices Vencidas" da tela
+     * Administração. Cria uma apólice nova e arquiva a antiga. Só admin.
+     */
     public function renovar(Request $request, int $id)
     {
         $data = $request->validate([
@@ -147,6 +189,11 @@ class ApolicesController extends Controller
         }
     }
 
+    /**
+     * Restaura uma apólice cancelada — botão da seção "Apólices Canceladas" da
+     * tela Administração. Só admin; recusa motivos que não podem voltar (ver
+     * Apolice::podeSerRestaurada()).
+     */
     public function restaurar(int $id)
     {
         try {
@@ -158,6 +205,9 @@ class ApolicesController extends Controller
         }
     }
 
+    /**
+     * Botão "Exportar" da tela Apólices: baixa o CSV de todas as apólices.
+     */
     public function exportar(ExportacaoApoliceService $exportacaoService)
     {
         return $exportacaoService->exportarApolicesCsv();

@@ -9,6 +9,10 @@ use App\Services\Cliente\SeguradoService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
+/**
+ * Controller da tela Administração (/administracao/usuarios, administracao.tsx,
+ * só admin): usuários do sistema e as listas de pendências administrativas.
+ */
 class UserController extends Controller
 {
     use PasswordValidationRules;
@@ -29,6 +33,9 @@ class UserController extends Controller
     // admin já está confirmando a identidade da pessoa ao cadastrá-la; não
     // depende do envio de e-mail de verificação (Resend está em modo
     // sandbox e hoje não entrega pra outros endereços).
+    /**
+     * Modal "Novo Usuário" (create-usuario-modal.tsx) da tela Administração.
+     */
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -55,6 +62,11 @@ class UserController extends Controller
         return redirect()->back()->with('success', 'Usuário cadastrado com sucesso!');
     }
 
+    /**
+     * Alimenta a tela Administração: "Lista de Usuários", "Clientes Inativos
+     * (Lixeira)", "Apólices Inativas (Suspensas)", "Apólices Vencidas" e
+     * "Apólices Canceladas".
+     */
     public function index()
     {
         $users = User::all();
@@ -69,6 +81,10 @@ class UserController extends Controller
         ]);
     }
 
+    /**
+     * Troca o cargo (admin/user) pelo modal de perfil do usuário
+     * (user-profile-modal.tsx). Impede remover o último admin.
+     */
     public function update(Request $request, int $id)
     {
         $user = User::findOrFail($id);
@@ -100,6 +116,10 @@ class UserController extends Controller
         return redirect()->back()->with('success', 'Cargo atualizado com sucesso!');
     }
 
+    /**
+     * Botão excluir do modal de perfil do usuário. Impede excluir a própria conta
+     * e o último admin.
+     */
     public function destroy(Request $request, int $id)
     {
         // Excluir a própria conta enquanto está logado nela deixaria a

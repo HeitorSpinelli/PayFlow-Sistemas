@@ -5,6 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Dados extras de apólice de veículo (placa, modelo etc.) — bloco "veículo"
+ * dos modais de criar/editar apólice.
+ */
 class DadosVeiculoApolice extends Model
 {
     protected $table = 'dados_veiculo_apolice';
@@ -34,6 +38,9 @@ class DadosVeiculoApolice extends Model
         'data_nascimento_condutor_principal' => 'date',
     ];
 
+    /**
+     * Apólice dona destes dados.
+     */
     public function apolice(): BelongsTo
     {
         return $this->belongsTo(Apolice::class, 'apolice_id');

@@ -33,6 +33,10 @@ trait EscreveLinhaCsv
         fputcsv($arquivo, array_map([$this, 'neutralizarFormula'], $colunas), ',', '"', '');
     }
 
+    /**
+     * Prefixa com apóstrofo o valor que começa com = + - @ TAB ou CR (ver
+     * escreverLinha()). Valores não-texto passam sem alteração.
+     */
     protected function neutralizarFormula($valor)
     {
         // Números e datas não são texto livre e não disparam fórmula —

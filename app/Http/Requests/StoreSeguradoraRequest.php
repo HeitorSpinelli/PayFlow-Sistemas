@@ -6,10 +6,15 @@ use App\Rules\CnpjValido;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Validação do modal de cadastro de seguradora + ramos (tela Seguradoras).
+ */
 class StoreSeguradoraRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * Sempre true: o acesso é controlado pelo middleware da rota (só admin).
      */
     public function authorize(): bool
     {

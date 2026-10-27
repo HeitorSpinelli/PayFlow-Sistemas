@@ -7,12 +7,21 @@ use App\Models\Parcelas;
 use App\Services\Apolice\ApoliceService;
 use Illuminate\Console\Command;
 
+/**
+ * Comando agendado (07:05) que cancela apólices com a 1ª parcela em atraso
+ * (Lei 15.040/2024, art. 21). Não roda se AUTOMACOES_FINANCEIRAS_ATIVAS=false.
+ * Na tela, as apólices canceladas somem da tela Apólices e vão para "Apólices
+ * Canceladas" na tela Administração, sem botão de restaurar efetivo.
+ */
 class CancelarApolicesPorAtrasoDaPrimeiraParcela extends Command
 {
     protected $signature = 'apolices:verificar-primeira-parcela';
 
     protected $description = 'Cancela automaticamente apólices cuja primeira parcela está em atraso (Lei 15.040/2024, art. 21).';
 
+    /**
+     * Busca as 1ªs parcelas não pagas e vencidas e cancela a apólice de cada uma.
+     */
     public function handle(ApoliceService $apoliceService): void
     {
         if (! config('automacoes.financeiras_ativas')) {

@@ -52,6 +52,7 @@ interface AuthUser {
 /* Conteúdo estático                                                  */
 /* ------------------------------------------------------------------ */
 
+// Cards da seção "Tutorial passo a passo" no rodapé da página.
 const PASSOS_TUTORIAL = [
     {
         numero: '01',
@@ -83,6 +84,8 @@ const PASSOS_TUTORIAL = [
     },
 ];
 
+// Lista do card "Requisitos do arquivo" (coluna lateral). Deve acompanhar
+// as colunas que ImportacaoSeguradosService espera no CSV.
 const REQUISITOS = [
     'Arquivo no formato .csv (separado por vírgula ou ponto e vírgula)',
     'Colunas: nome_completo, cpf_cnpj, seguradora, ramo, numero_apolice, numero_parcela, valor_parcela, data_vencimento',
@@ -94,6 +97,7 @@ const REQUISITOS = [
 /* Helpers                                                            */
 /* ------------------------------------------------------------------ */
 
+// Tamanho do arquivo legível ("12.3 KB") mostrado no card do arquivo selecionado.
 function formatarTamanho(bytes: number) {
     if (bytes < 1024) {
         return `${bytes} B`;
@@ -110,15 +114,36 @@ function formatarTamanho(bytes: number) {
 /* Componente principal                                               */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Tela "Importar Dados" — URL /importar (closure em routes/web.php).
+ * Única prop própria: `importResumo`, o resultado da última importação, que
+ * ImportacaoController::store() devolve via sessão (back()->with(...)).
+ *
+ * Fluxo: o usuário escolhe/arrasta um .csv → o front valida a extensão e
+ * conta as linhas (só para exibir) → "Confirmar importação" faz
+ * POST /importar-dados (ImportacaoSeguradosService::importar) → a página
+ * recarrega com o resumo (importados, erros, seguradoras faltantes).
+ *
+ * Seções: cabeçalho; zona de upload (vazia / arquivo selecionado / erro,
+ * com barra de progresso do envio); card de resultado da última importação;
+ * coluna lateral com download do modelo CSV e requisitos; tutorial passo a
+ * passo; modal de alerta de seguradoras não cadastradas.
+ */
 export default function ImportarDados() {
+    // <input type="file"> escondido; a zona de upload clica nele por código.
     const inputRef = useRef<HTMLInputElement>(null);
 
     const { props } = usePage<{
         importResumo?: ImportResumo;
         auth?: { user?: AuthUser | null };
     }>();
+    // Só admin pode cadastrar seguradora: decide se o modal de seguradoras
+    // faltantes mostra o atalho para /seguradoras ou só pede para avisar um admin.
     const isAdmin = props.auth?.user?.role === 'admin';
 
+    // Formulário do Inertia com o arquivo escolhido; `progress` alimenta a
+    // barra de envio e `errors.arquivo` mostra a validação do back-end
+    // (csv/txt, até 10 MB).
     const { data, setData, post, processing, progress, errors, reset } =
         useForm<{
             arquivo: File | null;
@@ -126,15 +151,23 @@ export default function ImportarDados() {
             arquivo: null,
         });
 
+    // estado: qual versão da zona de upload aparece ('vazio' | 'selecionado' | 'erro').
+    // arquivo: nome/tamanho/nº de linhas exibidos no card do arquivo.
+    // arrastando: destaca a zona enquanto um arquivo é arrastado por cima.
+    // erroLocal: mensagem de erro de validação feita no próprio navegador.
     const [estado, setEstado] = useState<EstadoArquivo>('vazio');
     const [arquivo, setArquivo] = useState<ArquivoInfo | null>(null);
     const [arrastando, setArrastando] = useState(false);
     const [erroLocal, setErroLocal] = useState<string | null>(null);
 
+    // Abre a janela do sistema para escolher o arquivo.
     const abrirSeletorDeArquivo = () => {
         inputRef.current?.click();
     };
 
+    // Valida a extensão .csv, lê o texto para contar as linhas de dados
+    // (descontando o cabeçalho) e coloca o arquivo no formulário. Não envia
+    // nada ao servidor ainda.
     const processarArquivo = useCallback(
         (file: File) => {
             const nomeValido = file.name.toLowerCase().endsWith('.csv');
@@ -176,6 +209,8 @@ export default function ImportarDados() {
         [setData],
     );
 
+    // Arquivo escolhido pela janela do sistema. Zera o input depois para
+    // permitir escolher o mesmo arquivo de novo.
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
 
@@ -186,6 +221,7 @@ export default function ImportarDados() {
         e.target.value = '';
     };
 
+    // Arquivo solto (drag & drop) sobre a zona de upload.
     const handleDrop = (e: DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         setArrastando(false);
@@ -196,6 +232,7 @@ export default function ImportarDados() {
         }
     };
 
+    // Acessibilidade: Enter/Espaço na zona de upload abre o seletor de arquivo.
     const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
@@ -203,6 +240,7 @@ export default function ImportarDados() {
         }
     };
 
+    // Botão de remover o arquivo selecionado: volta a zona de upload ao estado vazio.
     const limparArquivo = () => {
         setArquivo(null);
         setEstado('vazio');
@@ -210,6 +248,8 @@ export default function ImportarDados() {
         reset('arquivo');
     };
 
+    // Botão "Confirmar importação": POST /importar-dados como multipart.
+    // Em caso de sucesso limpa o arquivo; o resumo chega em props.importResumo.
     const confirmarImportacao = () => {
         if (!data.arquivo) {
             return;
@@ -226,6 +266,7 @@ export default function ImportarDados() {
 
     const resumo = props.importResumo;
 
+    // Abre/fecha o modal "Seguradora(s) não cadastrada(s)".
     const [modalSeguradorasAberto, setModalSeguradorasAberto] = useState(false);
 
     // Sempre que chega um resumo novo (nova submissão do formulário) com

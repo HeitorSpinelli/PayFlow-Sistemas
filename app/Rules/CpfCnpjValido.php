@@ -5,8 +5,15 @@ namespace App\Rules;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
+/**
+ * Valida o dígito verificador de CPF (11 dígitos) ou CNPJ (14) — campo
+ * CPF/CNPJ do modal "Novo Cliente".
+ */
 class CpfCnpjValido implements ValidationRule
 {
+    /**
+     * Decide pelo número de dígitos se checa como CPF ou CNPJ.
+     */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         // Remove tudo que não for dígito (pontos, traço, barra)

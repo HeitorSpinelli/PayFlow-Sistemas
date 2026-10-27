@@ -7,12 +7,18 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
+/**
+ * Validação do modal "Nova Apólice" (tela Apólices). Os erros aparecem
+ * embaixo de cada campo do modal.
+ */
 class StoreApoliceRequest extends FormRequest
 {
     use ValidaDadosPorCategoriaDeRamo;
 
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * Sempre true: o acesso é controlado pelo middleware da rota.
      */
     public function authorize(): bool
     {

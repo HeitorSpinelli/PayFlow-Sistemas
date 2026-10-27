@@ -6,8 +6,20 @@ use App\Http\Requests\StoreAutomacaoRequest;
 use App\Models\Automacao;
 use Illuminate\Http\Request;
 
+/**
+ * Controller das automações de notificação (envio automático por condição,
+ * ex.: X dias antes do vencimento). Usado pelo modal de configurações da
+ * tela Notificações (configuracoes-notificacoes-modal.tsx) e pelos toggles
+ * da lista de automações da própria tela. Quem executa as automações é o
+ * job ProcessarAutomacoes (agendado às 08:00), não este controller.
+ */
 class AutomacoesController extends Controller
 {
+    /**
+     * Lista as automações em JSON (GET /automacoes). Nenhuma tela chama esta
+     * rota hoje: a tela Notificações já recebe 'automacoes' direto na rota
+     * /notificacoes (routes/web.php).
+     */
     public function index(Request $request)
     {
         $automacoes = Automacao::with('tipoNotificacao')->get();
@@ -15,6 +27,11 @@ class AutomacoesController extends Controller
         return $automacoes;
     }
 
+    /**
+     * Cria uma automação pelo formulário do modal de configurações da tela
+     * Notificações. Bloqueia duplicata (mesma condição + canal + tipo) com toast
+     * de erro.
+     */
     public function store(StoreAutomacaoRequest $request)
     {
         try {
@@ -44,6 +61,10 @@ class AutomacoesController extends Controller
         }
     }
 
+    /**
+     * Edita uma automação (PUT /automacoes/{id}). Nenhuma tela chama esta rota
+     * hoje — o modal só cria, liga/desliga e exclui.
+     */
     public function update(StoreAutomacaoRequest $request, string $id)
     {
         try {
@@ -56,6 +77,10 @@ class AutomacoesController extends Controller
         }
     }
 
+    /**
+     * Liga/desliga uma automação — switch da aba "Automações" da tela
+     * Notificações e do modal de configurações de notificação.
+     */
     public function toggle(Request $request, string $id)
     {
 
@@ -75,6 +100,10 @@ class AutomacoesController extends Controller
         }
     }
 
+    /**
+     * Exclui uma automação pelo botão de lixeira do modal de configurações da
+     * tela Notificações.
+     */
     public function destroy(string $id)
     {
         try {

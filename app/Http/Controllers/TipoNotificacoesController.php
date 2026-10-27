@@ -6,10 +6,18 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\TipoNotificacao;
 
+/**
+ * Tipos de notificação (ex.: "Lembrete de vencimento") — o nome do tipo vira
+ * o assunto do e-mail enviado. Gerenciados no modal de configurações da tela
+ * Notificações (configuracoes-notificacoes-modal.tsx). Só admin.
+ */
 class TipoNotificacoesController extends Controller
 {
     /**
      * Display a listing of the resource.
+     *
+     * JSON com todos os tipos (GET /tipo_notificacoes). Nenhuma tela chama esta
+     * rota hoje: a tela Notificações já recebe 'tipos' na rota /notificacoes.
      */
     public function index()
     {
@@ -20,6 +28,8 @@ class TipoNotificacoesController extends Controller
 
     /**
      * Store a newly created resource in storage.
+     *
+     * Cria um tipo novo pelo formulário do modal de configurações de notificação.
      */
     public function store(Request $request)
     {
@@ -43,6 +53,9 @@ class TipoNotificacoesController extends Controller
 
     /**
      * Update the specified resource in storage.
+     *
+     * Usado de dois jeitos pelo modal de configurações: renomear o tipo (quando
+     * vem nome_notificacao) ou ligar/desligar o tipo (quando vem só 'ativo').
      */
     public function update(Request $request, string $id)
     {

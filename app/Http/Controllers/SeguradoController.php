@@ -9,6 +9,11 @@ use App\Services\Cliente\SeguradoService;
 use App\Services\Exportacoes\ExportacaoSeguradosService;
 use Illuminate\Http\Request;
 
+/**
+ * Controller do módulo Clientes (segurados): tela /clientes (clientes.tsx),
+ * modal de cadastro, painel do cliente (edição), lixeira, exportação, ficha
+ * impressa e restauração (tela Administração).
+ */
 class SeguradoController extends Controller
 {
     // 1. Declaração do service como propriedade
@@ -21,6 +26,10 @@ class SeguradoController extends Controller
     }
 
     // 3. Usa no store
+    /**
+     * Cadastra um cliente pelo modal "Novo Cliente" (create-segurado-modal.tsx)
+     * da tela Clientes. Resultado em toast; o cliente entra na "Lista de Clientes".
+     */
     public function store(StoreSeguradoRequest $request)
     {
         try {
@@ -33,6 +42,11 @@ class SeguradoController extends Controller
         }
     }
 
+    /**
+     * Alimenta a tela Clientes (/clientes): cards "Total de Clientes", "Clientes
+     * Ativos" e "Inativos", e a tabela "Lista de Clientes" paginada, com a busca
+     * (nome/CPF/CNPJ) e o filtro de status.
+     */
     public function show(Request $request)
     {
         $segurados = Segurado::with('apolices')
@@ -58,6 +72,11 @@ class SeguradoController extends Controller
         ]);
     }
 
+    /**
+     * Botão de lixeira da Lista de Clientes (com diálogo de confirmação): exclui
+     * o cliente (soft delete) e cancela todas as apólices dele. O cliente passa a
+     * aparecer em "Clientes Inativos (Lixeira)" na tela Administração.
+     */
     public function destroy(int $id)
     {
         try {
@@ -69,6 +88,10 @@ class SeguradoController extends Controller
         }
     }
 
+    /**
+     * Salva a edição feita no painel do cliente (components/clientes/painel-cliente.tsx)
+     * da tela Clientes. O CPF/CNPJ não é alterável (descartado no service).
+     */
     public function update(UpdateSeguradoRequest $request, int $id)
     {
         try {
@@ -81,6 +104,10 @@ class SeguradoController extends Controller
         }
     }
 
+    /**
+     * Botão de restaurar da seção "Clientes Inativos (Lixeira)" da tela
+     * Administração: traz o cliente de volta junto com as apólices restauráveis.
+     */
     public function restaurar(int $id)
     {
         try {
@@ -92,6 +119,11 @@ class SeguradoController extends Controller
         }
     }
 
+    /**
+     * Botão de impressora da Lista de Clientes: abre numa aba nova a ficha
+     * cadastral do segurado (resources/views/fichas/segurado.blade.php) já
+     * chamando o diálogo de impressão.
+     */
     public function ficha(int $id)
     {
         // Página Blade simples (não Inertia), aberta numa aba própria e já
@@ -133,6 +165,9 @@ class SeguradoController extends Controller
         ]);
     }
 
+    /**
+     * Botão "Exportar" da tela Clientes: baixa o CSV de todos os clientes.
+     */
     public function exportar(ExportacaoSeguradosService $exportacaoService)
     {
         return $exportacaoService->exportarSeguradosCsv();

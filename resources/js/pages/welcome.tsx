@@ -4,7 +4,18 @@ import React from 'react';
 import { UserRound, ArrowRight, LayoutDashboard, LogIn } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 
+/**
+ * Tela pública de boas-vindas — URL "/" (closure da rota 'home' em
+ * routes/web.php). Se ainda não existe nenhum usuário no banco, a rota nem
+ * chega aqui: redireciona para /configuracao-inicial.
+ *
+ * Renderizada SEM layout (app.tsx devolve null para 'welcome'), então não
+ * tem sidebar. Seções: imagem com depoimento (só em telas grandes, lado
+ * esquerdo) e, à direita, logo + título + botão de ação.
+ */
 export default function Welcome() {
+    // auth.user vem do HandleInertiaRequests::share(): decide qual botão
+    // aparece — "Ir para Dashboard" (logado) ou "Entrar no Sistema" (/login).
     const { auth } = usePage().props;
 
     return (

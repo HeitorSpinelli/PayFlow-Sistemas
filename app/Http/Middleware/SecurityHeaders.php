@@ -6,6 +6,9 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Adiciona cabeçalhos de segurança a todas as respostas. Sem efeito visual.
+ */
 class SecurityHeaders
 {
     /**

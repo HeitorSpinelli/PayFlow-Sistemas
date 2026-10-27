@@ -39,6 +39,13 @@ import {
     valorDigitadoParaNumero,
 } from '@/utils/Masks';
 
+// Valores iniciais (vazios) de cada bloco de "dados extras" do Passo 2. Cada
+// bloco corresponde a uma categoria de ramo e é validado no back-end por
+// ValidaDadosPorCategoriaDeRamo (regrasVeiculo, regrasResidencia, regrasVida,
+// regrasEmpresarial). Também servem para zerar o bloco quando a categoria do
+// ramo muda (handleRamoChange).
+
+// Passo 2, ramos de categoria "veiculo": seção "Dados do Veículo".
 const DADOS_VEICULO_INICIAL = {
     tipo_veiculo: '',
     placa: '',
@@ -58,6 +65,7 @@ const DADOS_VEICULO_INICIAL = {
     data_nascimento_condutor_principal: '',
 };
 
+// Passo 2, ramos de categoria "residencial": seção "Dados do Imóvel".
 const DADOS_RESIDENCIA_INICIAL = {
     tipo_imovel: '',
     tipo_construcao: '',
@@ -74,6 +82,7 @@ const DADOS_RESIDENCIA_INICIAL = {
     possui_sistema_seguranca: false,
 };
 
+// Passo 2, ramos de categoria "vida": seção "Dados do Segurado (Vida)".
 const DADOS_VIDA_INICIAL = {
     profissao: '',
     possui_atividade_profissional_risco: false,
@@ -85,6 +94,9 @@ const DADOS_VIDA_INICIAL = {
     capital_segurado: '',
 };
 
+// Um beneficiário em branco. É o item inicial da lista da seção
+// "Beneficiários" (ramos de vida) e o que o botão "Adicionar beneficiário"
+// acrescenta.
 const BENEFICIARIO_INICIAL = {
     nome_completo: '',
     cpf: '',
@@ -93,6 +105,7 @@ const BENEFICIARIO_INICIAL = {
     percentual_indenizacao: '',
 };
 
+// Passo 2, ramos de categoria "empresarial": seção "Dados da Empresa".
 const DADOS_EMPRESARIAL_INICIAL = {
     cnae_ou_atividade: '',
     numero_funcionarios: '',
@@ -108,6 +121,7 @@ const DADOS_EMPRESARIAL_INICIAL = {
     cep_estabelecimento: '',
 };
 
+// Opções do select "Parentesco" de cada beneficiário (seção Beneficiários).
 const PARENTESCOS = [
     { value: 'conjuge', label: 'Cônjuge' },
     { value: 'filho', label: 'Filho(a)' },
@@ -117,6 +131,9 @@ const PARENTESCOS = [
     { value: 'outro', label: 'Outro' },
 ];
 
+// Cartão visual usado em cada bloco do wizard (Dados da Apólice, Dados do
+// Veículo, Vigência etc.): ícone verde, título, descrição curta e os campos
+// passados como children. É só apresentação, não guarda estado.
 function Section({ icon, title, description, children }: any) {
     return (
         <section className="rounded-2xl border border-border/70 bg-muted/[0.18] p-4 sm:p-5">
@@ -136,6 +153,32 @@ function Section({ icon, title, description, children }: any) {
     );
 }
 
+/**
+ * Modal "Cadastrar Apólice", um wizard de 2 ou 3 passos.
+ *
+ * Aberto pela tela Apólices (pages/FunctionsApp/apolices.tsx), botão
+ * "Nova Apólice" no topo da página.
+ *
+ * Props (todas vêm de ApolicesController::index):
+ * - open / setOpen: visibilidade, controlada pela página Apólices.
+ * - segurados: lista usada na busca do campo "Cliente".
+ * - seguradoras: opções do select "Seguradora".
+ * - ramos: opções do select "Ramo" (filtradas pela seguradora escolhida). A
+ *   `categoria` do ramo decide se existe o Passo 2 e qual seção ele mostra.
+ *
+ * Passos:
+ * 1. Dados da Apólice: cliente (busca por nome/CPF/CNPJ), número da apólice,
+ *    seguradora e ramo.
+ * 2. Dados extras, só quando o ramo é de veículo, residencial, vida ou
+ *    empresarial: Dados do Veículo, Dados do Imóvel, Dados do Segurado (Vida)
+ *    + Beneficiários, ou Dados da Empresa.
+ * 3. Vigência e Valores: início/fim da vigência, prêmio, cobertura,
+ *    quantidade de parcelas, forma de pagamento e observações.
+ *
+ * Ao salvar, faz POST /apolices (ApolicesController::store →
+ * ApoliceService::store, que também gera as parcelas). A validação está em
+ * StoreApoliceRequest + ValidaDadosPorCategoriaDeRamo.
+ */
 export default function CreateApoliceModal({
     open,
     setOpen,
@@ -144,11 +187,19 @@ export default function CreateApoliceModal({
     seguradoras = [],
 }: any) {
     // Estados
+    // busca: texto digitado no campo "Cliente" do Passo 1.
+    // mostrarLista: abre/fecha a lista suspensa de resultados embaixo do campo.
+    // seguradoSelecionado: cliente clicado na lista (o id vai para cliente_id).
     const [busca, setBusca] = useState('');
     const [mostrarLista, setMostrarLista] = useState(false);
     const [seguradoSelecionado, setSeguradoSelecionado] = useState<any>(null);
 
-    // Formulário do Inertia
+    // Formulário do Inertia: guarda TODOS os campos dos 3 passos num único
+    // objeto, que vai inteiro no POST /apolices. `errors` traz as mensagens de
+    // validação do back-end (exibidas em vermelho embaixo de cada campo) e
+    // `processing` desabilita o botão "Salvar Apolice" durante o envio.
+    // Obs.: `status` vai no payload, mas StoreApoliceRequest não o valida,
+    // então ele é descartado pelo validated() no back-end.
     const { data, errors, setData, post, reset, clearErrors, processing } =
         useForm({
             numero_apolice: '',
@@ -183,6 +234,9 @@ export default function CreateApoliceModal({
         string | null
     >(null);
 
+    // Atualizadores dos blocos aninhados do Passo 2: trocam um único campo
+    // (ex.: 'placa') dentro de data.veiculo / residencia / vida / empresarial,
+    // mantendo os demais. Chamados pelo onChange dos inputs de cada seção.
     const atualizarVeiculo = (campo: string, valor: any) =>
         setData('veiculo', { ...data.veiculo, [campo]: valor });
 
@@ -195,6 +249,8 @@ export default function CreateApoliceModal({
     const atualizarEmpresarial = (campo: string, valor: any) =>
         setData('empresarial', { ...data.empresarial, [campo]: valor });
 
+    // Seção "Beneficiários": altera um campo do beneficiário na posição
+    // `index` da lista (os cartões "Beneficiário 1", "Beneficiário 2"...).
     const atualizarBeneficiario = (
         index: number,
         campo: string,
@@ -209,9 +265,12 @@ export default function CreateApoliceModal({
         setData('beneficiarios', atualizados);
     };
 
+    // Botão "Adicionar beneficiário": acrescenta um cartão em branco à lista.
     const adicionarBeneficiario = () =>
         setData('beneficiarios', [...data.beneficiarios, BENEFICIARIO_INICIAL]);
 
+    // Botão X no canto do cartão do beneficiário (só aparece quando há mais
+    // de um): remove aquele beneficiário da lista.
     const removerBeneficiario = (index: number) =>
         setData(
             'beneficiarios',
@@ -255,12 +314,15 @@ export default function CreateApoliceModal({
         ? (['dados', 'categoria', 'valores'] as const)
         : (['dados', 'valores'] as const);
 
+    // Passo atual do wizard (1, 2 ou 3). Muda o texto "Passo X de Y" e a
+    // barra de progresso no cabeçalho, e decide qual bloco de JSX aparece.
     const [step, setStep] = useState(1);
     // Se o usuário voltar e trocar pra uma categoria diferente (ou remover a
     // categoria), `steps` pode encolher — sem isso, `step` podia apontar pra
     // um índice que não existe mais.
     const stepAtual = steps[Math.min(step, steps.length) - 1];
 
+    // Nomes exibidos no cabeçalho ("Passo 2 de 3 — Dados do Veículo").
     const rotuloCategoria: Record<string, string> = {
         veiculo: 'Dados do Veículo',
         residencial: 'Dados do Imóvel',
@@ -274,6 +336,8 @@ export default function CreateApoliceModal({
         valores: 'Vigência e Valores',
     };
 
+    // Referência à área com rolagem do corpo do modal (entre o cabeçalho e o
+    // rodapé), usada para voltar ao topo ao trocar de passo.
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     // Toda vez que a etapa muda de propósito (o usuário clicou em Avançar/
@@ -284,6 +348,8 @@ export default function CreateApoliceModal({
         scrollContainerRef.current?.scrollTo({ top: 0 });
     }, [step]);
 
+    // Passo 1 está completo quando cliente, número, seguradora e ramo foram
+    // preenchidos. Libera o botão "Avançar".
     const dadosApoliceValidos = Boolean(
         data.cliente_id &&
         data.numero_apolice.trim() &&
@@ -373,6 +439,8 @@ export default function CreateApoliceModal({
         return true;
     })();
 
+    // Habilita/desabilita o botão "Avançar" do rodapé conforme o passo atual.
+    // O último passo não tem "Avançar" (vira "Salvar Apolice").
     const podeAvancar =
         stepAtual === 'dados'
             ? dadosApoliceValidos
@@ -380,11 +448,15 @@ export default function CreateApoliceModal({
               ? dadosCategoriaValidos
               : true;
 
+    // Botões "Avançar" e "Voltar" do rodapé: mudam de passo sem apagar dados.
     const avancarEtapa = () =>
         setStep((atual) => Math.min(atual + 1, steps.length));
 
     const voltarEtapa = () => setStep((atual) => Math.max(atual - 1, 1));
 
+    // Quando o modal fecha (por qualquer caminho), limpa o formulário, os
+    // erros, a busca de cliente e volta para o Passo 1, para a próxima
+    // abertura começar do zero.
     useEffect(() => {
         if (!open) {
             reset();
@@ -423,7 +495,8 @@ export default function CreateApoliceModal({
         }
     };
 
-    // Seleciona um segurado da lista
+    // Seleciona um segurado da lista: grava o id em cliente_id, fecha a lista
+    // suspensa e escreve o nome dele no campo "Cliente".
     const selecionarSegurado = (segurado: any) => {
         setSeguradoSelecionado(segurado);
         setData('cliente_id', segurado.id);
@@ -478,6 +551,11 @@ export default function CreateApoliceModal({
     // (AppSidebarLayout) já mostra automaticamente a partir da flash message
     // que o backend manda; chamar toast.success aqui de novo duplicava o
     // aviso toda vez que uma apólice era cadastrada.
+    // Botão "Salvar Apolice" (último passo): POST /apolices. No sucesso fecha
+    // o modal e o Inertia recarrega a tela Apólices com a nova linha. No erro
+    // mostra um toast vermelho e as mensagens embaixo dos campos. Atenção: se
+    // o erro for de um campo de um passo anterior, o usuário precisa voltar
+    // até ele para ver a mensagem.
     const salvarApolice = () => {
         post('/apolices', {
             onSuccess: () => {
@@ -489,6 +567,8 @@ export default function CreateApoliceModal({
         });
     };
 
+    // Fechar pelo X, pela tecla Esc ou clicando fora também limpa tudo (mesma
+    // limpeza do useEffect acima).
     return (
         <Dialog
             open={open}

@@ -7,6 +7,11 @@ use App\Http\Requests\StoreNotificacaoRequest;
 use App\Services\Notificacao\NotificacaoService;
 use Illuminate\Http\Request;
 
+/**
+ * Controller da tela Notificações (/notificacoes, só admin). A listagem
+ * inicial da tela é montada direto em routes/web.php; aqui ficam o envio
+ * manual e o filtro do histórico.
+ */
 class NotificacoesController extends Controller
 {
 
@@ -17,6 +22,12 @@ class NotificacoesController extends Controller
         $this->notificacoes = $notificacoes;
     }
 
+    /**
+     * Envio manual de notificação pelo modal de envio (create-notificacao-modal.tsx),
+     * aberto pelos botões de canal (e-mail / WhatsApp) da tela Notificações. Cria
+     * um registro por segurado selecionado e tenta enviar o e-mail; o resultado
+     * (Enviado/Falha) aparece no "Histórico de Notificações".
+     */
     public function store(StoreNotificacaoRequest $request)
     {
         try {
@@ -27,6 +38,11 @@ class NotificacoesController extends Controller
         }
     }
 
+    /**
+     * Filtros e busca do "Histórico de Notificações" (canal, status, texto) e
+     * paginação. A tela recarrega só a prop 'notificacoes' (only), por isso os
+     * cards e as outras props não são reenviados aqui.
+     */
     public function filtrar(Request $request)
     {
         $query = \App\Models\Notificacoes::with(['tipoNotificacao', 'segurado']);

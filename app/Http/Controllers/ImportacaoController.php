@@ -5,12 +5,22 @@ namespace App\Http\Controllers;
 use App\Services\Importacoes\ImportacaoSeguradosService;
 use Illuminate\Http\Request;
 
+/**
+ * Controller da tela Importar (/importar, importar.tsx): importação de
+ * clientes/apólices/parcelas a partir de planilha CSV.
+ */
 class ImportacaoController extends Controller
 {
     public function __construct(
         private readonly ImportacaoSeguradosService $importacaoSeguradosService,
     ) {}
 
+    /**
+     * Recebe o CSV enviado pelo botão de importar da tela Importar e devolve o
+     * resumo (total, importados, erros por linha e seguradoras faltantes) via
+     * flash 'importResumo' — é esse resumo que a tela mostra no quadro de
+     * resultado, inclusive o atalho "cadastrar seguradora" para as faltantes.
+     */
     public function store(Request $request)
     {
         $request->validate([

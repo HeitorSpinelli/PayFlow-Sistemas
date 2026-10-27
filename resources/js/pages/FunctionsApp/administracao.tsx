@@ -66,6 +66,7 @@ interface Props {
     apolicesSuspensas?: ApoliceResumo[];
 }
 
+// Data no formato dd/mm/aaaa (ou "—") usada nas tabelas de usuários e apólices.
 function formatarData(data?: string | null) {
     if (!data) {
         return '—';
@@ -74,6 +75,8 @@ function formatarData(data?: string | null) {
     return new Date(data).toLocaleDateString('pt-BR');
 }
 
+// "há N dias" desde a data informada — mostra há quanto tempo um cliente
+// foi inativado na aba "Clientes Inativos".
 function diasDesde(data: string) {
     const dias = Math.floor(
         (Date.now() - new Date(data).getTime()) / (1000 * 60 * 60 * 24),
@@ -90,6 +93,21 @@ function diasDesde(data: string) {
     return `há ${dias} dias`;
 }
 
+/**
+ * Tela "Administração do Sistema" — URL /administracao/usuarios (somente admin).
+ * Props entregues por UserController::index(): `users`, `inativos`
+ * (clientes excluídos, SeguradoService::listarInativos) e as listas de
+ * apólices suspensas, vencidas e canceladas (ApoliceService).
+ *
+ * Abas:
+ * - Usuários: busca local, tabela e botão "Novo usuário" (CreateUsuarioModal →
+ *   POST /administracao/usuarios); clicar num usuário abre UserProfileModal
+ *   (trocar cargo → PUT, excluir → DELETE /administracao/usuarios/{id});
+ * - Clientes Inativos: restaurar cliente (PATCH /clientes/restaurar/{id});
+ * - Apólices: suspensas (ativar), vencidas (renovar via RenovarApoliceModal)
+ *   e canceladas (restaurar, quando o motivo permite);
+ * - Sistema: cards informativos sobre cargos e proteção do último admin.
+ */
 export default function Administracao({
     users,
     inativos,
@@ -97,6 +115,10 @@ export default function Administracao({
     apolicesVencidas = [],
     apolicesSuspensas = [],
 }: Props) {
+    // openPerfil/usuarioSelecionado: modal de perfil do usuário clicado.
+    // openNovoUsuario: modal "Novo usuário".
+    // busca: filtro local (nome/e-mail) da tabela de usuários — sem requisição.
+    // openRenovar/apoliceParaRenovar: modal de renovação de apólice vencida.
     const [openPerfil, setOpenPerfil] = useState(false);
     const [usuarioSelecionado, setUsuarioSelecionado] = useState<User | null>(
         null,
@@ -107,6 +129,8 @@ export default function Administracao({
     const [apoliceParaRenovar, setApoliceParaRenovar] =
         useState<ApoliceResumo | null>(null);
 
+    // Contadores exibidos nos títulos das abas/toolbars e no card "Proteção
+    // de administradores" da aba Sistema.
     const totalUsuarios = users?.length ?? 0;
     const totalAdmins = useMemo(
         () => users?.filter((u) => u.role === 'admin').length ?? 0,
@@ -114,6 +138,7 @@ export default function Administracao({
     );
     const totalInativos = inativos?.length ?? 0;
 
+    // Linhas da tabela de usuários após aplicar a busca.
     const usuariosFiltrados = useMemo(() => {
         const termo = busca.trim().toLowerCase();
 
@@ -128,6 +153,7 @@ export default function Administracao({
         );
     }, [users, busca]);
 
+    // Clique numa linha da tabela de usuários: abre o modal de perfil.
     const abrirPerfil = (user: User) => {
         setUsuarioSelecionado(user);
         setOpenPerfil(true);
@@ -136,6 +162,8 @@ export default function Administracao({
     // Os toasts de sucesso não são mostrados aqui — o layout já mostra
     // automaticamente a partir da flash message do backend; duplicar com
     // toast.success aqui mostrava dois avisos a cada ação.
+    // Botão "Restaurar" da aba Clientes Inativos: PATCH /clientes/restaurar/{id}
+    // (SeguradoController::restaurar — volta o cliente e as apólices restauráveis).
     const restaurarSegurado = (id: number) => {
         router.patch(
             `/clientes/restaurar/${id}`,
@@ -148,6 +176,8 @@ export default function Administracao({
         );
     };
 
+    // Botão "Ativar" de uma apólice suspensa: PATCH /apolices/ativar/{id}
+    // (ApolicesController::ativar).
     const ativarApolice = (id: number) => {
         router.patch(
             `/apolices/ativar/${id}`,
@@ -160,11 +190,15 @@ export default function Administracao({
         );
     };
 
+    // Botão "Renovar" de uma apólice vencida: abre o RenovarApoliceModal,
+    // que faz PATCH /apolices/renovar/{id}.
     const abrirRenovacao = (apolice: ApoliceResumo) => {
         setApoliceParaRenovar(apolice);
         setOpenRenovar(true);
     };
 
+    // Botão "Restaurar" de uma apólice cancelada: PATCH /apolices/restaurar/{id}
+    // (ApolicesController::restaurar).
     const restaurarApolice = (id: number) => {
         router.patch(
             `/apolices/restaurar/${id}`,
@@ -182,6 +216,7 @@ export default function Administracao({
     const podeRestaurarApolice = (motivo: string | null) =>
         motivo === 'manual' || motivo === 'suspensao_prolongada';
 
+    // Texto da coluna "Motivo" na lista de apólices canceladas.
     const rotuloMotivoCancelamento = (motivo: string | null) => {
         switch (motivo) {
             case 'atraso_primeira_parcela':
@@ -816,6 +851,7 @@ export default function Administracao({
                 </Tabs>
             </div>
 
+            {/* Modais: perfil do usuário, novo usuário e renovação de apólice */}
             {usuarioSelecionado && (
                 <UserProfileModal
                     open={openPerfil}

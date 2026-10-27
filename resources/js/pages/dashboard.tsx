@@ -81,6 +81,8 @@ function tempoRelativo(data: string): string {
     return dias === 1 ? 'há 1 dia' : `há ${dias} dias`;
 }
 
+// Botões do card "Ações rápidas" (coluna lateral): cada um é só um link
+// para outra tela.
 const AÇÕES_RAPIDAS = [
     // adminOnly: mesmo sinalizador usado em app-sidebar.tsx — essas duas
     // rotas exigem Gate::is-admin no backend; sem esse filtro, um usuário
@@ -137,6 +139,7 @@ function useVariacaoMensal(serie: Record<string, any>[], campo: string) {
     }, [serie, campo]);
 }
 
+// Rótulo e cor do selo de cada item da lista "Vencimentos próximos".
 const STATUS_VENCIMENTO = {
     atrasado: {
         label: 'Atrasado',
@@ -148,6 +151,7 @@ const STATUS_VENCIMENTO = {
     },
 };
 
+// Cor da bolinha de cada item de "Notificações recentes", pelo status do envio.
 const STATUS_NOTIFICACAO = {
     enviado: { dot: 'bg-emerald-500' },
     pendente: { dot: 'bg-amber-500' },
@@ -173,6 +177,9 @@ interface TrendBarChartProps {
     emptyMessage: string;
 }
 
+// Card com gráfico de barras dos últimos meses (usado em "Receita" e
+// "Clientes ativos"): a barra do mês atual fica na cor cheia, as demais
+// esmaecidas, e o selo no canto mostra a variação contra o mês anterior.
 function TrendBarChart({
     title,
     subtitle,
@@ -275,6 +282,20 @@ function TrendBarChart({
 /* Componente principal                                               */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Tela "Dashboard" — URL /dashboard (primeira tela após o login).
+ * Props entregues por DashboardController::index():
+ * - receitaMensal / distribuicaoPorRamo / vencimentosProximos /
+ *   clientesDevedores: ApoliceService;
+ * - clientesAtivosMensal: SeguradoService;
+ * - notificacoesRecentes: NotificacaoService::recentes() (últimas 6).
+ *
+ * Seções: saudação com a data de hoje; coluna principal com os gráficos de
+ * Receita e Clientes ativos e a lista "Vencimentos próximos" (próximos 15
+ * dias + atrasadas, com link para /agenda); coluna lateral com a pizza
+ * "Distribuição por tipo de seguro", "Ações rápidas" e "Notificações recentes".
+ * Tudo é só leitura: a tela não faz requisições além dos links.
+ */
 export default function Dashboard({
     clientesDevedores,
     vencimentosProximos = [],
@@ -287,6 +308,7 @@ export default function Dashboard({
         auth: { user: { name: string; role: string } };
     };
 
+    // Usado na saudação "Olá, <primeiro nome>".
     const primeiroNome = auth?.user?.name?.split(' ')[0] ?? 'por aqui';
     const isAdmin = auth?.user?.role === 'admin';
 
@@ -295,12 +317,14 @@ export default function Dashboard({
     const acoesRapidasVisiveis = AÇÕES_RAPIDAS.filter(
         (acao) => !acao.adminOnly || isAdmin,
     );
+    // Data por extenso exibida abaixo da saudação (ex.: "terça-feira, 27 de outubro").
     const dataHoje = new Date().toLocaleDateString('pt-BR', {
         weekday: 'long',
         day: '2-digit',
         month: 'long',
     });
 
+    // Percentual do selo de variação de cada gráfico de barras.
     const variacaoReceita = useVariacaoMensal(receitaMensal, 'valor');
     const variacaoClientes = useVariacaoMensal(clientesAtivosMensal, 'total');
 

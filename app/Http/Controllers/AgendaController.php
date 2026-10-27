@@ -5,8 +5,19 @@ namespace App\Http\Controllers;
 use App\Models\Parcelas;
 use Carbon\Carbon;
 
+/**
+ * Controller da tela Agenda (/agenda, item "Agenda" do dashboard).
+ */
 class AgendaController extends Controller
 {
+    /**
+     * Monta a lista de cobranças (parcelas) exibida no calendário da tela Agenda
+     * (resources/js/pages/FunctionsApp/agenda.tsx), numa janela de 1 ano antes e
+     * 1 ano depois de hoje. Cada parcela já vem classificada como 'pago',
+     * 'atrasado' ou 'pendente' — é essa classificação que define a cor do dia e
+     * do item no calendário. O telefone devolvido é exibido junto do item da
+     * cobrança na agenda.
+     */
     public function index()
     {
         $hoje = Carbon::today();

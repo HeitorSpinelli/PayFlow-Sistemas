@@ -16,6 +16,10 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 
+/**
+ * Bloco visual com ícone, título e descrição que agrupa campos do modal
+ * ("Dados do usuário", "Senha inicial", "Permissões"). Só apresentação.
+ */
 function Section({
     icon,
     title,
@@ -45,12 +49,29 @@ function Section({
     );
 }
 
+// `open`/`setOpen` vêm da tela de Administração (estado openNovoUsuario).
 interface Props {
     open: boolean;
     setOpen: (open: boolean) => void;
 }
 
+/**
+ * Modal "Cadastrar usuário" — aberto pelo botão "Novo usuário" da aba de
+ * usuários em Administração (pages/FunctionsApp/administracao.tsx).
+ *
+ * Envia POST /administracao/usuarios (UserController::store), que valida
+ * nome/e-mail único/senha/cargo, cria o usuário já com e-mail verificado e
+ * volta com flash de sucesso. Como a resposta é redirect back, o Inertia
+ * recarrega a página e o novo usuário aparece na lista de Administração.
+ *
+ * Seções: Dados do usuário (nome, e-mail), Senha inicial (senha +
+ * confirmação), Permissões (cargo admin/user). Erros de validação aparecem
+ * em vermelho embaixo de cada campo.
+ */
 export default function CreateUsuarioModal({ open, setOpen }: Props) {
+    // Estado do formulário (Inertia useForm). `processing` desabilita o botão e
+    // troca o texto para "Cadastrando..."; `errors` recebe os erros de validação
+    // do back-end e mostra embaixo dos campos. Cargo padrão: "user".
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
@@ -59,11 +80,13 @@ export default function CreateUsuarioModal({ open, setOpen }: Props) {
         role: 'user',
     });
 
+    // Limpa o formulário e fecha o modal (botão Cancelar, X ou clique fora).
     const fechar = () => {
         reset();
         setOpen(false);
     };
 
+    // Botão "Cadastrar usuário": envia o POST; só fecha o modal se der certo.
     // O toast de sucesso já vem do listener global de flash message no
     // layout — não duplicamos aqui.
     const salvar = () => {

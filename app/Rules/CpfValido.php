@@ -13,6 +13,9 @@ use Illuminate\Contracts\Validation\ValidationRule;
  */
 class CpfValido implements ValidationRule
 {
+    /**
+     * Na tela: erro no campo CPF do beneficiário (bloco "vida" do modal de apólice).
+     */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $documento = preg_replace('/\D/', '', (string) $value);

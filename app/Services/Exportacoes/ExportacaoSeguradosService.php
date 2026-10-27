@@ -5,11 +5,17 @@ namespace App\Services\Exportacoes;
 use App\Models\Segurado;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
+/**
+ * Gera o CSV do botão "Exportar" da tela Clientes.
+ */
 class ExportacaoSeguradosService
 {
     use EscreveLinhaCsv;
 
     //StreamedResponse Cria um fluxo de dados para o navegador, permitindo que o arquivo seja baixado sem precisar armazená-lo no servidor
+    /**
+     * Arquivo baixado pelo botão "Exportar" da tela Clientes (todos os clientes).
+     */
     public function exportarSeguradosCsv(): StreamedResponse
     {
         //Nome do arquivo = segurados + data atual + extensão .csv

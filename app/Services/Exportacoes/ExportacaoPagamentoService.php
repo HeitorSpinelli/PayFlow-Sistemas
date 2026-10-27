@@ -8,6 +8,10 @@ use App\Models\Parcelas;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
+/**
+ * Gera os CSVs da tela Pagamentos: o "Exportar" da toolbar e o exportar por
+ * apólice do painel do cliente.
+ */
 class ExportacaoPagamentoService
 {
     use EscreveLinhaCsv;
@@ -17,6 +21,8 @@ class ExportacaoPagamentoService
      * apólice arquivada (soft-deleted) continua tendo pagamentos válidos —
      * o `motivo_cancelamento` é o que distingue uma renovação, em que o
      * dinheiro do ciclo anterior é legítimo, de um cancelamento.
+     *
+     * Vira a coluna de situação da apólice no CSV de pagamentos.
      */
     private function situacaoDaApolice(?Apolice $apolice): string
     {
@@ -38,6 +44,10 @@ class ExportacaoPagamentoService
     }
 
     // StreamedResponse cria um fluxo de dados direto para o navegador baixar sem ocupar memória do servidor
+    /**
+     * Botão "Exportar" da tela Pagamentos — respeita a busca e o filtro de forma
+     * de pagamento que estavam ativos na tela.
+     */
     public function exportarPagamentosCsv(array $filtros = []): StreamedResponse
     {
         // Nome do arquivo = pagamentos + data atual + extensão .csv
@@ -143,6 +153,10 @@ class ExportacaoPagamentoService
      * entra no arquivo). Diferente de exportarPagamentosCsv() acima, que só
      * traz pagamentos JÁ CONFIRMADOS de todo mundo — aqui entra parcela em
      * aberto e a vencer também, porque é isso que o operador vê no modal.
+     *
+     * Na tela, é o botão de exportar do painel do cliente
+     * (components/pagamentos/painel-cliente.tsx), na coluna da direita da tela
+     * Pagamentos.
      */
     public function exportarPagamentosApoliceCsv(int $apoliceId): StreamedResponse
     {

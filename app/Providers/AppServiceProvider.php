@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
+/**
+ * Configuração global da aplicação: Gate 'is-admin', padrões de produção
+ * (senha forte, datas imutáveis) e limites de requisições.
+ */
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -25,6 +29,10 @@ class AppServiceProvider extends ServiceProvider
 
     /**
      * Bootstrap any application services.
+     *
+     * Define o Gate 'is-admin' — usado nas rotas com can:is-admin (telas
+     * Seguradoras, Notificações, Administração e ações sensíveis de apólice e
+     * pagamento). Quem não é admin recebe 403.
      */
     public function boot(): void
     {
@@ -38,6 +46,9 @@ class AppServiceProvider extends ServiceProvider
 
     /**
      * Configure default behaviors for production-ready applications.
+     *
+     * Em produção, exige senha forte (mín. 12, maiúsc./minúsc., número, símbolo,
+     * não vazada) — afeta a tela Configuração Inicial e o modal "Novo Usuário".
      */
     protected function configureDefaults(): void
     {

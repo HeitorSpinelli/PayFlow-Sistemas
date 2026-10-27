@@ -11,6 +11,9 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 
+// Dados mínimos da apólice vencida que a tela Administração (aba "Apólices
+// Inativas/Vencidas/Canceladas", lista "Apólices Vencidas") passa ao modal.
+// Servem para pré-preencher o formulário da nova apólice.
 interface ApoliceVencida {
     id: number;
     numero_apolice: string;
@@ -42,7 +45,30 @@ function sugerirNovaVigencia(fimVigenciaAntiga: string) {
     };
 }
 
+/**
+ * Modal "Renovar apólice #...".
+ *
+ * Aberto pela tela Administração (pages/FunctionsApp/administracao.tsx), aba
+ * "Apólices Inativas/Vencidas/Canceladas", botão "Renovar" de cada linha da
+ * lista "Apólices Vencidas" (só admin: a rota exige `can:is-admin`).
+ *
+ * Props:
+ * - open / setOpen: controlam a visibilidade (estado da página Administração).
+ * - apolice: apólice vencida escolhida. Sem ela o modal não renderiza nada.
+ *
+ * Tela: um formulário único com número da nova apólice, início/fim da
+ * vigência, valor do prêmio, valor de cobertura e quantidade de parcelas,
+ * mais os botões "Cancelar" e "Confirmar Renovação".
+ *
+ * Ao confirmar, faz PATCH /apolices/renovar/{id} (ApolicesController::renovar
+ * → ApoliceService::renovar). O back-end cria uma apólice NOVA, com número
+ * próprio, e arquiva a antiga como histórico. As regras de validação estão no
+ * próprio controller: número único, fim depois do início, prêmio > 0,
+ * 1 a 60 parcelas.
+ */
 export default function RenovarApoliceModal({ open, setOpen, apolice }: Props) {
+    // Estado do formulário (Inertia useForm). `errors` recebe as mensagens de
+    // validação do back-end, que aparecem em vermelho embaixo de cada campo.
     const { data, setData, patch, processing, errors, reset } = useForm({
         numero_apolice: '',
         inicio_vigencia: '',
@@ -52,6 +78,10 @@ export default function RenovarApoliceModal({ open, setOpen, apolice }: Props) {
         quantidade_parcelas: 1,
     });
 
+    // Toda vez que o modal abre com uma apólice, pré-preenche o formulário:
+    // vigência sugerida (dia seguinte ao fim da antiga + 1 ano) e os mesmos
+    // prêmio, cobertura e parcelas da antiga. O número fica vazio de propósito,
+    // porque a nova apólice precisa de um número próprio.
     useEffect(() => {
         if (apolice && open) {
             const { inicio, fim } = sugerirNovaVigencia(apolice.fim_vigencia);
@@ -67,11 +97,17 @@ export default function RenovarApoliceModal({ open, setOpen, apolice }: Props) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [apolice, open]);
 
+    // Fecha o modal e limpa o formulário. Usado pelo botão "Cancelar", pelo X
+    // e pelo clique fora do diálogo, e também depois de renovar com sucesso.
     const fechar = () => {
         setOpen(false);
         reset();
     };
 
+    // Botão "Confirmar Renovação": envia PATCH /apolices/renovar/{id}. Se der
+    // certo, fecha o modal e o Inertia recarrega a página Administração (a
+    // apólice sai da lista de vencidas). Se a validação falhar, mostra um toast
+    // vermelho e deixa as mensagens de erro embaixo dos campos.
     // O toast de sucesso não é mostrado aqui — o layout já mostra
     // automaticamente a partir da flash message do backend (que já inclui o
     // número da nova apólice); duplicar com toast.success aqui mostrava dois
@@ -115,6 +151,7 @@ export default function RenovarApoliceModal({ open, setOpen, apolice }: Props) {
                     </div>
                 </DialogHeader>
 
+                {/* Formulário da nova apólice (campos validados em ApolicesController::renovar) */}
                 <div className="space-y-4 py-2">
                     <div className="space-y-2">
                         <label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
@@ -243,6 +280,7 @@ export default function RenovarApoliceModal({ open, setOpen, apolice }: Props) {
                     </div>
                 </div>
 
+                {/* Rodapé: Cancelar / Confirmar Renovação */}
                 <div className="flex justify-end gap-2 border-t border-border/70 pt-4">
                     <Button variant="outline" onClick={fechar}>
                         Cancelar

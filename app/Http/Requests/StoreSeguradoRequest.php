@@ -8,10 +8,16 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Validação do modal "Novo Cliente" (tela Clientes). Os erros aparecem
+ * embaixo de cada campo do modal.
+ */
 class StoreSeguradoRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * Sempre true: o acesso é controlado pelo middleware da rota.
      */
     public function authorize(): bool
     {
@@ -58,6 +64,9 @@ class StoreSeguradoRequest extends FormRequest
         ];
     }
 
+    /**
+     * Mensagens em português exibidas no modal "Novo Cliente".
+     */
     public function messages(): array
     {
         return [

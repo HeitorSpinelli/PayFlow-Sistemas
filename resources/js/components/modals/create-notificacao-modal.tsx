@@ -5,6 +5,8 @@ import { useState, useMemo } from 'react';
 import { useForm } from '@inertiajs/react';
 import { toast } from 'sonner';
 
+// `canal` null = modal fechado; 'email'/'whatsapp' = aberto naquele canal.
+// `segurados` e `tipos` vêm das props da rota GET /notificacoes (routes/web.php).
 interface NotificacaoModalProps {
     canal: Canal | null;
     onClose: () => void;
@@ -12,16 +14,33 @@ interface NotificacaoModalProps {
     tipos: { id: number; nome_notificacao: string; ativo: boolean }[];
 }
 
+/**
+ * Modal "Nova Notificação" — aberto pelo botão "Enviar Notificação" da tela
+ * Notificações (pages/FunctionsApp/notificacoes.tsx, sempre com canal 'email').
+ * A tela passa key={modalCanal}, então o modal remonta zerado a cada abertura.
+ *
+ * Seções: busca de clientes, lista de clientes com checkbox (+ "Selecionar
+ * todos" os visíveis), select de Tipo de Notificação e campo Mensagem.
+ * "Enviar (N)" faz POST /notificacoes (NotificacoesController::store ->
+ * NotificacaoService::criarEEnviar), que grava uma notificação por cliente e
+ * tenta mandar o e-mail; cada uma fica Enviado ou Falha no histórico da tela.
+ * É um overlay próprio (div fixa), não usa o Dialog do shadcn.
+ */
 export default function NotificacaoModal({
     canal,
     onClose,
     segurados = [],
     tipos = [],
 }: NotificacaoModalProps) {
+    // Texto do campo de busca — filtra a lista de clientes abaixo dele.
     const [busca, setBusca] = useState('');
+    // IDs dos clientes marcados — alimenta o contador e o "Enviar (N)".
     const [selecionados, setSelecionados] = useState<number[]>([]);
+    // Texto da mensagem e tipo escolhido no select; ambos obrigatórios para habilitar o envio.
     const [mensagem, setMensagem] = useState('');
     const [tipo, setTipo] = useState('');
+    // Formulário Inertia usado só para o POST; `processing` desabilita o botão
+    // Enviar enquanto a requisição roda.
     const { data, setData, post, processing, errors } = useForm({
         segurado_ids: [] as number[],
         canal: '',
@@ -29,6 +48,7 @@ export default function NotificacaoModal({
         tipo_notificacao_id: '',
     });
 
+    // Clientes que aparecem na lista: filtra por nome, e-mail ou CPF/CNPJ conforme a busca.
     const clientesFiltrados = useMemo(() => {
     if (!segurados) return []; // Guard against undefined/null
     
@@ -43,6 +63,7 @@ export default function NotificacaoModal({
         );
     }, [busca, segurados]);
 
+    // Clique num cliente da lista: marca/desmarca o checkbox dele.
     const alternarCliente = (id: number) => {
         setSelecionados((prev) =>
             prev.includes(id)
@@ -51,6 +72,8 @@ export default function NotificacaoModal({
         );
     };
 
+    // Botão "Selecionar todos": marca todos os clientes visíveis no filtro atual;
+    // se todos já estavam marcados, desmarca esses.
     const selecionarTodosVisiveis = () => {
         const idsVisiveis = clientesFiltrados.map((segurado) => segurado.id);
         const todosJaSelecionados = idsVisiveis.every((id) =>
@@ -63,6 +86,7 @@ export default function NotificacaoModal({
         );
     };
 
+    // Botão "Enviar (N)": monta os dados e faz POST /notificacoes. Em erro mostra toast vermelho.
     // O toast de sucesso não é mostrado aqui — o layout já mostra
     // automaticamente a partir da flash message do backend. Também fecha o
     // modal e limpa a seleção/mensagem: antes disso, o modal ficava aberto
@@ -87,6 +111,7 @@ export default function NotificacaoModal({
         });
     };
 
+    // Sem canal escolhido o modal não renderiza nada (está fechado).
     if (!canal) return null;
 
     return (
@@ -98,6 +123,7 @@ export default function NotificacaoModal({
                 onClick={(e) => e.stopPropagation()}
                 className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xl"
             >
+                {/* Cabeçalho: título conforme o canal + botão X para fechar */}
                 <div className="flex items-center justify-between border-b p-4">
                     <div className="flex items-center gap-3">
                         <div className="rounded-lg bg-blue-500 p-2 text-white">
@@ -119,6 +145,7 @@ export default function NotificacaoModal({
                     </button>
                 </div>
 
+                {/* Corpo: busca, lista de clientes, tipo e mensagem */}
                 <div className="flex flex-col gap-4 overflow-y-auto px-5 py-4">
                     <div className="relative">
                         <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -130,6 +157,7 @@ export default function NotificacaoModal({
                         />
                     </div>
 
+                    {/* Lista de clientes com seleção múltipla */}
                     <div className="rounded-xl border border-border/70">
                         <button
                             onClick={selecionarTodosVisiveis}
@@ -231,6 +259,7 @@ export default function NotificacaoModal({
                     </div>
                 </div>
 
+                {/* Rodapé: Cancelar / Enviar (desabilitado sem cliente, tipo ou mensagem) */}
                 <div className="flex items-center justify-end gap-2 border-t border-border/70 px-5 py-4">
                     <Button
                         variant="outline"

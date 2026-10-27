@@ -6,6 +6,11 @@ use App\Http\Requests\StoreRamoRequest;
 use App\Http\Requests\UpdateRamoRequest;
 use App\Services\Cliente\RamoService;
 
+/**
+ * CRUD de ramos de uma seguradora já cadastrada — usado na seção de ramos do
+ * modal de perfil da seguradora (create-profileSeguradora-modal.tsx), tela
+ * Seguradoras. Só admin.
+ */
 class RamosController extends Controller
 {
     private RamoService $ramoService;
@@ -16,6 +21,9 @@ class RamosController extends Controller
     }
 
     // Ramo de cada contrato de seguro, como automóvel, residencial, vida, empresarial, etc.
+    /**
+     * Adiciona um ramo novo à seguradora pelo modal de perfil da seguradora.
+     */
     public function store(StoreRamoRequest $request)
     {
         try {
@@ -27,11 +35,17 @@ class RamosController extends Controller
         }
     }
 
+    /**
+     * Devolve um ramo pelo id. Não existe rota apontando para este método hoje.
+     */
     public function show(int $id)
     {
         return $this->ramoService->show($id);
     }
 
+    /**
+     * Salva a edição de nome/categoria de um ramo no modal de perfil da seguradora.
+     */
     public function update(UpdateRamoRequest $request, int $id)
     {
         try {
@@ -43,6 +57,10 @@ class RamosController extends Controller
         }
     }
 
+    /**
+     * Exclui um ramo pelo modal de perfil da seguradora; recusa com toast de erro
+     * se houver apólice usando o ramo.
+     */
     public function destroy(int $id)
     {
         try {

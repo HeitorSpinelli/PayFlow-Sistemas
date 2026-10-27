@@ -5,11 +5,17 @@ namespace App\Services\Exportacoes;
 use App\Models\Apolice;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
+/**
+ * Gera o CSV do botão "Exportar" da tela Apólices.
+ */
 class ExportacaoApoliceService
 {
     use EscreveLinhaCsv;
 
     // StreamedResponse cria um fluxo de dados direto para o navegador baixar sem ocupar memória do servidor
+    /**
+     * Arquivo baixado pelo botão "Exportar" da tela Apólices (todas as apólices).
+     */
     public function exportarApolicesCsv(): StreamedResponse
     {
         // Nome do arquivo = apolices + data atual + extensão .csv

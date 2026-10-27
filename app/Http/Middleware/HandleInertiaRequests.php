@@ -5,6 +5,9 @@ namespace App\Http\Middleware;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
+/**
+ * Middleware do Inertia: define as props compartilhadas por todas as telas.
+ */
 class HandleInertiaRequests extends Middleware
 {
     /**
@@ -32,6 +35,10 @@ class HandleInertiaRequests extends Middleware
      * @see https://inertiajs.com/shared-data
      *
      * @return array<string, mixed>
+     *
+     * Props disponíveis em todas as páginas: auth.user (nome no menu, cargo usado
+     * para esconder botões de admin), sidebarOpen (estado da barra lateral) e
+     * flash success/error (viram os toasts verdes/vermelhos do layout).
      */
     public function share(Request $request): array
     {

@@ -12,12 +12,23 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Regras de pagamento de parcela: registrar (com multa/juros e reavaliação de
+ * suspensão da apólice), estornar e histórico por cliente. Usado por
+ * pagamentoController (tela Pagamentos).
+ */
 class PagamentoService
 {
     public function __construct(
         private readonly ParcelaFinanceiroService $parcelaFinanceiroService,
     ) {}
 
+    /**
+     * Registra o pagamento enviado pelo modal "Registrar Pagamento": calcula o
+     * valor final, grava quem lançou, marca a parcela como paga e, se for o caso,
+     * tira a apólice da suspensão. Na tela, o pagamento passa a aparecer na Lista
+     * de Pagamentos e os cards de totais mudam.
+     */
     public function store(array $data)
     {
         try {
@@ -130,6 +141,9 @@ class PagamentoService
      * quando NENHUMA parcela (2ª em diante) continuar em atraso — uma
      * apólice pode ter mais de uma parcela atrasada ao mesmo tempo, e pagar
      * só uma delas não deveria reabrir a cobertura antes da hora.
+     *
+     * Efeito na tela: a apólice sai da seção "Apólices Inativas (Suspensas)" da
+     * tela Administração.
      */
     private function reavaliarSuspensaoApolice(?Apolice $apolice): void
     {
@@ -157,11 +171,20 @@ class PagamentoService
         }
     }
 
+    /**
+     * Total de pagamentos. Nenhuma tela ou controller usa este método hoje.
+     */
     public function count()
     {
         return Pagamento::count();
     }
 
+    /**
+     * Estorno pelo botão de lixeira da Lista de Pagamentos (só admin): reabre a
+     * parcela (em aberto ou vencida), registra quem estornou e faz soft delete
+     * do pagamento. Pode suspender a apólice na hora se a parcela reaberta já
+     * estiver vencida.
+     */
     public function destroy(int $id)
     {
         try {
@@ -235,6 +258,9 @@ class PagamentoService
      * o próximo horário do comando agendado (VerificarInadimplenciaParcelas,
      * dailyAt 07:15), até quase 24h depois do estorno. Mesma condição usada
      * lá, só que reavaliada na hora.
+     *
+     * Efeito na tela: a apólice passa a aparecer em "Apólices Inativas
+     * (Suspensas)" na tela Administração.
      */
     private function suspenderSeParcelaReabertaEstaAtrasada(Parcelas $parcela): void
     {
@@ -252,6 +278,9 @@ class PagamentoService
     // Todos os pagamentos (de todas as parcelas/apólices) de um mesmo cliente.
     // Limitado a $limite registros — evita carregar um histórico enorme de
     // uma vez só num cliente muito antigo.
+    /**
+     * Usado só por pagamentoController::porCliente(), cuja rota nenhuma tela chama hoje.
+     */
     public function listarPorCliente(int $clienteId, int $limite = 100)
     {
         try {

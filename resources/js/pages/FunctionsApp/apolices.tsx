@@ -46,6 +46,21 @@ import {
     formatarMoeda
 } from '@/utils/Masks';
 
+/**
+ * Tela "Apólices" — URL /apolices.
+ * Props entregues por ApolicesController::index(): `apolices` (paginado,
+ * filtrado por ?busca e ?status via ApoliceService::buscarApolices()),
+ * listas de segurados/seguradoras/ramos para os selects do modal de criação
+ * e os totais dos cards.
+ *
+ * Seções, de cima para baixo:
+ * 1. Cabeçalho com o botão "Nova Apólice" (CreateApoliceModal → POST /apolices);
+ * 2. Cards: Total de Apólices, Ativas (vigência cobre hoje), Inativas;
+ * 3. Tabela (busca, filtro de status de vigência, Exportar CSV) — o botão
+ *    "..." de cada linha abre o perfil da apólice (CreateApoliceProfileModal:
+ *    editar, alterar ramo, ativar, renovar, cancelar, restaurar);
+ * 4. Paginação.
+ */
 export default function Apolices({
     segurados,
     seguradoras,
@@ -58,9 +73,12 @@ export default function Apolices({
     const [openModal, setOpenModal] = useState(false); // modal de criar
     const [openApoliceProfile, setOpenApoliceProfile] = useState(false); // modal de perfil da apólice
     const [apoliceSelecionada, setApoliceSelecionada] = useState<any>(null); // apólice selecionada para o perfil
-    const [filtroAberto, setFiltroAberto] = useState(false);
+    const [filtroAberto, setFiltroAberto] = useState(false); // dropdown do filtro de status
+    // Opções do filtro — mesmos textos de Apolice::getStatusVigenciaAttribute();
+    // 'Todas' remove o ?status da URL.
     const opcoesFiltro = ['Todas', 'Vigente', 'A Iniciar', 'Para Renovar'];
 
+    // Cor do selo da coluna "Status" da tabela conforme o status de vigência.
     const getStatusBadgeStyle = (status: string) => {
         switch (status) {
             case 'Vigente':
@@ -74,11 +92,14 @@ export default function Apolices({
         }
     };
 
+    // Botão "..." da linha: guarda a apólice e abre o modal de perfil.
     const abrirPerfil = (apolice: any) => {
         setApoliceSelecionada(apolice);
         setOpenApoliceProfile(true);
     };
 
+    // Cópia local do formatarDataBR de utils/Masks (mesmo comportamento),
+    // usada nas colunas de vigência da tabela.
     const formatarDataBR = (dataString: string) => {
         if (!dataString) return '-';
         const [ano, mes, dia] = dataString.split('T')[0].split('-');
@@ -91,6 +112,8 @@ export default function Apolices({
             ? new URLSearchParams(window.location.search)
             : new URLSearchParams();
 
+    // Texto do campo de busca e opção marcada no filtro, iniciados pela URL
+    // (assim um F5 mantém a tela filtrada).
     const [busca, setBusca] = useState(urlParams.get('busca') || '');
     const [filtroSelecionado, setFiltroSelecionado] = useState(
         urlParams.get('status') || 'Todas',
@@ -100,6 +123,7 @@ export default function Apolices({
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Função de busca acionada ao digitar com debounce (dispara a busca no Back-end via Inertia)
+    // GET /apolices?busca=... → recarrega só a tabela, voltando à página 1.
     const handleBuscaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const valorDigitado = e.target.value;
         setBusca(formataInputBusca(valorDigitado));
@@ -137,6 +161,7 @@ export default function Apolices({
     };
 
     // Função acionada ao selecionar um filtro de status
+    // GET /apolices?status=... e fecha o dropdown.
     const handleFiltroChange = (opcao: string) => {
         setFiltroSelecionado(opcao);
         setFiltroAberto(false);
@@ -481,6 +506,7 @@ export default function Apolices({
             </div>
 
             {/* Modais da Aplicação */}
+            {/* Criação (key={openModal} recria o modal a cada abertura, zerando o formulário) */}
             <CreateApoliceModal
                 open={openModal}
                 key={openModal}
@@ -490,6 +516,7 @@ export default function Apolices({
                 ramos={ramos}
                 apolices={apolices}
             />
+            {/* Perfil da apólice clicada na tabela */}
             {apoliceSelecionada && (
                 <CreateApoliceProfileModal
                     open={openApoliceProfile}

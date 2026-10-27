@@ -13,6 +13,10 @@ use App\Services\Pagamento\PagamentoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Controller do módulo Pagamentos: tela /pagamentos (pagamentos.tsx), modal
+ * "Registrar Pagamento", painel do cliente, estorno, exportações e cupom.
+ */
 class pagamentoController extends Controller
 {
     protected PagamentoService $pagamentoService;
@@ -28,6 +32,11 @@ class pagamentoController extends Controller
         $this->apoliceService = $apoliceService;
     }
 
+    /**
+     * Modal "Registrar Pagamento" (create-pagamentos-modal.tsx): grava o
+     * pagamento, marca a parcela como paga e reavalia a suspensão da apólice.
+     * Resultado em toast; a tabela e os cards da tela recarregam.
+     */
     public function store(StorePagamentoRequest $request)
     {
         $data = $request->validated();
@@ -41,6 +50,13 @@ class pagamentoController extends Controller
         }
     }
 
+    /**
+     * Alimenta a tela Pagamentos (/pagamentos): tabela "Lista de Pagamentos"
+     * (uma linha por cliente, o pagamento mais recente), busca e filtro de forma
+     * de pagamento, cards "Total Recebido", "Pagamentos Confirmados" e "Clientes
+     * com Pendência", e as listas de segurados/apólices/parcelas usadas pelo
+     * modal "Registrar Pagamento" e pelo painel do cliente (coluna da direita).
+     */
     public function show(Request $request)
     {
         // Mostra só 1 linha por cliente (o pagamento mais recente entre todas
@@ -161,6 +177,10 @@ class pagamentoController extends Controller
         ]);
     }
 
+    /**
+     * Botão de lixeira da Lista de Pagamentos (só admin, com confirmação):
+     * estorna o pagamento e reabre a parcela.
+     */
     public function destroy(int $id)
     {
         try {
@@ -172,6 +192,11 @@ class pagamentoController extends Controller
         }
     }
 
+    /**
+     * Botão de impressora da Lista de Pagamentos: abre numa aba nova o cupom da
+     * parcela (resources/views/cupons/parcela.blade.php) com o status de todas
+     * as parcelas da apólice e a parcela do pagamento em destaque.
+     */
     public function cupom(int $id)
     {
         // Página Blade simples (não Inertia): é aberta numa aba própria e vai
@@ -209,6 +234,11 @@ class pagamentoController extends Controller
         ]);
     }
 
+    /**
+     * JSON com o histórico de pagamentos de um cliente (GET
+     * /pagamentos/cliente/{id}). Nenhuma tela chama esta rota hoje — o painel
+     * do cliente da tela Pagamentos usa as parcelas que já vêm na prop 'apolices'.
+     */
     public function porCliente(int $clienteId)
     {
         return response()->json(
@@ -216,6 +246,10 @@ class pagamentoController extends Controller
         );
     }
 
+    /**
+     * Botão "Exportar" da tela Pagamentos: CSV dos pagamentos respeitando a busca
+     * e o filtro ativos na tela.
+     */
     public function exportar(Request $request, ExportacaoPagamentoService $exportacaoService)
     {
         // Repassa os filtros da tela: sem isso, o operador filtrava por
@@ -224,6 +258,10 @@ class pagamentoController extends Controller
         return $exportacaoService->exportarPagamentosCsv($request->only(['busca', 'forma_pagamento']));
     }
 
+    /**
+     * Botão de exportar do painel do cliente (components/pagamentos/painel-cliente.tsx):
+     * CSV das parcelas da apólice selecionada.
+     */
     public function exportarPorApolice(int $apoliceId, ExportacaoPagamentoService $exportacaoService)
     {
         return $exportacaoService->exportarPagamentosApoliceCsv($apoliceId);

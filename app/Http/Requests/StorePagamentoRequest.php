@@ -6,8 +6,15 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
+/**
+ * Validação do modal "Registrar Pagamento" (tela Pagamentos). Os erros
+ * aparecem embaixo de cada campo do modal.
+ */
 class StorePagamentoRequest extends FormRequest
 {
+    /**
+     * Sempre true: o acesso é controlado pelo middleware da rota.
+     */
     public function authorize(): bool
     {
         return true;
@@ -55,6 +62,9 @@ class StorePagamentoRequest extends FormRequest
         ];
     }
 
+    /**
+     * Mensagens em português exibidas no modal "Registrar Pagamento".
+     */
     public function messages(): array
     {
         return [

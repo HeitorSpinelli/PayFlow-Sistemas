@@ -6,6 +6,9 @@ use App\Services\Apolice\ApoliceService;
 use App\Services\Cliente\SeguradoService;
 use App\Services\Notificacao\NotificacaoService;
 
+/**
+ * Controller da tela inicial após o login: Dashboard (/dashboard, dashboard.tsx).
+ */
 class DashboardController extends Controller
 {
     protected SeguradoService $seguradoService;
@@ -21,6 +24,12 @@ class DashboardController extends Controller
         $this->notificacaoService = $notificacaoService;
     }
 
+    /**
+     * Alimenta o Dashboard: card de clientes devedores, lista "Vencimentos
+     * próximos", card "Notificações" (últimas enviadas), gráfico de receita
+     * mensal, gráfico de clientes ativos por mês e o gráfico de pizza
+     * "Tipos de seguro" (distribuição por ramo).
+     */
     public function index()
     {
         $clientesDevedores = $this->apoliceService->contarClientesDevedores();

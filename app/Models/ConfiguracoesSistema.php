@@ -4,6 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Configurações gerais da empresa (dados cadastrais, SMTP, WhatsApp, gateway).
+ * Nenhuma tela ou serviço usa este model hoje.
+ */
 class ConfiguracoesSistema extends Model
 {
     protected $table = 'configuracoes_sistema';

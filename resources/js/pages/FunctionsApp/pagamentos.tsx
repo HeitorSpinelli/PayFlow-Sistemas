@@ -50,6 +50,22 @@ interface PageProps {
     apolices?: any[];
 }
 
+/**
+ * Tela "Pagamentos" — URL /pagamentos.
+ * Props entregues por pagamentoController::show(): `pagamentos` (paginado,
+ * UMA linha por cliente — o pagamento mais recente dele, já filtrado por
+ * ?busca e ?forma_pagamento), os totais dos cards, e `segurados`/`apolices`
+ * (com parcelas e valor sugerido) para o modal de registro e o painel lateral.
+ *
+ * Seções, de cima para baixo:
+ * 1. Cabeçalho com "Registrar Pagamento" (CreatePagamentoModal → POST /pagamentos);
+ * 2. Cards: Total Recebido, Pagamentos Confirmados, Clientes com Pendência;
+ * 3. Lista de pagamentos (busca, filtro por forma, Exportar CSV, tabela com
+ *    ações de imprimir cupom e excluir) + painel do cliente selecionado à
+ *    direita (PainelClientePagamentos: histórico via GET /pagamentos/cliente/{id});
+ * 4. Paginação;
+ * 5. Modais: registrar pagamento e confirmar exclusão (DELETE /pagamentos/{id}).
+ */
 export default function Pagamentos({
     pagamentos,
     totalRecebido = 0,
@@ -66,7 +82,9 @@ export default function Pagamentos({
     };
     const isAdmin = auth?.user?.role === 'admin';
 
+    // Abre/fecha o modal "Registrar Pagamento".
     const [openModal, setOpenModal] = useState(false);
+    // Abre/fecha o dropdown do filtro por forma de pagamento.
     const [filtroAberto, setFiltroAberto] = useState(false);
     // Cliente selecionado alimenta o painel da coluna direita — não é mais
     // um "pagamento" único aberto num modal, é o cliente daquela linha.
@@ -74,9 +92,12 @@ export default function Pagamentos({
         id: number;
         nome: string;
     } | null>(null);
+    // Apólice que o painel lateral já abre selecionada (a da linha clicada).
     const [apoliceIdInicialPainel, setApoliceIdInicialPainel] = useState<
         number | null
     >(null);
+    // Pagamento da linha cuja lixeira foi clicada; não-nulo = diálogo de
+    // exclusão aberto.
     const [pagamentoParaExcluir, setPagamentoParaExcluir] = useState<any>(null);
 
 
@@ -86,6 +107,7 @@ export default function Pagamentos({
             ? new URLSearchParams(window.location.search)
             : new URLSearchParams();
 
+    // Texto do campo de busca (cliente, CPF/CNPJ ou nº da apólice).
     const [busca, setBusca] = useState(urlParams.get('busca') || '');
 
     // Os valores precisam casar com o `in:` de StorePagamentoRequest e com o
@@ -109,6 +131,7 @@ export default function Pagamentos({
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Busca com debounce, disparando a requisição pro back-end
+    // GET /pagamentos?busca=... 500ms depois da última tecla; volta à página 1.
     const handleBuscaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const valor = e.target.value;
         setBusca(valor);
@@ -166,6 +189,8 @@ export default function Pagamentos({
         );
     };
 
+    // Clique numa linha da tabela: destaca a linha e carrega esse cliente
+    // (já na apólice daquele pagamento) no painel da direita.
     const selecionarCliente = (pagamento: any) => {
         setClienteSelecionado({
             id: pagamento.cliente_id,
@@ -174,6 +199,8 @@ export default function Pagamentos({
         setApoliceIdInicialPainel(pagamento.apolice_id ?? null);
     };
 
+    // Botão "Confirmar exclusão" do diálogo: DELETE /pagamentos/{id}
+    // (pagamentoController::destroy — estorna o pagamento e reabre a parcela).
     const confirmarExclusao = () => {
         if (!pagamentoParaExcluir) {
             return;
@@ -304,6 +331,7 @@ export default function Pagamentos({
                                 </div>
 
                                 {/* Dropdown de filtro por status */}
+                                {/* (na prática filtra por FORMA de pagamento: boleto, pix, cartão, débito) */}
                                 <div className="relative">
                                     <button
                                         onClick={() =>
@@ -561,6 +589,7 @@ export default function Pagamentos({
                         </div>
                     </div>
 
+                    {/* Painel do cliente selecionado (coluna direita) */}
                     <PainelClientePagamentos
                         key={clienteSelecionado?.id ?? 'vazio'}
                         cliente={clienteSelecionado}
@@ -570,6 +599,7 @@ export default function Pagamentos({
                 </div>
             </div>
 
+            {/* 5. Modais */}
             <CreatePagamentoModal
                 open={openModal}
                 setOpen={setOpenModal}
@@ -577,6 +607,7 @@ export default function Pagamentos({
                 apolices={apolices}
             />
 
+            {/* Confirmação de exclusão (só admin chega aqui: a lixeira só aparece para admin) */}
             <Dialog
                 open={!!pagamentoParaExcluir}
                 onOpenChange={(open) => !open && setPagamentoParaExcluir(null)}

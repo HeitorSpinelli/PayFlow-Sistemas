@@ -14,6 +14,10 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
+/**
+ * Importação de planilha CSV da tela Importar: cada linha cria/atualiza o
+ * cliente, a apólice e a parcela. Chamado por ImportacaoController.
+ */
 class ImportacaoSeguradosService
 {
     /**
@@ -41,6 +45,11 @@ class ImportacaoSeguradosService
 
     /**
      * @return array{total: int, importados: int, erros: array<string>, seguradorasFaltantes: array<string>}
+     *
+     * Processa o arquivo inteiro numa transação e devolve o resumo exibido no
+     * quadro de resultado da tela Importar (total, importados, erros por linha e
+     * seguradoras que precisam ser cadastradas antes). Registra a importação em
+     * HistoricoImportacao.
      */
     public function importar(string $caminhoArquivo, ?string $nomeOriginal = null, ?int $usuarioId = null): array
     {
@@ -125,6 +134,9 @@ class ImportacaoSeguradosService
     /**
      * @param  array<string>  $erros
      * @return array{total: int, importados: int, erros: array<string>, seguradorasFaltantes: array<string>}
+     *
+     * Resumo de importação sem nenhuma linha importada, só com os erros — é o que
+     * a tela Importar mostra quando o arquivo é recusado por inteiro.
      */
     private function resultadoVazio(array $erros, int $total = 0): array
     {
@@ -133,6 +145,9 @@ class ImportacaoSeguradosService
 
     /**
      * @return array{0: array<int, array<string, string>>, 1: string|null}
+     *
+     * Lê o CSV (detecta separador, corrige codificação, confere cabeçalho e
+     * limite de linhas) e devolve as linhas mais um erro de cabeçalho, se houver.
      */
     private function lerCsv(string $caminho): array
     {
@@ -225,6 +240,10 @@ class ImportacaoSeguradosService
 
     /**
      * @return array{erro: string|null, seguradoraFaltante: string|null}
+     *
+     * Processa uma linha da planilha: valida, acha seguradora/ramo e grava
+     * cliente, apólice e parcela. O erro devolvido vira "Linha N: ..." na lista
+     * de erros da tela Importar.
      */
     private function processarLinha(array $linha, $seguradoras, $ramosPorSeguradora): array
     {

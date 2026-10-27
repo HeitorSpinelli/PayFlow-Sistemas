@@ -6,10 +6,15 @@ use App\Rules\EmailSeguradoDisponivel;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Validação da edição do cliente no painel do cliente (tela Clientes).
+ */
 class UpdateSeguradoRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * Sempre true: o acesso é controlado pelo middleware da rota.
      */
     public function authorize(): bool
     {

@@ -6,8 +6,16 @@ use App\Models\Segurado;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
+/**
+ * Impede cadastrar um cliente com CPF/CNPJ que já existe (inclusive na
+ * lixeira). Usado no modal "Novo Cliente"; a mensagem aparece no campo CPF/CNPJ.
+ */
 class CpfCnpjDisponivel implements ValidationRule
 {
+    /**
+     * Compara só os dígitos e diferencia "já cadastrado" de "cliente excluído —
+     * restaure na lixeira".
+     */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         // cpf_cnpj é salvo com a máscara exatamente como o formulário manda

@@ -6,8 +6,15 @@ use App\Models\Ramo;
 use App\Models\Seguradora;
 use Illuminate\Database\QueryException;
 
+/**
+ * Regras de seguradoras. Usado por SeguradoraController (tela Seguradoras).
+ */
 class SeguradorasService
 {
+    /**
+     * Grava o modal de cadastro de seguradora (create-cadastro-seg_ramo.tsx):
+     * a seguradora e a lista de ramos digitada no mesmo formulário.
+     */
     public function createSeguradora(array $data): void
     {
         // 1. Separa os ramos do resto dos dados
@@ -36,12 +43,18 @@ class SeguradorasService
     }
 
     // Contagem total de seguradoras
+    /**
+     * Só SeguradoraController::count() usa, e não há rota para ele.
+     */
     public function count()
     {
         return Seguradora::count();
     }
 
     // Atualiza a seguradora
+    /**
+     * Salva a edição do modal de perfil da seguradora.
+     */
     public function updateSeguradora(int $id, array $data): void
     {
         try {
@@ -61,6 +74,9 @@ class SeguradorasService
      * erro específico (SQLSTATE 23503, violação de chave estrangeira) e
      * devolve uma mensagem que faz sentido pro usuário, em vez do erro de
      * SQL cru (mesmo tratamento já usado em RamoService::delete()).
+     *
+     * Usado pelo botão excluir do modal de perfil da seguradora; a mensagem da
+     * exceção vira o toast de erro.
      */
     public function deleteSeguradora(int $id)
     {
@@ -78,6 +94,10 @@ class SeguradorasService
     }
 
     // Verifica se a seguradora tem ramos associados antes de ativar/inativar
+    /**
+     * Nenhuma tela ou controller chama este método. Ele também não salva a
+     * alteração (falta ->save()), e o model Seguradora não tem 'ativo' no $fillable.
+     */
     public function activeInative(int $id)
     {
         if (Seguradora::has('ramos')->where('id', $id)->exists()) {
@@ -86,6 +106,9 @@ class SeguradorasService
         }
     }
 
+    /**
+     * Lista dos cards da tela Seguradoras.
+     */
     public function getAllSeguradoras()
     {
         // Traz as seguradoras e os ramos relacionados (relacionamento 'ramos')

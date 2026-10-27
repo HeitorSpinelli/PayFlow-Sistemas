@@ -5,6 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Dados extras de apólice de vida — bloco "vida" dos modais de criar/editar
+ * apólice (os beneficiários ficam em BeneficiarioApolice).
+ */
 class DadosVidaApolice extends Model
 {
     protected $table = 'dados_vida_apolice';
@@ -28,6 +32,9 @@ class DadosVidaApolice extends Model
         'pratica_esporte_risco' => 'boolean',
     ];
 
+    /**
+     * Apólice dona destes dados.
+     */
     public function apolice(): BelongsTo
     {
         return $this->belongsTo(Apolice::class, 'apolice_id');

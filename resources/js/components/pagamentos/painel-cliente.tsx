@@ -7,22 +7,42 @@ import {
 } from '@/components/ui/collapsible';
 import { formatarDataBR, formatarMoeda } from '@/utils/Masks';
 
+// Cliente da linha clicada na lista de Pagamentos (só id e nome).
 interface ClienteSelecionado {
     id: number;
     nome: string;
 }
 
+// `apolices` é a prop de mesmo nome da rota GET /pagamentos
+// (pagamentoController::show): todas as apólices com parcelas, dias_atraso e
+// valor_sugerido já calculados. `apoliceIdInicial` = apólice da linha clicada,
+// que já abre expandida.
 interface PainelClientePagamentosProps {
     cliente: ClienteSelecionado | null;
     apolices: any[];
     apoliceIdInicial?: number | null;
 }
 
+/**
+ * Painel lateral direito da tela Pagamentos (pages/FunctionsApp/pagamentos.tsx).
+ * Atualiza quando o operador clica numa linha da "Lista de Pagamentos".
+ *
+ * Sem cliente: mostra um aviso "Nenhum cliente selecionado".
+ * Com cliente:
+ *   - Cabeçalho: inicial, nome e selo "Inadimplente"/"Em dia".
+ *   - Acordeão com uma apólice por item ("X de N parcelas pagas"); só uma fica
+ *     aberta por vez. Aberta, mostra a tabela de parcelas com status Paga /
+ *     Atrasado / A vencer (só a próxima pendente) / Em aberto, e o link
+ *     "Exportar parcelas desta apólice" (GET /pagamentos/apolice/{id}/exportar,
+ *     baixa um CSV).
+ * Não faz requisição própria: filtra a lista `apolices` já carregada pela tela.
+ */
 export default function PainelClientePagamentos({
     cliente,
     apolices,
     apoliceIdInicial = null,
 }: PainelClientePagamentosProps) {
+    // Apólices só do cliente selecionado (itens do acordeão).
     const apolicesDoCliente = useMemo(() => {
         if (!cliente) {
             return [];
@@ -76,6 +96,7 @@ export default function PainelClientePagamentos({
 
     return (
         <div className="flex max-h-[calc(100vh-14rem)] flex-col gap-5 rounded-2xl border border-border/70 bg-card p-5 shadow-sm sm:p-6 lg:sticky lg:top-6">
+            {/* Cabeçalho: avatar, nome e selo Inadimplente / Em dia */}
             <div className="flex items-center gap-5">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25">
                     <span className="text-lg font-bold">
@@ -98,6 +119,7 @@ export default function PainelClientePagamentos({
                 </div>
             </div>
 
+            {/* Acordeão de apólices do cliente (rolagem interna) */}
             <div className="scroll-fina flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
                 {apolicesDoCliente.length === 0 && (
                     <p className="py-6 text-center text-sm text-muted-foreground">
@@ -106,6 +128,7 @@ export default function PainelClientePagamentos({
                 )}
 
                 {apolicesDoCliente.map((apolice: any) => {
+                    // Parcelas em ordem e contagem das pagas (texto "X de N parcelas pagas").
                     const parcelas = [...(apolice.parcelas ?? [])].sort(
                         (a: any, b: any) => a.numero_parcela - b.numero_parcela,
                     );
@@ -120,6 +143,7 @@ export default function PainelClientePagamentos({
                             p.status_pagamento !== 'paga' &&
                             (p.dias_atraso ?? 0) === 0,
                     )?.id;
+                    // Item do acordeão aberto = apólice guardada em apoliceAberta.
                     const isOpen = apoliceAberta === apolice.id;
 
                     return (
@@ -183,6 +207,7 @@ export default function PainelClientePagamentos({
                                                     <tbody>
                                                         {parcelas.map(
                                                             (p: any) => {
+                                                                // Status exibido no selo da parcela (cor: verde, vermelho, âmbar ou neutro).
                                                                 const paga =
                                                                     p.status_pagamento ===
                                                                     'paga';

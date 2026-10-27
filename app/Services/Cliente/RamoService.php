@@ -5,13 +5,23 @@ namespace App\Services\Cliente;
 use App\Models\Ramo;
 use Illuminate\Database\QueryException;
 
+/**
+ * Regras de ramos de seguradora (CRUD). Usado por RamosController, ou seja,
+ * pela seção de ramos do modal de perfil da seguradora (tela Seguradoras).
+ */
 class RamoService
 {
+    /**
+     * Busca um ramo pelo id. Só RamosController::show() usa, e não há rota para ele.
+     */
     public function show(int $id)
     {
         return Ramo::findOrFail($id);
     }
 
+    /**
+     * Cria um ramo — botão de adicionar ramo no modal de perfil da seguradora.
+     */
     public function create(array $data)
     {
         try {
@@ -21,6 +31,9 @@ class RamoService
         }
     }
 
+    /**
+     * Atualiza nome/categoria do ramo — edição de ramo no modal de perfil da seguradora.
+     */
     public function update(int $id, array $data): void
     {
         try {
@@ -36,6 +49,9 @@ class RamoService
      * apagar um ramo que ainda tem apólice vinculada. Captura esse erro
      * específico (SQLSTATE 23503, violação de chave estrangeira) e devolve
      * uma mensagem que faz sentido pro usuário, em vez do erro de SQL cru.
+     *
+     * Usado pela lixeira de ramo no modal de perfil da seguradora; a mensagem da
+     * exceção vira o toast de erro.
      */
     public function delete(int $id): void
     {

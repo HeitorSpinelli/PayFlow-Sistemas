@@ -10,6 +10,10 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
+/**
+ * E-mail enviado ao segurado pelas notificações (manuais e automáticas).
+ * Template: resources/views/emails/notificacao.blade.php.
+ */
 class NotificacaoMail extends Mailable
 {
     use Queueable, SerializesModels;

@@ -49,6 +49,8 @@ const NOMES_MES = [
 
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
+// Monta a chave 'YYYY-MM-DD' de um dia (mês 0-based, como no Date do JS) —
+// mesmo formato de `data_vencimento` vindo do back-end, para casar os dois.
 function toKey(y: number, m: number, day: number) {
     return `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
@@ -60,6 +62,7 @@ function formatMoeda(valor: number) {
     return `R$ ${formatarMoedaBase(valor)}`;
 }
 
+// Texto "3ª/10ª Parcela" mostrado em cada cobrança do modal do dia.
 function labelParcela(c: Cobranca) {
     if (!c.numero_parcela) {
         return null;
@@ -70,6 +73,8 @@ function labelParcela(c: Cobranca) {
         : `${c.numero_parcela}ª Parcela`;
 }
 
+// Rótulo e cores de cada status de cobrança: bolinha no calendário, selo
+// no modal do dia e legenda. O status é calculado em AgendaController::index().
 const STATUS_CONFIG: Record<
     StatusCobranca,
     { label: string; dot: string; badge: string; text: string }
@@ -98,11 +103,24 @@ const STATUS_CONFIG: Record<
 /* Componente principal                                               */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Tela "Agenda de Pagamentos" — URL /agenda.
+ * Props entregues por AgendaController::index(): `cobrancas` = todas as
+ * parcelas com vencimento entre 1 ano atrás e 1 ano à frente, já com status
+ * pago / pendente (a vencer) / atrasado. A troca de mês é feita só no front
+ * (não faz nova requisição).
+ *
+ * Seções: cabeçalho com botão "Hoje", cards de resumo do mês visível
+ * (a receber, em atraso, recebido), calendário mensal com navegação,
+ * legenda de cores e modal com as cobranças do dia clicado.
+ */
 export default function Agenda({ cobrancas }: Props) {
     const dados = useMemo(() => cobrancas ?? [], [cobrancas]);
 
     const hoje = new Date();
+    // Primeiro dia do mês exibido no calendário (as setas mudam este estado).
     const [dataAtual, setDataAtual] = useState(new Date(hoje.getFullYear(), hoje.getMonth(), 1));
+    // Dia clicado ('YYYY-MM-DD'); não-nulo = modal de detalhe do dia aberto.
     const [diaSelecionado, setDiaSelecionado] = useState<string | null>(null);
 
     const ano = dataAtual.getFullYear();
@@ -146,6 +164,7 @@ export default function Agenda({ cobrancas }: Props) {
     }, [ano, mes]);
 
     // Resumo financeiro do mês visível
+    // Alimenta os 3 cards do topo. "A receber" inclui também o que está em atraso.
     const resumoMes = useMemo(() => {
         let aReceber = 0;
         let atrasado = 0;
@@ -167,14 +186,18 @@ export default function Agenda({ cobrancas }: Props) {
         return { aReceber, atrasado, recebido, qtdAtrasados };
     }, [dados, ano, mes]);
 
+    // Setas do calendário: -1 = mês anterior, +1 = próximo mês.
     const mudarMes = (delta: number) => {
         setDataAtual(new Date(ano, mes + delta, 1));
     };
 
+    // Botão "Hoje" do cabeçalho: volta o calendário para o mês atual.
     const irParaHoje = () => {
         setDataAtual(new Date(hoje.getFullYear(), hoje.getMonth(), 1));
     };
 
+    // chaveHoje destaca o dia de hoje na grade; cobrancasDoDiaSelecionado
+    // é a lista exibida no modal do dia.
     const chaveHoje = toKey(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
     const cobrancasDoDiaSelecionado = diaSelecionado
         ? (cobrancasPorDia.get(diaSelecionado) ?? [])

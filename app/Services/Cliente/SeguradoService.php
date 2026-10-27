@@ -6,6 +6,11 @@ use App\Models\Segurado;
 use App\Services\Apolice\ApoliceService;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Regras de clientes (segurados). Usado por SeguradoController (tela Clientes),
+ * DashboardController (gráfico de clientes ativos) e UserController (lixeira
+ * da tela Administração).
+ */
 class SeguradoService
 {
     private const MESES_ABREV = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -17,6 +22,9 @@ class SeguradoService
         $this->apolice_service = $apolice_service;
     }
 
+    /**
+     * Cria o cliente a partir do modal "Novo Cliente" da tela Clientes.
+     */
     public function store(array $data)
     {
         try {
@@ -26,6 +34,10 @@ class SeguradoService
         }
     }
 
+    /**
+     * Total de clientes. Nenhuma tela chama este método hoje
+     * (SeguradoController::show() conta direto pelo model).
+     */
     public function count()
     {
         return Segurado::count();
@@ -36,6 +48,10 @@ class SeguradoService
     // e o controller (SeguradoController::destroy) já embrulha qualquer
     // exceção com "Erro ao excluir segurado: ...". Capturar e reembrulhar
     // aqui de novo só duplicava esse mesmo prefixo na mensagem exibida.
+    /**
+     * Lixeira da Lista de Clientes: cancela todas as apólices do cliente (cada
+     * uma via ApoliceService::destroy) e exclui o cliente, tudo numa transação.
+     */
     public function destroy(int $id)
     {
         DB::transaction(function () use ($id) {
@@ -47,6 +63,10 @@ class SeguradoService
         });
     }
 
+    /**
+     * Salva a edição do painel do cliente da tela Clientes. Descarta cpf_cnpj de
+     * propósito: o documento não pode ser trocado depois do cadastro.
+     */
     public function update(int $id, array $data)
     {
         try {
@@ -61,12 +81,18 @@ class SeguradoService
     // Listando apenas clientes que estão com deleted at. with('apolices'):
     // Segurado::getStatusAttribute() reaproveita essa relação já carregada
     // em vez de rodar uma query EXISTS por cliente na hora de serializar.
+    /**
+     * Seção "Clientes Inativos (Lixeira)" da tela Administração.
+     */
     public function listarInativos()
     {
         return Segurado::onlyTrashed()->with('apolices')->get();
     }
 
     // Restaura o segurado pelo id
+    /**
+     * Botão restaurar da seção "Clientes Inativos (Lixeira)" da tela Administração.
+     */
     public function restore(int $id)
     {
         try {
@@ -99,6 +125,8 @@ class SeguradoService
      * estava ativo no ÚLTIMO DIA daquele mês. Para o mês atual (ainda em
      * andamento), usa a data de hoje como referência — mesmo padrão que
      * receitaDoMes() já usa para o mês corrente ser "parcial".
+     *
+     * Alimenta o gráfico de clientes ativos por mês do Dashboard.
      */
     public function clientesAtivosUltimosMeses(int $meses = 6): array
     {

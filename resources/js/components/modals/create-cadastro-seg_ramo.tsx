@@ -29,11 +29,15 @@ const CATEGORIAS_RAMO = [
     { value: 'outro', label: 'Outro' },
 ];
 
+// Um ramo da lista "Ramos de atuação", ainda não salvo (vai junto no POST da seguradora).
 interface RamoNovo {
     nome_ramo: string;
     categoria: string;
 }
 
+/**
+ * Bloco visual com ícone, título e descrição que agrupa os campos do modal.
+ */
 function Section({ icon, title, description, children }: any) {
     return (
         <section className="rounded-2xl border border-border/70 bg-muted/[0.18] p-4 sm:p-5">
@@ -53,15 +57,33 @@ function Section({ icon, title, description, children }: any) {
     );
 }
 
+/**
+ * Modal "Nova Seguradora" — aberto pelo botão "Nova Seguradora" da tela
+ * Seguradoras (pages/FunctionsApp/seguradoras.tsx). Também abre sozinho quando
+ * a URL chega com ?nova_seguradora=Nome (link do alerta "seguradora não
+ * encontrada" da tela Importar); esse nome vem em `nomeInicial`.
+ *
+ * Seções: Dados da seguradora (nome fantasia, razão social, CNPJ com máscara,
+ * contato, e-mail de suporte) e Ramos de atuação (nome + categoria, botão "+"
+ * ou Enter adiciona na lista; X remove). Rodapé: Cancelar / Salvar.
+ *
+ * Salvar faz POST /seguradoras (SeguradoraController::store +
+ * StoreSeguradoraRequest -> SeguradorasService::createSeguradora), que cria a
+ * seguradora e um registro em `ramos` para cada item da lista. A grade de
+ * seguradoras da tela recarrega com o novo card.
+ */
 export default function CreateSeguradoraRamoModal({
     open,
     setOpen,
     nomeInicial,
 }: any) {
+    // Lista de ramos exibida no modal (espelhada em data.ramos para o envio).
     const [ramos, setRamos] = useState<RamoNovo[]>([]);
+    // Campos de "novo ramo" (nome e categoria) antes de clicar em "+".
     const [novoRamo, setNovoRamo] = useState('');
     const [novaCategoria, setNovaCategoria] = useState('');
 
+    // Formulário Inertia enviado no POST; `errors` mostra validação embaixo dos campos.
     const { data, setData, post, processing, errors } = useForm({
         nome_fantasia: '',
         razao_social: '',
@@ -80,6 +102,8 @@ export default function CreateSeguradoraRamoModal({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, nomeInicial]);
 
+    // Botão "+" (ou Enter no nome do ramo): valida nome/categoria, recusa
+    // repetido (toast vermelho) e adiciona o ramo na lista.
     const adicionarRamo = () => {
         if (!novoRamo.trim()) {
             return;
@@ -107,12 +131,14 @@ export default function CreateSeguradoraRamoModal({
         setNovaCategoria('');
     };
 
+    // X de um ramo da lista: remove antes de salvar.
     const removerRamo = (index: number) => {
         const ramosAtualizados = ramos.filter((_, i) => i !== index);
         setRamos(ramosAtualizados);
         setData('ramos', ramosAtualizados);
     };
 
+    // Enter no campo do ramo adiciona em vez de enviar o formulário.
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -120,6 +146,7 @@ export default function CreateSeguradoraRamoModal({
         }
     };
 
+    // Botão Cancelar / fechar: limpa a lista de ramos e fecha o modal.
     const fechar = () => {
         setRamos([]);
         setNovoRamo('');
@@ -127,6 +154,8 @@ export default function CreateSeguradoraRamoModal({
         setOpen(false);
     };
 
+    // Botão "Salvar": envia a seguradora com os ramos; sucesso fecha o modal,
+    // erro mostra toast vermelho.
     const salvar = () => {
         post('/seguradoras', {
             onSuccess: () => {

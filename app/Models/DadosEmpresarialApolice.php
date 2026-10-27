@@ -5,6 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Dados extras de apólice empresarial — bloco "empresarial" dos modais de
+ * criar/editar apólice.
+ */
 class DadosEmpresarialApolice extends Model
 {
     protected $table = 'dados_empresarial_apolice';
@@ -29,6 +33,9 @@ class DadosEmpresarialApolice extends Model
         'possui_cobertura_incendio_basica' => 'boolean',
     ];
 
+    /**
+     * Apólice dona destes dados.
+     */
     public function apolice(): BelongsTo
     {
         return $this->belongsTo(Apolice::class, 'apolice_id');

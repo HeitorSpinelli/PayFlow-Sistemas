@@ -41,8 +41,25 @@ function lerNomeSugeridoDaUrl(): string | undefined {
     );
 }
 
+/**
+ * Tela "Seguradoras e Ramos" — URL /seguradoras (somente admin).
+ * Props entregues por SeguradoraController::index() (seguradoras com os
+ * ramos de cada uma).
+ *
+ * Seções, de cima para baixo:
+ * 1. Cabeçalho com o botão "Nova Seguradora" (abre CreateSeguradoraRamoModal,
+ *    que faz POST /seguradoras e POST /ramos);
+ * 2. Grid de cards, um por seguradora (CNPJ, e-mail, ramos atendidos e botão
+ *    "Detalhes");
+ * 3. Modais: criação e perfil/edição/exclusão (CreateProfileSeguradoraModal,
+ *    que usa PUT/DELETE /seguradoras/{id} e /ramos/{id}).
+ */
 export default function Seguradoras({ seguradoras = [] }: Props) {
     // Estados independentes para cada modal
+    // nomeSugerido: nome pré-preenchido no modal de criação (vindo da URL).
+    // isCreateModalOpen: abre/fecha o modal "Nova Seguradora" — já nasce
+    // aberto quando a URL traz ?nova_seguradora=...
+    // isProfileModalOpen: abre/fecha o modal de detalhes da seguradora.
     const [nomeSugerido, setNomeSugerido] = useState<string | undefined>(
         lerNomeSugeridoDaUrl,
     );
@@ -75,11 +92,14 @@ export default function Seguradoras({ seguradoras = [] }: Props) {
     const selectedSeguradora =
         seguradoras.find((s) => s.id === selectedSeguradoraId) ?? null;
 
+    // Botão "Detalhes" de um card: marca a seguradora e abre o modal de perfil.
     const abrirDetalhes = (seguradora: Seguradora) => {
         setSelectedSeguradoraId(seguradora.id);
         setIsProfileModalOpen(true);
     };
 
+    // Repassado ao modal de perfil como setOpen: ao fechar, também limpa a
+    // seguradora selecionada (o modal some do DOM, ver JSX abaixo).
     const fecharDetalhes = (open: boolean) => {
         setIsProfileModalOpen(open);
 

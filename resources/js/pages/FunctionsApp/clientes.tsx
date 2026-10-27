@@ -48,13 +48,29 @@ interface PageProps {
     totalInativos?: number;
 }
 
+/**
+ * Tela "Clientes" — URL /clientes.
+ * Props entregues por SeguradoController::show(): `segurados` (paginado de
+ * 10 em 10, já filtrado por ?busca e ?status) e os totais dos cards.
+ *
+ * Seções, de cima para baixo:
+ * 1. Cabeçalho com o botão "Novo Cliente" (abre CreateSeguradoModal → POST /clientes);
+ * 2. Cards: Total de Clientes, Clientes Ativos, Inativos;
+ * 3. Lista de clientes (busca, filtro de status, Exportar CSV, tabela com
+ *    ações de imprimir ficha e excluir) + painel do cliente selecionado à
+ *    direita (PainelCliente: dados, edição via PUT /clientes/{id} e apólices);
+ * 4. Paginação;
+ * 5. Modais: criar cliente e confirmar exclusão (DELETE /clientes/{id}).
+ */
 export default function Clientes({
     segurados,
     total = 0,
     totalInativos = 0,
     totalAtivos = 0,
 }: PageProps) {
+    // Abre/fecha o modal "Novo Cliente".
     const [openModal, setOpenModal] = useState(false);
+    // Abre/fecha o dropdown do filtro de status (Todos/Ativos/Inativos).
     const [filtroAberto, setFiltroAberto] = useState(false);
 
     // Estado para controlar o segurado selecionado e o segurado a ser excluído
@@ -69,6 +85,8 @@ export default function Clientes({
             (segurado) => segurado.id === seguradoSelecionadoId,
         ) ?? null;
 
+    // Opções do dropdown de status — o valor vai como ?status=... e é tratado
+    // em Segurado::scopeFilter() (Ativo = tem apólice dentro da vigência).
     const opcoesFiltro = ['Todos', 'Ativos', 'Inativos'];
 
     // Lê os parâmetros atuais da URL para inicializar os estados corretamente
@@ -77,6 +95,7 @@ export default function Clientes({
             ? new URLSearchParams(window.location.search)
             : new URLSearchParams();
 
+    // Texto do campo de busca (já com máscara de CPF/CNPJ quando é número).
     const [seguradoPesquisado, setSeguradoPesquisado] = useState(
         urlParams.get('busca') || '',
     );
@@ -88,6 +107,8 @@ export default function Clientes({
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Função de busca acionada ao digitar (com debounce de 500ms)
+    // Recarrega a tabela via GET /clientes?busca=... (SeguradoController::show),
+    // voltando para a página 1.
     const handleBuscaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const valorDigitado = e.target.value;
 
@@ -130,6 +151,7 @@ export default function Clientes({
     };
 
     // Função acionada ao selecionar um filtro de status
+    // Recarrega a tabela via GET /clientes?status=... e fecha o dropdown.
     const handleFiltroChange = (opcao: string) => {
         setFiltroSelecionado(opcao);
         setFiltroAberto(false);
@@ -156,10 +178,15 @@ export default function Clientes({
         );
     };
 
+    // Clique numa linha da tabela: destaca a linha e abre esse cliente no
+    // painel da direita.
     const selecionarCliente = (segurado: any) => {
         setSeguradoSelecionadoId(segurado.id);
     };
 
+    // Botão "Confirmar exclusão" do diálogo: DELETE /clientes/{id}
+    // (SeguradoController::destroy — soft delete do cliente e das apólices).
+    // O toast de sucesso vem do flash; aqui só trata erro de rede/validação.
     const confirmarExclusao = () => {
         if (!seguradoParaExcluir) {
             return;
@@ -522,6 +549,7 @@ export default function Clientes({
                         </div>
                     </div>
 
+                    {/* Painel do cliente selecionado (coluna direita) */}
                     <PainelCliente
                         key={seguradoSelecionado?.id ?? 'vazio'}
                         segurado={seguradoSelecionado}
@@ -530,6 +558,7 @@ export default function Clientes({
                 </div>
             </div>
 
+            {/* 5. Modais */}
             {/* Modal de criar cliente */}
             <CreateSeguradoModal
                 key={openModal}
@@ -537,6 +566,8 @@ export default function Clientes({
                 setOpen={setOpenModal}
             />
 
+            {/* Modal de confirmação de exclusão (aberto pela lixeira da tabela
+                ou pelo botão de excluir do painel do cliente) */}
             <Dialog
                 open={!!seguradoParaExcluir}
                 onOpenChange={(open) => !open && setSeguradoParaExcluir(null)}

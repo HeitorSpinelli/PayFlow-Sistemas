@@ -53,6 +53,7 @@ interface Props {
     totalFalhas: number;
 }
 
+// Rótulo e cor do selo da coluna "Status" da tabela do histórico.
 const STATUS_CONFIG: Record<
     StatusNotificacao,
     { label: string; badge: string }
@@ -71,11 +72,14 @@ const STATUS_CONFIG: Record<
     },
 };
 
+// Nome e ícone de cada canal, usados na coluna "Canal" da tabela.
 const CANAL_CONFIG: Record<Canal, { label: string; icon: typeof Mail }> = {
     email: { label: 'E-mail', icon: Mail },
     whatsapp: { label: 'WhatsApp', icon: MessageCircle },
 };
 
+// Chave liga/desliga. Obs.: hoje não é usada — a aba Automações desenha o
+// próprio botão inline (mesmo visual).
 function Toggle({ ativo, onChange }: { ativo: boolean; onChange: () => void }) {
     return (
         <button
@@ -90,6 +94,21 @@ function Toggle({ ativo, onChange }: { ativo: boolean; onChange: () => void }) {
     );
 }
 
+/**
+ * Tela "Notificações" — URL /notificacoes (somente admin).
+ * Props entregues pela closure da rota 'notificacoes' em routes/web.php:
+ * totais dos cards, `tipos` de notificação, `segurados` (destinatários do
+ * envio manual), `notificacoes` (histórico paginado) e `automacoes`.
+ *
+ * Seções, de cima para baixo:
+ * 1. Cabeçalho com "Configurar" (ConfigNotificacaoModal: tipos e automações,
+ *    via /tipo_notificacoes e /automacoes) e "Nova notificação";
+ * 2. Cards de métricas (hoje, enviadas, falhas);
+ * 3. Cards de canal (E-mail / WhatsApp) — cada um abre NotificacaoModal já
+ *    no canal escolhido (envio manual → POST /notificacoes);
+ * 4. Abas: "Histórico" (busca, filtros de canal e status, tabela, paginação)
+ *    e "Automações" (lista com liga/desliga de cada regra).
+ */
 export default function Notificacoes({
     tipos,
     segurados,
@@ -99,8 +118,11 @@ export default function Notificacoes({
     totalEnviados,
     totalFalhas,
 }: Props) {
+    // Aba visível: tabela do histórico ou lista de automações.
     const [aba, setAba] = useState<'historico' | 'automacoes'>('historico');
+    // Canal do modal de envio manual; null = modal fechado.
     const [modalCanal, setModalCanal] = useState<Canal | null>(null);
+    // Abre/fecha o modal "Configurar" (tipos de notificação e automações).
     const [configAberto, setConfigAberto] = useState(false);
 
     // Estados dos filtros do histórico
@@ -108,6 +130,10 @@ export default function Notificacoes({
     const [filtroStatus, setFiltroStatus] = useState('');
     const [busca, setBusca] = useState('');
 
+    // Recarrega SÓ a tabela do histórico (only: ['notificacoes']) via
+    // GET /notificacoes/filtrar (NotificacoesController::filtrar), com os
+    // filtros de canal/status, a busca no texto da mensagem e a página.
+    // Usada pelos filtros, pela busca e pelos botões de paginação.
     const buscarNotificacoes = (params: {
         canal?: string;
         status?: string;
@@ -139,11 +165,15 @@ export default function Notificacoes({
         });
     };
 
+    // Abrem/fecham o modal de envio manual no canal escolhido.
     const abrirModal = (canal: Canal) => setModalCanal(canal);
     const fecharModal = () => setModalCanal(null);
 
     // O toast de sucesso não é mostrado aqui — o layout já mostra
     // automaticamente a partir da flash message do backend.
+    // Chave de uma automação na aba "Automações": PATCH /automacoes/{id}/toggle
+    // invertendo o `ativo` (AutomacoesController::toggle). A lista atualiza
+    // com a recarga do Inertia.
     const toggleAutomacao = (id: number, ativo: boolean) => {
         router.patch(
             `/automacoes/${id}/toggle`,
@@ -314,6 +344,7 @@ export default function Notificacoes({
                     </button>
                 </div>
 
+                {/* Conteúdo da aba: Histórico (tabela) ou Automações (lista) */}
                 {aba === 'historico' ? (
                     <div className="rounded-2xl border border-border/70 bg-card shadow-sm">
                         {/* Cabeçalho com filtros e busca */}
@@ -637,6 +668,7 @@ export default function Notificacoes({
                 )}
             </div>
 
+            {/* Modais: envio manual (key={modalCanal} recria ao trocar de canal) e configurações */}
             <NotificacaoModal
                 key={modalCanal}
                 canal={modalCanal}

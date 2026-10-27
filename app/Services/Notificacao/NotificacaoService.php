@@ -9,8 +9,19 @@ use App\Models\TipoNotificacao;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
+/**
+ * Envio manual de notificações e o card "Notificações" do Dashboard. Usado
+ * por NotificacoesController e DashboardController.
+ */
 class NotificacaoService
 {
+    /**
+     * Envio do modal de notificação da tela Notificações: cria um registro por
+     * segurado selecionado e envia o e-mail (NotificacaoMail). O status final
+     * (Enviado/Falha, com o motivo) aparece no "Histórico de Notificações" e nos
+     * cards da tela. Obs.: o envio é sempre por e-mail, mesmo quando o canal
+     * gravado é outro.
+     */
     public function criarEEnviar(array $data): void
     {
         foreach ($data['segurado_ids'] as $seguradoId) {
@@ -48,6 +59,10 @@ class NotificacaoService
 
     // Últimas notificações disparadas (manual ou por automação) — usado no
     // card "Notificações" do dashboard.
+    /**
+     * Devolve id, texto resumido, data e status (enviado/falha/pendente) — o
+     * status define a cor do item na lista.
+     */
     public function recentes(int $limite = 6)
     {
         return Notificacoes::with('segurado')
@@ -68,6 +83,9 @@ class NotificacaoService
             });
     }
 
+    /**
+     * Frase curta de cada item do card "Notificações" do Dashboard.
+     */
     private function textoResumo(Notificacoes $notificacao): string
     {
         $nome = $notificacao->segurado->nome_completo ?? 'Cliente removido';

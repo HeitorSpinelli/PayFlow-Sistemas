@@ -21,14 +21,20 @@ import {
 } from '@/components/ui/select';
 import { aplicarMascaraCEP, formatarTelefone } from '@/utils/Masks';
 
+// O painel tem dois modos: 'visualizar' (campos só leitura + Editar/Excluir)
+// e 'editar' (formulário + Salvar/Cancelar).
 type Modo = 'visualizar' | 'editar';
 
+// UF retornada pela API do IBGE — popula o select "Estado" no modo edição.
 interface Estado {
     id: number;
     nome: string;
     sigla: string;
 }
 
+// Converte o segurado nos campos editáveis do formulário (null vira '').
+// CPF/CNPJ, tipo de pessoa e data de nascimento/fundação não entram: não são
+// editáveis por aqui (UpdateSeguradoRequest também não os aceita).
 function mapSeguradoParaFormulario(segurado: any) {
     return {
         nome_completo: segurado?.nome_completo ?? '',
@@ -45,11 +51,28 @@ function mapSeguradoParaFormulario(segurado: any) {
     };
 }
 
+// `segurado` = cliente clicado na tabela de Clientes (ou null);
+// `onExcluir` = abre o diálogo de confirmação de exclusão da própria tela.
 interface PainelClienteProps {
     segurado: any;
     onExcluir: (segurado: any) => void;
 }
 
+/**
+ * Painel lateral direito da tela Clientes (pages/FunctionsApp/clientes.tsx).
+ * Atualiza ao clicar numa linha da tabela de clientes.
+ *
+ * Sem cliente: aviso "Nenhum cliente selecionado".
+ * Com cliente:
+ *   - Cabeçalho: inicial, nome e selo Ativo/Inativo (Segurado::status).
+ *   - Modo visualizar: Dados principais, Contato, Endereço e Observações (só
+ *     quando houver); rodapé com "Editar" e "Excluir" (chama onExcluir, que
+ *     abre a confirmação da tela; o DELETE /clientes/{id} é feito por lá).
+ *   - Modo editar: mesmos grupos como formulário; CEP busca o endereço no
+ *     ViaCEP ao sair do campo; "Salvar alterações" faz PUT /clientes/{id}
+ *     (SeguradoController::update + UpdateSeguradoRequest) e volta para o
+ *     modo visualizar; a tela recarrega e o painel mostra os dados novos.
+ */
 export default function PainelCliente({
     segurado,
     onExcluir,
@@ -61,17 +84,23 @@ export default function PainelCliente({
     // cliente anterior — o modal antigo resolvia isso ajustando estado
     // durante a renderização; aqui a remontagem via key evita até precisar
     // desse ajuste.
+    // Modo atual do painel (troca o corpo e os botões do rodapé).
     const [modo, setModo] = useState<Modo>('visualizar');
+    // Lista de UFs para o select Estado (carregada do IBGE ao montar).
     const [estados, setEstados] = useState<Estado[]>([]);
 
+    // Formulário de edição; `errors` mostra os erros de validação embaixo de
+    // Bairro, CEP e Estado; `processing` desabilita "Salvar alterações".
     const { data, setData, put, processing, errors } = useForm(
         mapSeguradoParaFormulario(segurado),
     );
 
+    // Rótulos mudam entre pessoa física (CPF/Nascimento) e jurídica (CNPJ/Fundação); Razão social só aparece para PJ.
     const isPF = segurado?.tipo_pessoa === 'pf';
     const labelDocumento = isPF ? 'CPF' : 'CNPJ';
     const labelData = isPF ? 'Nascimento' : 'Fundação';
 
+    // Busca as UFs no IBGE uma vez; se falhar, o select fica vazio.
     useEffect(() => {
         fetch(
             'https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome',
@@ -81,6 +110,7 @@ export default function PainelCliente({
             .catch(() => setEstados([]));
     }, []);
 
+    // Ao sair do campo CEP: com 8 dígitos, consulta o ViaCEP e preenche endereço, bairro, cidade e estado.
     const buscarCep = async (cep: string) => {
         const cepLimpo = cep.replace(/\D/g, '');
 
@@ -107,6 +137,7 @@ export default function PainelCliente({
         }
     };
 
+    // Botão "Salvar alterações": envia o PUT; em erro mostra toast vermelho e continua editando.
     const salvarEdicao = () => {
         if (!segurado) {
             return;
@@ -139,6 +170,7 @@ export default function PainelCliente({
 
     return (
         <div className="flex max-h-[calc(100vh-14rem)] flex-col gap-5 overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm lg:sticky lg:top-6">
+            {/* Cabeçalho: avatar, nome e selo Ativo/Inativo */}
             <div className="shrink-0 border-b border-border/70 px-5 py-5 sm:px-6">
                 <div className="flex items-center gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
@@ -166,6 +198,7 @@ export default function PainelCliente({
             </div>
 
             <div className="scroll-fina min-h-0 flex-1 space-y-5 overflow-y-auto px-5 pb-2 sm:px-6">
+                {/* Modo visualizar: dados somente leitura */}
                 {modo === 'visualizar' && (
                     <>
                         <Section
@@ -258,6 +291,7 @@ export default function PainelCliente({
                     </>
                 )}
 
+                {/* Modo editar: formulário */}
                 {modo === 'editar' && (
                     <>
                         <Section
@@ -493,6 +527,7 @@ export default function PainelCliente({
                 )}
             </div>
 
+            {/* Rodapé: Editar/Excluir (visualizar) ou Salvar/Cancelar (editar) */}
             <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border/70 bg-background px-5 py-4 sm:px-6">
                 {modo === 'visualizar' && (
                     <>

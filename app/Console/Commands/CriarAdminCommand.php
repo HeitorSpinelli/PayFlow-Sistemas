@@ -7,6 +7,10 @@ use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Validator;
 
+/**
+ * Comando de console (php artisan usuarios:criar-admin) para criar ou
+ * promover um admin. Sem tela; alternativa à tela Configuração Inicial.
+ */
 class CriarAdminCommand extends Command
 {
     use PasswordValidationRules;
@@ -18,6 +22,9 @@ class CriarAdminCommand extends Command
     // já que o cadastro público em /register foi desativado de propósito.
     protected $description = 'Cria (ou promove a admin) um usuário — usar quando não existe nenhuma conta ainda.';
 
+    /**
+     * Pergunta os dados no terminal e cria (ou promove) o usuário admin.
+     */
     public function handle(): int
     {
         $name = $this->ask('Nome completo');

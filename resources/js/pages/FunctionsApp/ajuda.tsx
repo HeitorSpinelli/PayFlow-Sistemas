@@ -17,6 +17,9 @@ interface ManualSecao {
     conteudo: string[];
 }
 
+// Texto do manual exibido na aba "Manual do Usuário": cada item vira um
+// bloco expansível (título + resumo; ao abrir, os parágrafos de `conteudo`).
+// Para mudar o manual basta editar esta lista — não há nada no back-end.
 const MANUAL: ManualSecao[] = [
     {
         id: 'dashboard',
@@ -109,7 +112,10 @@ const MANUAL: ManualSecao[] = [
 /* Manual (accordion)                                                 */
 /* ------------------------------------------------------------------ */
 
+// Lista de seções do manual em accordion: só uma fica aberta por vez
+// (a primeira, "Dashboard", já começa aberta).
 function ManualAccordion() {
+    // id da seção expandida no momento (null = todas fechadas).
     const [aberta, setAberta] = useState<string | null>(MANUAL[0].id);
 
     return (
@@ -152,7 +158,15 @@ function ManualAccordion() {
 /* Página principal                                                   */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Tela "Central de Ajuda" — URL /ajuda (closure em routes/web.php, sem props
+ * próprias). Seções: cabeçalho e, abaixo:
+ * - admin: abas "Manual do Usuário" e "Documentação do TCC" (botão que baixa
+ *   o .docx via GET /ajuda/documentacao-tcc, rota só para admin);
+ * - demais usuários: só o manual, sem abas.
+ */
 export default function Ajuda() {
+    // Papel do usuário logado (props compartilhadas): decide se mostra a aba do TCC.
     const { auth } = usePage().props as any;
     const isAdmin = auth?.user?.role === 'admin';
 

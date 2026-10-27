@@ -29,6 +29,10 @@ import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 
 // Aqui estão os ícones seguindo a ordem da sua imagem
+// Itens do menu lateral, na ordem em que aparecem. `href` é a URL da rota
+// em routes/web.php; `adminOnly: true` esconde o item de quem não é admin
+// (as rotas desses itens também exigem `can:is-admin` no back-end, então
+// esconder aqui é só para não mostrar um link que daria 403).
 const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard', //titulo do item
@@ -79,12 +83,22 @@ const mainNavItems: NavItem[] = [
         icon: Settings, // Reutilizando o ícone de Pessoas para Administração
     }
 ];
+// Links do rodapé da sidebar (acima do usuário). Vazio hoje.
 const footerNavItems: NavItem[] = [
     
 ];
 
+/**
+ * Menu lateral de todas as telas autenticadas (montado pelo AppSidebarLayout).
+ * De cima para baixo: logo (link para o Dashboard), itens de navegação
+ * filtrados pelo papel do usuário, e no rodapé o NavUser (avatar/nome com o
+ * menu de configurações e sair). `collapsible="icon"` permite recolher a
+ * sidebar deixando só os ícones.
+ */
 export function AppSidebar() {
 
+    // Usuário logado, compartilhado com todas as páginas pelo
+    // HandleInertiaRequests::share() (props.auth.user).
     const {auth} = usePage().props as any;
     const user = auth.user;
 

@@ -6,12 +6,19 @@ use App\Models\Parcelas;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
+/**
+ * Job diário (07:00, routes/console.php) que muda parcelas em aberto já
+ * vencidas para 'vencida'. Sem tela própria: o efeito aparece na Agenda, no
+ * Dashboard e nas automações de atraso.
+ */
 class AtualizarParcelasVencidas implements ShouldQueue
 {
     use Queueable;
 
     /**
      * Create a new job instance.
+     *
+     * Sem parâmetros: o job sempre processa todas as parcelas.
      */
     public function __construct()
     {

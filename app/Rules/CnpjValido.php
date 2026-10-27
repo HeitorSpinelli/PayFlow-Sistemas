@@ -13,6 +13,9 @@ use Illuminate\Contracts\Validation\ValidationRule;
  */
 class CnpjValido implements ValidationRule
 {
+    /**
+     * Na tela: erro no campo CNPJ dos modais de cadastro/edição de seguradora.
+     */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $documento = preg_replace('/\D/', '', (string) $value);
@@ -54,6 +57,9 @@ class CnpjValido implements ValidationRule
         return (int) $cnpj[13] === $segundoDigito;
     }
 
+    /**
+     * Calcula um dígito verificador do CNPJ com os pesos informados.
+     */
     private static function calcularDigito(string $cnpj, array $pesos, int $quantidadeDigitos): int
     {
         $soma = 0;

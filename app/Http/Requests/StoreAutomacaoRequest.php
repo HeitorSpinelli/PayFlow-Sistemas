@@ -5,10 +5,16 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Validação do formulário de automação do modal de configurações da tela
+ * Notificações.
+ */
 class StoreAutomacaoRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * Sempre true: o acesso é controlado pelo middleware da rota (só admin).
      */
     public function authorize(): bool
     {

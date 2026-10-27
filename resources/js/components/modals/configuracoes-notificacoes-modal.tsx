@@ -5,12 +5,14 @@ import { useForm, router } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { Automacao } from '@/types/notificacoes';
 
+// Tipo de notificação (tabela tipos_notificacao) — vem da prop `tipos` da rota GET /notificacoes.
 interface Tipo {
     id: number;
     nome_notificacao: string;
     ativo: boolean;
 }
 
+// `aberto`/`onClose` vêm do estado configAberto da tela Notificações.
 interface ConfiguracoesModalProps {
     aberto: boolean;
     onClose: () => void;
@@ -18,6 +20,8 @@ interface ConfiguracoesModalProps {
     automacoes: Automacao[];
 }
 
+// Rótulo legível de cada condição de automação. As chaves são as mesmas que
+// o job ProcessarAutomacoes entende (roda todo dia às 08:00, routes/console.php).
 const CONDICOES: Record<string, string> = {
     apolice_vencendo: 'Apólice vencendo',
     parcela_vencendo: 'Parcela vencendo',
@@ -25,13 +29,35 @@ const CONDICOES: Record<string, string> = {
     cliente_inativo: 'Cliente inativo',
 };
 
+/**
+ * Modal "Configurações" de notificações — aberto pelo botão "Configurar" no
+ * topo da tela Notificações (pages/FunctionsApp/notificacoes.tsx). A tela passa
+ * key={String(configAberto)}, então ele remonta zerado a cada abertura.
+ *
+ * Aba "Tipos de Notificação":
+ *   - criar tipo: POST /tipo_notificacoes (TipoNotificacoesController::store);
+ *   - renomear (lápis -> check): PATCH /tipo_notificacoes/{id} com o nome;
+ *   - ligar/desligar (interruptor): PATCH /tipo_notificacoes/{id} com `ativo`.
+ *     Tipo desligado aparece riscado e as automações dele são puladas pelo job.
+ * Aba "Automações":
+ *   - formulário "Nova Automação" (condição, dias, repetir a cada, canal, tipo,
+ *     mensagem): POST /automacoes (AutomacoesController::store, que recusa
+ *     duplicata de condição+canal+tipo);
+ *   - lista das automações com interruptor (PATCH /automacoes/{id}/toggle) e
+ *     lixeira (DELETE /automacoes/{id}).
+ * Toda ação volta com redirect back: as listas `tipos`/`automacoes` são
+ * recarregadas pela tela e o toast de sucesso vem do flash global.
+ * É um overlay próprio (div fixa), não usa o Dialog do shadcn.
+ */
 export default function ConfigNotificacaoModal({
     aberto,
     onClose,
     tipos,
     automacoes,
 }: ConfiguracoesModalProps) {
+    // Aba visível no corpo do modal.
     const [aba, setAba] = useState<'tipos' | 'automacoes'>('tipos');
+    // ID do tipo em edição inline (mostra input no lugar do nome) e o texto digitado nele.
     const [editandoId, setEditandoId] = useState<number | null>(null);
     const [nomeEditando, setNomeEditando] = useState('');
 
@@ -57,8 +83,10 @@ export default function ConfigNotificacaoModal({
         ativo: true,
     });
 
+    // Fechado = não renderiza nada.
     if (!aberto) return null;
 
+    // Botão "+" da aba Tipos: cria o tipo digitado e limpa o campo.
     // Os toasts de sucesso não são mostrados aqui — o layout já mostra
     // automaticamente a partir da flash message do backend. Os de erro
     // ficam: quando vêm de errors.<campo>, são falha de validação (422, sem
@@ -75,6 +103,7 @@ export default function ConfigNotificacaoModal({
         });
     };
 
+    // Botão de check na edição inline: salva o novo nome do tipo e sai da edição.
     const salvarEdicao = (id: number) => {
         router.patch(
             `/tipo_notificacoes/${id}`,
@@ -90,6 +119,7 @@ export default function ConfigNotificacaoModal({
         );
     };
 
+    // Interruptor de um tipo: inverte o `ativo` dele.
     const toggleAtivo = (id: number, ativo: boolean) => {
         router.patch(
             `/tipo_notificacoes/${id}`,
@@ -104,6 +134,7 @@ export default function ConfigNotificacaoModal({
 
     // --- Funções de Automações ---
 
+    // Botão "Adicionar Automação": cria a automação e limpa o formulário.
     const criarAutomacao = () => {
         postAuto('/automacoes', {
             onSuccess: () => resetAuto(),
@@ -113,6 +144,7 @@ export default function ConfigNotificacaoModal({
         });
     };
 
+    // Interruptor de uma automação: liga/desliga sem apagar.
     const toggleAutomacao = (id: number, ativo: boolean) => {
         router.patch(
             `/automacoes/${id}/toggle`,
@@ -125,6 +157,7 @@ export default function ConfigNotificacaoModal({
         );
     };
 
+    // Lixeira de uma automação: exclui na hora (sem confirmação).
     const deletarAutomacao = (id: number) => {
         router.delete(`/automacoes/${id}`, {
             onError: () => {
@@ -133,6 +166,7 @@ export default function ConfigNotificacaoModal({
         });
     };
 
+    // Habilita "Adicionar Automação" só com os campos obrigatórios preenchidos (intervalo é opcional).
     const podeAdicionarAutomacao =
         dataAuto.tipo_condicao &&
         dataAuto.dias &&

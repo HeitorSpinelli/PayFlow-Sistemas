@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Services\Assistente\DininhoService;
 use Illuminate\Http\Request;
 
+/**
+ * Endpoint do assistente virtual "Dininho" — o widget de chat flutuante
+ * (components/dininho/dininho-widget.tsx) presente em todas as telas logadas.
+ */
 class DininhoController extends Controller
 {
     protected DininhoService $dininhoService;
@@ -14,6 +18,11 @@ class DininhoController extends Controller
         $this->dininhoService = $dininhoService;
     }
 
+    /**
+     * Recebe a pergunta digitada no chat do Dininho (mais o histórico recente da
+     * conversa) e devolve a resposta em JSON, que o widget exibe como balão.
+     * Limitado a 4 perguntas por minuto (throttle na rota).
+     */
     public function pergunta(Request $request)
     {
         $dados = $request->validate([

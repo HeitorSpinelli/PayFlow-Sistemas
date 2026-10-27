@@ -5,6 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Cliente (segurado) — tabela segurados. Tela Clientes, ficha impressa, e
+ * dono das apólices em todo o sistema. Soft delete = cliente na lixeira
+ * ("Clientes Inativos (Lixeira)" da tela Administração).
+ */
 class Segurado extends Model
 {
     protected $table = 'segurados';
@@ -28,6 +33,9 @@ class Segurado extends Model
         'observacoes',
     ];
 
+    /**
+     * Apólices do cliente (coluna apolices.cliente_id).
+     */
     public function apolices()
     {
         return $this->hasMany(Apolice::class, 'cliente_id');
@@ -40,6 +48,8 @@ class Segurado extends Model
      * query EXISTS por cliente — sem isso, cada linha da tabela de clientes
      * disparava sua própria consulta extra (N+1), mesmo com o with('apolices')
      * já feito no controller.
+     *
+     * Na tela: é o selo Ativo/Inativo da Lista de Clientes e da ficha impressa.
      */
     public function getStatusAttribute(): string
     {
@@ -55,6 +65,10 @@ class Segurado extends Model
         return $this->apolices()->ativas()->exists() ? 'Ativo' : 'Inativo';
     }
 
+    /**
+     * Busca por nome/CPF/CNPJ e filtro Ativos/Inativos da tela Clientes
+     * (SeguradoController::show).
+     */
     public function scopeFilter($query, array $filters)
     {
         // Bloco de busca — isolado dentro de parênteses

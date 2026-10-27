@@ -39,8 +39,17 @@ import {
     valorDigitadoParaNumero,
 } from '@/utils/Masks';
 
+// Os três "modos" do modal: cada um troca o título, o corpo e os botões do
+// rodapé. visualizar = somente leitura; editar = formulário; excluir =
+// confirmação com senha.
 type Modo = 'visualizar' | 'editar' | 'excluir';
 
+// Valores vazios de cada bloco de "dados extras" por categoria de ramo
+// (mesmos campos do modal de criação, validados no back-end por
+// ValidaDadosPorCategoriaDeRamo). Usados como base dos map*() abaixo e para
+// zerar o bloco quando, na edição, o ramo muda de categoria.
+
+// Categoria "veiculo": seção "Dados do veículo".
 const DADOS_VEICULO_INICIAL = {
     tipo_veiculo: '',
     placa: '',
@@ -60,6 +69,7 @@ const DADOS_VEICULO_INICIAL = {
     data_nascimento_condutor_principal: '',
 };
 
+// Categoria "residencial": seção "Dados do imóvel".
 const DADOS_RESIDENCIA_INICIAL = {
     tipo_imovel: '',
     tipo_construcao: '',
@@ -89,6 +99,7 @@ function mapDadosResidencia(apolice: any) {
     };
 }
 
+// Categoria "vida": seção "Dados do segurado (vida)".
 const DADOS_VIDA_INICIAL = {
     profissao: '',
     possui_atividade_profissional_risco: false,
@@ -100,6 +111,8 @@ const DADOS_VIDA_INICIAL = {
     capital_segurado: '',
 };
 
+// Um beneficiário em branco: item inicial da seção "Beneficiários" quando a
+// apólice de vida ainda não tem nenhum, e o que "Adicionar" acrescenta.
 const BENEFICIARIO_INICIAL = {
     nome_completo: '',
     cpf: '',
@@ -108,6 +121,7 @@ const BENEFICIARIO_INICIAL = {
     percentual_indenizacao: '',
 };
 
+// Categoria "empresarial": seção "Dados da empresa".
 const DADOS_EMPRESARIAL_INICIAL = {
     cnae_ou_atividade: '',
     numero_funcionarios: '',
@@ -123,6 +137,7 @@ const DADOS_EMPRESARIAL_INICIAL = {
     cep_estabelecimento: '',
 };
 
+// Opções do select "Parentesco" de cada beneficiário (modo editar).
 const PARENTESCOS = [
     { value: 'conjuge', label: 'Cônjuge' },
     { value: 'filho', label: 'Filho(a)' },
@@ -132,6 +147,8 @@ const PARENTESCOS = [
     { value: 'outro', label: 'Outro' },
 ];
 
+// Mesma ideia de mapDadosVeiculo/mapDadosResidencia para vida, beneficiários
+// (garante pelo menos um cartão na lista) e empresarial.
 function mapDadosVida(apolice: any) {
     return { ...DADOS_VIDA_INICIAL, ...(apolice?.dados_vida ?? {}) };
 }
@@ -234,6 +251,9 @@ const LABEL_PARENTESCO: Record<string, string> = {
     outro: 'Outro',
 };
 
+// Cartão visual de cada bloco do modal (Informações gerais, Vigência, Dados
+// do veículo etc.): ícone, título, descrição e os campos como children.
+// Só apresentação.
 function Section({ icon, title, description, children }: any) {
     return (
         <section className="rounded-2xl border border-border/70 bg-muted/[0.18] p-4 sm:p-5">
@@ -253,6 +273,8 @@ function Section({ icon, title, description, children }: any) {
     );
 }
 
+// Caixinha somente leitura "rótulo + valor" do modo visualizar. Sem valor,
+// mostra "Não informado".
 function InfoField({ label, value }: { label: string; value?: string }) {
     return (
         <div className="rounded-xl border border-border/70 bg-background px-3 py-2.5 shadow-sm">
@@ -266,12 +288,42 @@ function InfoField({ label, value }: { label: string; value?: string }) {
     );
 }
 
+/**
+ * Modal de perfil da apólice: ver detalhes, editar ou excluir (cancelar).
+ *
+ * Aberto pela tela Apólices (pages/FunctionsApp/apolices.tsx), botão de
+ * três pontos (⋯) na coluna de ações de cada linha da tabela (abrirPerfil).
+ *
+ * Props:
+ * - open / setOpen: visibilidade, controlada pela página Apólices.
+ * - apolice: linha clicada, já com os campos de exibição montados pelo
+ *   back-end (nome_completo, nome_ramo, nome_fantasia, ramo_categoria,
+ *   status_vigencia, dados_veiculo/residencia/vida/empresarial,
+ *   beneficiarios). Sem apólice, o modal não renderiza nada.
+ * - ramos: lista de ramos (ApolicesController::index), usada no select
+ *   "Ramo" da edição e para descobrir a categoria do ramo escolhido.
+ *
+ * Modos (estado `modo`):
+ * - visualizar (padrão): seções somente leitura — Informações gerais,
+ *   Valores e parcelas, Vigência, a seção da categoria do ramo (veículo,
+ *   imóvel, vida + beneficiários ou empresa) e Observações. Rodapé com
+ *   "Excluir" (só admin) e "Editar".
+ * - editar: as mesmas seções viram formulário. "Salvar alterações" faz
+ *   PUT /apolices/{id} (ApolicesController::update, validado por
+ *   UpdateApoliceRequest + ValidaDadosPorCategoriaDeRamo).
+ * - excluir: pede a senha do usuário logado e faz DELETE /apolices/{id}
+ *   (ApolicesController::destroy, rota só para admin). No back-end
+ *   (ApoliceService::destroy) é um soft delete com motivo "manual" — a
+ *   apólice pode voltar pelo "Restaurar" da tela Administração.
+ */
 export default function CreateApoliceProfileModal({
     open,
     setOpen,
     apolice,
     ramos,
 }: any) {
+    // Modo atual do modal. Os botões do rodapé trocam entre eles; fechar o
+    // modal sempre volta para 'visualizar'.
     const [modo, setModo] = useState<Modo>('visualizar');
 
     // A rota apolices.destroy é protegida por `can:is-admin`. Sem esconder o
@@ -286,10 +338,16 @@ export default function CreateApoliceProfileModal({
     // Confirmação por senha antes de excluir — estado próprio, separado do
     // useForm principal (que é o formulário de edição da apólice), pra não
     // misturar um campo de senha no payload de salvarEdicao().
+    // senhaConfirmacao: campo "Digite sua senha para confirmar" (modo excluir).
+    // erroSenha: mensagem em vermelho embaixo desse campo.
+    // excluindo: desabilita o botão e troca o texto para "Excluindo...".
     const [senhaConfirmacao, setSenhaConfirmacao] = useState('');
     const [erroSenha, setErroSenha] = useState('');
     const [excluindo, setExcluindo] = useState(false);
 
+    // Formulário do modo editar. É preenchido com os dados da apólice pelo
+    // useEffect abaixo e enviado inteiro no PUT /apolices/{id}. `errors`
+    // traz a validação do back-end (mensagens embaixo dos campos).
     const { data, setData, put, processing, errors } = useForm({
         numero_apolice: '',
         cliente_id: '',
@@ -353,6 +411,8 @@ export default function CreateApoliceProfileModal({
         categoriaDosDadosExtrasRef.current = novaCategoria;
     };
 
+    // Atualizadores dos blocos aninhados (modo editar): trocam um campo dentro
+    // de data.veiculo / residencia / vida / empresarial, mantendo os demais.
     const atualizarVeiculo = (campo: string, valor: any) =>
         setData('veiculo', { ...data.veiculo, [campo]: valor });
 
@@ -365,6 +425,8 @@ export default function CreateApoliceProfileModal({
     const atualizarEmpresarial = (campo: string, valor: any) =>
         setData('empresarial', { ...data.empresarial, [campo]: valor });
 
+    // Seção "Beneficiários" (modo editar): altera um campo do beneficiário na
+    // posição `index`; adicionar/remover acrescentam ou tiram um cartão.
     const atualizarBeneficiario = (
         index: number,
         campo: string,
@@ -388,6 +450,8 @@ export default function CreateApoliceProfileModal({
             data.beneficiarios.filter((_: any, i: number) => i !== index),
         );
 
+    // Soma dos percentuais dos beneficiários. Se não fechar em 100% numa
+    // apólice de vida, "Salvar alterações" fica desabilitado.
     const somaPercentuaisBeneficiarios = data.beneficiarios.reduce(
         (soma: number, b: any) =>
             soma + (parseFloat(b.percentual_indenizacao) || 0),
@@ -410,6 +474,8 @@ export default function CreateApoliceProfileModal({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [apolice, open]);
 
+    // Fecha o modal (X, Esc, clique fora ou depois de salvar/excluir) e deixa
+    // tudo pronto para a próxima abertura: modo visualizar e senha limpa.
     const fechar = () => {
         setModo('visualizar');
         setSenhaConfirmacao('');
@@ -439,6 +505,9 @@ export default function CreateApoliceProfileModal({
     // resposta com flash de ERRO como uma visita "bem-sucedida" (não é uma
     // falha de validação), esse onSuccess disparava mesmo quando o backend
     // tinha rejeitado a ação, mostrando "sucesso" ao lado do erro real.
+    // Botão "Salvar alterações" (modo editar): PUT /apolices/{id}. No sucesso
+    // fecha o modal e o Inertia recarrega a tela Apólices; no erro de
+    // validação mostra um toast vermelho e as mensagens nos campos.
     const salvarEdicao = () => {
         if (!apolice) {
             return;
@@ -450,12 +519,18 @@ export default function CreateApoliceProfileModal({
         });
     };
 
+    // Botão "Cancelar" do modo excluir: limpa a senha e volta a visualizar.
     const cancelarExclusao = () => {
         setSenhaConfirmacao('');
         setErroSenha('');
         setModo('visualizar');
     };
 
+    // Botão "Confirmar exclusão" (ou Enter no campo de senha): envia
+    // DELETE /apolices/{id} com a senha. O back-end confere a senha
+    // (regra current_password); se estiver errada, a mensagem aparece
+    // embaixo do campo. No sucesso fecha o modal e a apólice some da tela
+    // Apólices.
     const confirmarExclusao = () => {
         if (!apolice) {
             return;
@@ -486,6 +561,7 @@ export default function CreateApoliceProfileModal({
         return null;
     }
 
+    // Texto do breadcrumb do cabeçalho ("Apólices › Detalhes/Editar/Excluir").
     const tituloBreadcrumb =
         modo === 'editar'
             ? 'Editar'
@@ -496,6 +572,7 @@ export default function CreateApoliceProfileModal({
     return (
         <Dialog open={open} onOpenChange={fechar}>
             <DialogContent className="!flex max-h-[92vh] flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 shadow-2xl sm:max-w-4xl">
+                {/* Cabeçalho: inicial do segurado, breadcrumb, título conforme o modo, nome do segurado e selo de vigência */}
                 <DialogHeader className="relative shrink-0 overflow-hidden border-b border-border/70 bg-gradient-to-br from-emerald-500/[0.12] via-background to-background px-6 py-6 pr-12 sm:px-8">
                     <div className="absolute -top-12 -right-10 h-36 w-36 rounded-full bg-emerald-500/10 blur-2xl" />
                     <div className="relative flex items-center gap-3">
@@ -541,8 +618,10 @@ export default function CreateApoliceProfileModal({
                     )}
                 </DialogHeader>
 
+                {/* Corpo com rolagem: mostra só o bloco do modo atual */}
                 <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6 sm:px-8">
                     {/* ── MODO VISUALIZAR ── */}
+                    {/* Seções somente leitura. A seção da categoria usa apolice.ramo_categoria (o ramo salvo no banco). */}
                     {modo === 'visualizar' && (
                         <>
                             <Section
@@ -990,6 +1069,7 @@ export default function CreateApoliceProfileModal({
                     )}
 
                     {/* ── MODO EDITAR ── */}
+                    {/* Formulário. A seção da categoria usa categoriaRamoEmEdicao, então muda na hora se o usuário trocar o ramo. */}
                     {modo === 'editar' && (
                         <>
                             <Section
@@ -2781,6 +2861,7 @@ export default function CreateApoliceProfileModal({
                     )}
 
                     {/* ── MODO EXCLUIR ── */}
+                    {/* Aviso + campo de senha. Obs.: o texto diz "removida permanentemente", mas o back-end faz soft delete restaurável. */}
                     {modo === 'excluir' && (
                         <Section
                             icon={
@@ -2831,6 +2912,7 @@ export default function CreateApoliceProfileModal({
                     )}
                 </div>
 
+                {/* Rodapé: botões mudam conforme o modo (Excluir/Editar · Cancelar/Salvar alterações · Cancelar/Confirmar exclusão) */}
                 <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border/70 bg-background px-6 py-4 sm:px-8">
                     {modo === 'visualizar' && (
                         <>

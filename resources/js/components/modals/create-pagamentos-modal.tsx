@@ -74,6 +74,7 @@ function Section({
     );
 }
 
+// Mensagem de erro de validação em vermelho embaixo de um campo; não renderiza nada sem erro.
 function FieldError({ message }: { message?: string }) {
     if (!message) return null;
 
@@ -84,6 +85,7 @@ function FieldError({ message }: { message?: string }) {
     );
 }
 
+// Classes Tailwind repetidas nos rótulos, inputs e selects do formulário.
 const labelClass = 'text-sm leading-none font-medium';
 
 const inputClass =
@@ -126,12 +128,34 @@ function PixIcon({ className }: { className?: string }) {
     );
 }
 
+/**
+ * Modal "Registrar Pagamento" — aberto pelo botão "Registrar Pagamento" no
+ * topo da tela Pagamentos (pages/FunctionsApp/pagamentos.tsx). `segurados` e
+ * `apolices` são props da rota GET /pagamentos (pagamentoController::show):
+ * apólices já vêm com parcelas, pagamentos lançados, dias_atraso e
+ * valor_sugerido (com multa/juros calculados para hoje).
+ *
+ * Etapas numeradas (o círculo vira check quando resolvida):
+ *   1. Segurado: busca por nome ou CPF/CNPJ com lista de sugestões.
+ *   2. Apólice e parcela: só apólices do segurado; ao escolher, já seleciona
+ *      a próxima parcela ainda não lançada (as lançadas ficam bloqueadas).
+ *   3. Valores e pagamento: valor (preenchido sozinho, só editável com
+ *      "ajustar valor manualmente"), data e forma (Boleto/Pix/Cartão/Débito).
+ *   4. Observações.
+ * "Registrar" valida o básico aqui (toasts) e faz POST /pagamentos
+ * (pagamentoController::store + StorePagamentoRequest -> PagamentoService::store),
+ * que recalcula o valor pela data informada (salvo modo manual), grava o
+ * pagamento, marca a parcela como paga e reavalia a suspensão da apólice.
+ * A lista, os cards de resumo e o painel do cliente recarregam com o novo dado.
+ */
 export default function CreatePagamentoModal({
     open,
     setOpen,
     segurados,
     apolices,
 }: any) {
+    // Dados enviados no POST /pagamentos; `errors` aparece embaixo dos campos
+    // (FieldError) e `processing` desabilita o botão Registrar.
     const { data, setData, post, reset, clearErrors, errors, processing } =
         useForm({
             segurado_id: '',
@@ -155,6 +179,7 @@ export default function CreatePagamentoModal({
     const [buscaSegurado, setBuscaSegurado] = useState('');
     // Controla se a lista de sugestões está visível
     const [sugestoesAbertas, setSugestoesAbertas] = useState(false);
+    // Contorno do campo de busca + sugestões — clique fora dele fecha a lista.
     const wrapperRef = useRef<HTMLDivElement>(null);
 
     // Sempre que o modal fechar (por X, Cancelar, clique fora, Esc, etc.), limpa tudo
@@ -193,6 +218,8 @@ export default function CreatePagamentoModal({
             .slice(0, 8); // limita a 8 sugestões pra não estourar a tela
     })();
 
+    // Clique numa sugestão: escolhe o segurado, mostra o nome no campo e zera
+    // apólice/parcela/valor (etapa 2 recomeça).
     const selecionarSegurado = (segurado: any) => {
         setData('segurado_id', String(segurado.id));
         // limpa apólice/parcela já escolhidas, já que pertenciam ao segurado anterior
@@ -235,6 +262,7 @@ export default function CreatePagamentoModal({
         (p: any) => Number(p.parcela),
     );
 
+    // Dispara ao trocar a apólice no select da etapa 2.
     // Ao escolher a apólice, calcula automaticamente a próxima parcela em aberto e o valor dela
     useEffect(() => {
         if (!data.apolice_id) return;
@@ -267,6 +295,7 @@ export default function CreatePagamentoModal({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [data.apolice_id]);
 
+    // Preenche o campo Valor da etapa 3 (somente leitura fora do modo manual).
     // Mantém o valor exibido acompanhando a parcela selecionada — inclusive
     // quando o operador troca a parcela na mão, o que antes deixava o valor
     // da parcela anterior no campo. Não mexe no campo quando ele está em
@@ -297,6 +326,8 @@ export default function CreatePagamentoModal({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [data.apolice_id, data.parcela, data.valor_manual]);
 
+    // Botão "Registrar pagamento": confere segurado, apólice, valor, data e forma
+    // (toast vermelho explicando o que falta) e envia. Sucesso limpa e fecha.
     const handleSubmit = () => {
         // Antes de enviar, garante que as etapas anteriores (cadastro do
         // cliente e da apólice) não foram puladas — sem isso o backend só
@@ -403,6 +434,7 @@ export default function CreatePagamentoModal({
 
                 <div className="min-h-0 flex-1 overflow-y-auto bg-muted/30 px-6 py-6 sm:px-8">
                     <div className="grid gap-5 md:grid-cols-2">
+                        {/* Etapa 1 — Segurado */}
                         <Section
                             className="md:col-start-1"
                             step={1}
@@ -499,6 +531,7 @@ export default function CreatePagamentoModal({
                                 />
                             </div>
                         </Section>
+                        {/* Etapa 2 — Apólice e parcela */}
                         <Section
                             className="md:col-start-1"
                             step={2}
@@ -611,6 +644,7 @@ export default function CreatePagamentoModal({
                             )}
                         </Section>
 
+                        {/* Etapa 3 — Valor, data e forma de pagamento (coluna da direita) */}
                         <Section
                             className="md:col-start-2 md:row-span-2 md:row-start-1"
                             step={3}
@@ -779,6 +813,7 @@ export default function CreatePagamentoModal({
                             </div>
                         </Section>
 
+                        {/* Etapa 4 — Observações (largura total) */}
                         <Section
                             className="md:col-span-2"
                             icon={<FileText className="size-3.5" />}
@@ -799,6 +834,7 @@ export default function CreatePagamentoModal({
                     </div>
                 </div>
 
+                {/* Rodapé: Cancelar / Registrar pagamento */}
                 <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border/70 bg-background px-6 py-4 sm:px-8">
                     <Button
                         variant="outline"

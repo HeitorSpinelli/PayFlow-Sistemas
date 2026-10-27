@@ -1,8 +1,19 @@
+// Props do interruptor: `ativo` decide a posição/cor; `onChange` é chamado
+// no clique — quem usa é que dispara a requisição e troca o estado.
 interface ToggleProps {
     ativo: boolean
     onChange: () => void
 }
 
+/**
+ * Interruptor liga/desliga (verde = ligado, cinza = desligado), pensado para
+ * ativar/desativar uma automação de notificação (PATCH /automacoes/{id}/toggle,
+ * AutomacoesController::toggle).
+ *
+ * ATENÇÃO: hoje nenhum arquivo importa este componente — a tela
+ * FunctionsApp/notificacoes.tsx declara a própria função Toggle local, com o
+ * mesmo visual. Se for mexer no interruptor das automações, é lá que muda.
+ */
 export default function Toggle({ativo, onChange}: ToggleProps) {
     return (
         <button

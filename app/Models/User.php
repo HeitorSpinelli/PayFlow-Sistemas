@@ -11,6 +11,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
+/**
+ * Usuário que acessa o sistema (role 'admin' ou 'user'). Gerenciado na
+ * "Lista de Usuários" da tela Administração; o primeiro é criado pela tela
+ * Configuração Inicial ou pelo comando usuarios:criar-admin.
+ */
 #[Fillable(['name', 'email', 'password', 'role'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
@@ -33,6 +38,10 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
+    /**
+     * Atalho para role === 'admin'. Hoje nada chama este método: o controle de
+     * acesso usa o Gate 'is-admin' (AppServiceProvider) e o front lê auth.user.role.
+     */
     public function isAdmin(): bool
     {
         return $this->role === 'admin';

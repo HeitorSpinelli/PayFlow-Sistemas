@@ -7,6 +7,13 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
+/**
+ * Busca e guarda Selic e IPCA (API do Banco Central) para o cálculo de juros
+ * de mora das parcelas atrasadas. Não tem tela própria: roda pelo comando
+ * agendado AtualizarIndicadoresEconomicos (06:30) e é lido por
+ * ParcelaFinanceiroService. O efeito visível é o valor sugerido (com multa e
+ * juros) no modal "Registrar Pagamento".
+ */
 class IndicadorEconomicoService
 {
     // Códigos das séries no Sistema Gerenciador de Séries Temporais (SGS) do
@@ -21,6 +28,8 @@ class IndicadorEconomicoService
      * Atualiza os dois indicadores (Selic e IPCA acumulado 12m).
      * Cada um é buscado/salvo de forma independente: se um falhar,
      * isso não impede o outro de ser atualizado com sucesso.
+     *
+     * Chamado pelo comando agendado indicadores:atualizar (06:30).
      */
     public function atualizarTodos(): void
     {

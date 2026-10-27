@@ -6,6 +6,12 @@ use App\Models\Parcelas;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 
+/**
+ * Cálculo de multa e juros de mora de parcela atrasada. Usado por
+ * pagamentoController::show() (valor sugerido que o modal "Registrar
+ * Pagamento" pré-preenche) e por PagamentoService::store() (valor final
+ * gravado no pagamento).
+ */
 class ParcelaFinanceiroService
 {
     // Multa fixa por atraso, aplicada uma única vez — teto máximo legal
@@ -26,6 +32,9 @@ class ParcelaFinanceiroService
     // instância nova por resolução, então o cache não vaza entre requisições.
     private ?float $taxaDiariaCache = null;
 
+    /**
+     * Recebe o serviço de indicadores (Selic/IPCA) usado para a taxa de juros.
+     */
     public function __construct(IndicadorEconomicoService $indicadorService)
     {
         $this->indicadorService = $indicadorService;
@@ -40,6 +49,9 @@ class ParcelaFinanceiroService
      * padrão, hoje. Passar a data real evita cobrar juros a mais quando o
      * lançamento no sistema é feito depois do pagamento de fato (lançamento
      * retroativo).
+     *
+     * Na tela: é o "valor sugerido" (com acréscimos) que aparece no modal
+     * "Registrar Pagamento" quando a parcela está atrasada.
      */
     public function calcular(Parcelas $parcela, ?CarbonInterface $dataPagamento = null): array
     {

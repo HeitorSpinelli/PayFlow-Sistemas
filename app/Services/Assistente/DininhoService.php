@@ -6,6 +6,10 @@ use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Integração com a API do Google Gemini para o assistente "Dininho" (widget
+ * de chat em todas as telas logadas). Chamado por DininhoController.
+ */
 class DininhoService
 {
     /**
@@ -34,6 +38,8 @@ class DininhoService
      * histórico recente da conversa para manter o contexto entre mensagens.
      *
      * @param  array<int, array{autor: string, texto: string}>  $historico
+     *
+     * O texto devolvido é exatamente o balão de resposta exibido no chat do widget.
      */
     public function perguntar(string $mensagem, array $historico = []): string
     {
@@ -108,6 +114,8 @@ class DininhoService
      *
      * @param  array<int, array{autor: string, texto: string}>  $historico
      * @return array<int, array{role: string, parts: array<int, array{text: string}>}>
+     *
+     * Usado só por perguntar().
      */
     private function formatarHistorico(array $historico): array
     {

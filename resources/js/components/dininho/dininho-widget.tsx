@@ -1,15 +1,20 @@
 import { MessageCircle, Send, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+// Uma bolha do chat: do usuário (verde, à direita) ou do Dininho (cinza, à esquerda).
 interface Mensagem {
     autor: 'usuario' | 'dininho';
     texto: string;
 }
 
+// Chave do sessionStorage onde a conversa fica salva; quantas mensagens
+// anteriores vão junto como contexto (o back-end aceita até 20); e o limite de
+// caracteres da pergunta (mesmo max:1000 validado em DininhoController).
 const CHAVE_STORAGE = 'dininho:mensagens';
 const MAX_HISTORICO_ENVIADO = 12;
 const MAX_CARACTERES = 1000;
 
+// Lê a conversa salva desta aba ao montar o widget; qualquer erro = conversa vazia.
 function carregarMensagensSalvas(): Mensagem[] {
     try {
         const bruto = sessionStorage.getItem(CHAVE_STORAGE);
@@ -21,15 +26,36 @@ function carregarMensagensSalvas(): Mensagem[] {
     }
 }
 
+/**
+ * Dininho — assistente de chat (IA) do PayFlow. Renderizado pelo layout
+ * autenticado (layouts/app/app-sidebar-layout.tsx), então aparece em TODAS as
+ * telas internas como um botão flutuante 🦖 no canto inferior direito.
+ *
+ * Partes da tela:
+ *   - Botão flutuante: abre/fecha a janela; mostra um ponto vermelho quando
+ *     chegou resposta com o chat fechado.
+ *   - Janela de chat: cabeçalho (com lixeira para limpar a conversa), lista de
+ *     mensagens com indicador "digitando" e campo de pergunta + botão enviar.
+ * Cada pergunta faz POST /dininho/perguntar (DininhoController::pergunta ->
+ * DininhoService), limitado a 4 por minuto pela rota (throttle:4,1); o 429
+ * vira uma mensagem amigável no chat. Usa fetch puro (não Inertia) porque a
+ * resposta é JSON, não uma página.
+ */
 export default function DininhoWidget() {
+    // Janela do chat visível ou escondida.
     const [aberto, setAberto] = useState(false);
+    // Conversa exibida na janela (inicia com o que estava salvo na aba).
     const [mensagens, setMensagens] = useState<Mensagem[]>(
         carregarMensagensSalvas,
     );
+    // Texto digitado no campo de pergunta.
     const [pergunta, setPergunta] = useState('');
+    // true enquanto espera a resposta: mostra os três pontinhos e trava o campo/botão.
     const [carregando, setCarregando] = useState(false);
+    // Ponto vermelho no botão flutuante: resposta chegou com o chat fechado.
     const [temMensagemNaoLida, setTemMensagemNaoLida] = useState(false);
 
+    // Âncora no fim da lista (para rolar até a última mensagem) e referência do campo (para dar foco).
     const fimDaListaRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -44,6 +70,7 @@ export default function DininhoWidget() {
         }
     }, [mensagens]);
 
+    // Rola a lista até o fim sempre que entra mensagem nova ou o "digitando" aparece.
     useEffect(() => {
         fimDaListaRef.current?.scrollIntoView({
             behavior: 'smooth',
@@ -51,12 +78,14 @@ export default function DininhoWidget() {
         });
     }, [mensagens, carregando]);
 
+    // Ao abrir o chat, coloca o cursor no campo de pergunta.
     useEffect(() => {
         if (aberto) {
             inputRef.current?.focus();
         }
     }, [aberto]);
 
+    // Clique no botão flutuante: abre/fecha a janela; ao abrir, apaga o aviso de não lida.
     const alternarChat = () => {
         setAberto((valor) => {
             const novoValor = !valor;
@@ -69,6 +98,7 @@ export default function DininhoWidget() {
         });
     };
 
+    // Lixeira do cabeçalho: apaga a conversa da tela e do sessionStorage.
     const limparConversa = () => {
         setMensagens([]);
         try {
@@ -78,6 +108,9 @@ export default function DininhoWidget() {
         }
     };
 
+    // Enter no campo ou botão enviar: adiciona a pergunta na tela, manda ao
+    // back-end com as últimas mensagens como histórico e adiciona a resposta
+    // (ou uma mensagem de erro amigável) como bolha do Dininho.
     const enviarPergunta = async () => {
         const perguntaAtual = pergunta.trim();
 

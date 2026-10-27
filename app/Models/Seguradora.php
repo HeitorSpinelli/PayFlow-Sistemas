@@ -4,6 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Seguradora parceira — cards da tela Seguradoras e select de seguradora dos
+ * modais de apólice.
+ */
 class Seguradora extends Model
 {
     // Seguradoras parceiras, como Porto Seguro, Bradesco Seguros, SulAmérica, etc.
@@ -17,6 +21,9 @@ class Seguradora extends Model
         'email_suporte',
     ];
 
+    /**
+     * Ramos oferecidos pela seguradora (listados no card e no modal de perfil).
+     */
     public function ramos()
     {
 

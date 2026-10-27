@@ -29,8 +29,12 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 
+// Três "telas" no mesmo modal: 'visualizar' (detalhes), 'editar' (dados +
+// gestão de ramos) e 'excluir' (confirmação). Mudam o corpo, o breadcrumb e
+// os botões do rodapé.
 type Modo = 'visualizar' | 'editar' | 'excluir';
 
+// Ramo já salvo da seguradora (vem em seguradora.ramos, prop da tela Seguradoras).
 interface RamoExistente {
     id: number;
     nome_ramo: string;
@@ -48,6 +52,9 @@ const CATEGORIAS_RAMO = [
     { value: 'outro', label: 'Outro' },
 ];
 
+/**
+ * Bloco visual com ícone, título e descrição que agrupa o conteúdo do modal.
+ */
 function Section({ icon, title, description, children }: any) {
     return (
         <section className="rounded-2xl border border-border/70 bg-muted/[0.18] p-4 sm:p-5">
@@ -67,6 +74,9 @@ function Section({ icon, title, description, children }: any) {
     );
 }
 
+/**
+ * Campo somente leitura (rótulo + valor); mostra "Não informado" quando vazio.
+ */
 function InfoField({ label, value }: { label: string; value?: string }) {
     return (
         <div className="rounded-xl border border-border/70 bg-background px-3 py-2.5 shadow-sm">
@@ -80,13 +90,32 @@ function InfoField({ label, value }: { label: string; value?: string }) {
     );
 }
 
+/**
+ * Modal de perfil da seguradora — aberto pelo botão "Detalhes" de um card na
+ * tela Seguradoras (pages/FunctionsApp/seguradoras.tsx). A tela só monta o
+ * modal com uma seguradora selecionada e sempre passa a versão atual dela,
+ * então a lista de ramos atualiza sozinha depois de cada ação.
+ *
+ * Modo visualizar: Informações principais e Ramos atendidos; rodapé Editar /
+ * Excluir.
+ * Modo editar:
+ *   - Editar dados (nome fantasia, razão social, CNPJ, e-mail) -> "Salvar"
+ *     faz PUT /seguradoras/{id} (SeguradoraController::update) e fecha.
+ *   - Ramos de atuação, cada ação salva na hora, sem esperar o "Salvar":
+ *     adicionar (POST /ramos), editar inline (PUT /ramos/{id}) e excluir
+ *     (DELETE /ramos/{id}; o banco recusa se alguma apólice usa o ramo).
+ * Modo excluir: confirmação -> DELETE /seguradoras/{id} (recusado pelo banco
+ * se houver apólice da seguradora); fecha o modal ao terminar.
+ */
 export default function SeguradoraProfileModal({
     open,
     setOpen,
     seguradora,
 }: any) {
+    // Modo atual do modal.
     const [modo, setModo] = useState<Modo>('visualizar');
 
+    // Formulário de "Editar dados" (nasce com os dados atuais da seguradora).
     const { data, setData, put, processing } = useForm({
         nome_fantasia: seguradora?.nome_fantasia ?? '',
         razao_social: seguradora?.razao_social ?? '',
@@ -103,12 +132,14 @@ export default function SeguradoraProfileModal({
     const [novoNomeRamo, setNovoNomeRamo] = useState('');
     const [novaCategoriaRamo, setNovaCategoriaRamo] = useState('');
 
+    // Fecha o modal (X, clique fora ou após salvar/excluir) e volta ao modo visualizar.
     const fechar = () => {
         setModo('visualizar');
         setEditandoRamoId(null);
         setOpen(false);
     };
 
+    // Botão "Salvar alterações" do modo editar: envia os dados da seguradora.
     // Os toasts de sucesso não são mostrados aqui — o layout já mostra
     // automaticamente a partir da flash message do backend; duplicar com
     // toast.success aqui mostrava dois avisos a cada ação.
@@ -123,6 +154,7 @@ export default function SeguradoraProfileModal({
         });
     };
 
+    // Botão "Confirmar exclusão": exclui a seguradora e fecha o modal (com sucesso ou erro).
     const confirmarExclusao = () => {
         if (!seguradora) {
             return;
@@ -135,6 +167,7 @@ export default function SeguradoraProfileModal({
         });
     };
 
+    // Botão "+" em Ramos de atuação: cria o ramo na seguradora e limpa os campos.
     const adicionarRamo = () => {
         if (!seguradora) {
             return;
@@ -165,16 +198,19 @@ export default function SeguradoraProfileModal({
         );
     };
 
+    // Lápis de um ramo: troca a linha por inputs com o nome/categoria atuais.
     const iniciarEdicaoRamo = (ramo: RamoExistente) => {
         setEditandoRamoId(ramo.id);
         setNomeRamoEditando(ramo.nome_ramo);
         setCategoriaRamoEditando(ramo.categoria);
     };
 
+    // X da edição inline: descarta e volta a linha ao normal.
     const cancelarEdicaoRamo = () => {
         setEditandoRamoId(null);
     };
 
+    // Check da edição inline: salva nome/categoria do ramo.
     const salvarEdicaoRamo = () => {
         if (editandoRamoId === null) {
             return;
@@ -201,6 +237,7 @@ export default function SeguradoraProfileModal({
         );
     };
 
+    // Lixeira de um ramo: exclui na hora (sem confirmação).
     const excluirRamo = (id: number) => {
         router.delete(`/ramos/${id}`, {
             preserveScroll: true,
@@ -211,6 +248,7 @@ export default function SeguradoraProfileModal({
         });
     };
 
+    // Texto final do breadcrumb do cabeçalho conforme o modo.
     const tituloBreadcrumb =
         modo === 'editar'
             ? 'Editar'
@@ -246,6 +284,7 @@ export default function SeguradoraProfileModal({
                 </DialogHeader>
 
                 <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6 break-all sm:px-8">
+                    {/* Modo visualizar: informações e ramos atendidos */}
                     {modo === 'visualizar' && (
                         <>
                             <Section
@@ -301,6 +340,7 @@ export default function SeguradoraProfileModal({
                         </>
                     )}
 
+                    {/* Modo editar: dados da seguradora */}
                     {modo === 'editar' && (
                         <Section
                             icon={<Building2 className="h-4 w-4" />}
@@ -375,6 +415,7 @@ export default function SeguradoraProfileModal({
                         </Section>
                     )}
 
+                    {/* Modo editar: ramos (adicionar / editar inline / excluir, salvam na hora) */}
                     {modo === 'editar' && (
                         <Section
                             icon={<FileText className="h-4 w-4" />}
@@ -542,6 +583,7 @@ export default function SeguradoraProfileModal({
                         </Section>
                     )}
 
+                    {/* Modo excluir: confirmação */}
                     {modo === 'excluir' && (
                         <Section
                             icon={
@@ -562,6 +604,7 @@ export default function SeguradoraProfileModal({
                     )}
                 </div>
 
+                {/* Rodapé: botões mudam conforme o modo */}
                 <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border/70 bg-background px-6 py-4 sm:px-8">
                     {modo === 'visualizar' && (
                         <>

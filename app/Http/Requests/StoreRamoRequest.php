@@ -6,10 +6,15 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
+/**
+ * Validação de ramo novo adicionado no modal de perfil da seguradora.
+ */
 class StoreRamoRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * Sempre true: o acesso é controlado pelo middleware da rota (só admin).
      */
     public function authorize(): bool
     {
@@ -38,6 +43,9 @@ class StoreRamoRequest extends FormRequest
         ];
     }
 
+    /**
+     * Mensagens em português exibidas no formulário de ramo.
+     */
     public function messages(): array
     {
         return [

@@ -12,6 +12,11 @@ use App\Rules\CpfValido;
  */
 trait ValidaDadosPorCategoriaDeRamo
 {
+    /**
+     * Escolhe o bloco de regras extras (veículo, residência, vida ou empresarial)
+     * pela categoria do ramo selecionado — o mesmo bloco que o modal de apólice
+     * mostra para aquele ramo.
+     */
     private function regrasPorCategoriaDoRamo(?int $ramoId): array
     {
         $categoria = Ramo::find($ramoId)?->categoria;
@@ -65,6 +70,9 @@ trait ValidaDadosPorCategoriaDeRamo
         });
     }
 
+    /**
+     * Regras dos campos do bloco "veículo" do modal de apólice.
+     */
     private function regrasVeiculo(): array
     {
         return [
@@ -88,6 +96,9 @@ trait ValidaDadosPorCategoriaDeRamo
         ];
     }
 
+    /**
+     * Regras dos campos do bloco "residência" do modal de apólice.
+     */
     private function regrasResidencia(): array
     {
         return [
@@ -108,6 +119,9 @@ trait ValidaDadosPorCategoriaDeRamo
         ];
     }
 
+    /**
+     * Regras dos campos do bloco "vida" e da lista de beneficiários do modal de apólice.
+     */
     private function regrasVida(): array
     {
         return [
@@ -133,6 +147,9 @@ trait ValidaDadosPorCategoriaDeRamo
         ];
     }
 
+    /**
+     * Regras dos campos do bloco "empresarial" do modal de apólice.
+     */
     private function regrasEmpresarial(): array
     {
         return [

@@ -9,6 +9,12 @@ use App\Services\Notificacao\NotificacaoService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Comando agendado (07:15) de inadimplência da 2ª parcela em diante: suspende
+ * a apólice (e avisa o segurado) e cancela as suspensas há 30+ dias. Na tela,
+ * as apólices aparecem em "Apólices Inativas (Suspensas)" e depois em
+ * "Apólices Canceladas" na tela Administração.
+ */
 class VerificarInadimplenciaParcelas extends Command
 {
     protected $signature = 'apolices:verificar-inadimplencia';
@@ -20,6 +26,9 @@ class VerificarInadimplenciaParcelas extends Command
     // hora (ver CancelarApolicesPorAtrasoDaPrimeiraParcela).
     private const DIAS_PARA_CANCELAMENTO = 30;
 
+    /**
+     * Executa as duas etapas: suspender inadimplentes e cancelar suspensas antigas.
+     */
     public function handle(ApoliceService $apoliceService, NotificacaoService $notificacaoService): void
     {
         if (! config('automacoes.financeiras_ativas')) {

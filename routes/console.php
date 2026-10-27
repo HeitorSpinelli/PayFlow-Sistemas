@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 
+// Comando de exemplo que vem com o Laravel; não é usado pelo sistema.
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
@@ -38,6 +39,8 @@ Schedule::job((new AtualizarParcelasVencidas)->onConnection('sync'))->dailyAt('0
 // aplicada automaticamente.
 Schedule::command(CancelarApolicesPorAtrasoDaPrimeiraParcela::class)->dailyAt('07:05');
 
+// Suspende apólices com parcela 2ª+ atrasada e cancela as suspensas há 30+
+// dias (aparecem nas seções de apólices da tela Administração).
 Schedule::command(VerificarInadimplenciaParcelas::class)->dailyAt('07:15');
 // Mesmo motivo do AtualizarParcelasVencidas acima: sem 'sync' esta automação
 // nunca executava, e as notificações de vencimento/atraso nunca saíam.

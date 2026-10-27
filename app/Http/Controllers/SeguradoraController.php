@@ -6,6 +6,11 @@ use App\Http\Requests\StoreSeguradoraRequest;
 use App\Http\Requests\UpdateSeguradoraRequest;
 use App\Services\Cliente\SeguradorasService;
 
+/**
+ * Controller da tela Seguradoras (/seguradoras, seguradoras.tsx, só admin):
+ * cards das seguradoras, modal de cadastro (seguradora + ramos) e modal de
+ * perfil (editar/excluir).
+ */
 class SeguradoraController extends Controller
 {
     protected SeguradorasService $seguradorasService;
@@ -15,6 +20,9 @@ class SeguradoraController extends Controller
         $this->seguradorasService = $seguradorasService;
     }
 
+    /**
+     * Alimenta a tela Seguradoras: um card por seguradora, com os ramos dela.
+     */
     public function index()
     {
         $seguradoras = $this->seguradorasService->getAllSeguradoras();
@@ -24,6 +32,11 @@ class SeguradoraController extends Controller
         ]);
     }
 
+    /**
+     * Cadastra seguradora e seus ramos pelo modal de cadastro
+     * (create-cadastro-seg_ramo.tsx). Também é o destino do atalho "cadastrar
+     * seguradora" da tela Importar (abre a tela com ?nova_seguradora=...).
+     */
     public function store(StoreSeguradoraRequest $request)
     {
         try {
@@ -35,6 +48,9 @@ class SeguradoraController extends Controller
         }
     }
 
+    /**
+     * Total de seguradoras em flash. Não existe rota apontando para este método.
+     */
     public function count()
     {
         try {
@@ -46,6 +62,10 @@ class SeguradoraController extends Controller
         }
     }
 
+    /**
+     * Salva a edição dos dados da seguradora no modal de perfil
+     * (create-profileSeguradora-modal.tsx).
+     */
     public function update(UpdateSeguradoraRequest $request, int $id)
     {
         try {
@@ -57,6 +77,10 @@ class SeguradoraController extends Controller
         }
     }
 
+    /**
+     * Exclui a seguradora pelo modal de perfil; recusa com toast de erro se
+     * houver apólice vinculada.
+     */
     public function destroy(int $id)
     {
         try {

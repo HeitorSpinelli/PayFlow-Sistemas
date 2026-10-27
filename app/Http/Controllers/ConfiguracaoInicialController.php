@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Tela "Configuração Inicial" (/configuracao-inicial,
+ * resources/js/pages/auth/configuracao-inicial.tsx): cria o primeiro admin
+ * num banco vazio. A rota "/" redireciona pra cá enquanto não houver usuário.
+ */
 class ConfiguracaoInicialController extends Controller
 {
     use PasswordValidationRules;
@@ -18,6 +23,9 @@ class ConfiguracaoInicialController extends Controller
     // registro aberto — ver config/fortify.php) pro cenário de venda: o
     // cliente recebe um banco vazio e só tem acesso à URL da aplicação, sem
     // console do servidor pra rodar `php artisan usuarios:criar-admin`.
+    /**
+     * Exibe a tela de Configuração Inicial (ou 404 se já existe usuário).
+     */
     public function create(): Response
     {
         $this->abortSeJaExisteUsuario();
@@ -25,6 +33,10 @@ class ConfiguracaoInicialController extends Controller
         return Inertia::render('auth/configuracao-inicial');
     }
 
+    /**
+     * Recebe o formulário da Configuração Inicial: cria o primeiro usuário como
+     * admin, já verificado, faz login e redireciona para o Dashboard.
+     */
     public function store(Request $request)
     {
         // Checa antes de validar: com o cadastro fechado (já existe
@@ -73,6 +85,10 @@ class ConfiguracaoInicialController extends Controller
         return redirect()->route('dashboard');
     }
 
+    /**
+     * Devolve 404 se já existir qualquer usuário — é o que "desliga" a tela de
+     * Configuração Inicial depois do primeiro admin criado.
+     */
     private function abortSeJaExisteUsuario(): void
     {
         if (User::count() > 0) {

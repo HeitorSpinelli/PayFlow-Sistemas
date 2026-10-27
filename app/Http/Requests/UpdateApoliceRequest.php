@@ -7,12 +7,17 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
+/**
+ * Validação da edição no modal de perfil da apólice (tela Apólices).
+ */
 class UpdateApoliceRequest extends FormRequest
 {
     use ValidaDadosPorCategoriaDeRamo;
 
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * Sempre true: o acesso é controlado pelo middleware da rota.
      */
     public function authorize(): bool
     {
@@ -46,6 +51,9 @@ class UpdateApoliceRequest extends FormRequest
         return $rules + $this->regrasPorCategoriaDoRamo($this->input('ramo_id'));
     }
 
+    /**
+     * Mensagens em português exibidas no modal de perfil da apólice.
+     */
     public function messages(): array
     {
         return [
