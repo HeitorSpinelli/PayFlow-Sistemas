@@ -196,10 +196,12 @@ export default function ConfigNotificacaoModal({
                             <p className="text-lg font-bold">Configurações</p>
                         </div>
                     </div>
+                    {/* Antes só voltava para a aba Tipos e não fechava nada. */}
                     <button
                         onClick={() => {
                             setAba('tipos');
                             setEditandoId(null);
+                            onClose();
                         }}
                         className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"
                     >
