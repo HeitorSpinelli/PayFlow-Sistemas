@@ -1,9 +1,22 @@
-import { Check, Mail, MessageCircle, Search, Send, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Canal, Segurado } from '@/types/notificacoes';
-import { useState, useMemo } from 'react';
-import { useForm } from '@inertiajs/react';
+import { router, useForm } from '@inertiajs/react';
+import {
+    Check,
+    ExternalLink,
+    Mail,
+    MessageCircle,
+    Search,
+    Send,
+    X,
+} from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import type { Canal, Segurado } from '@/types/notificacoes';
+import { gerarLinkWhatsapp } from '@/utils/Masks';
+import {
+    montarMensagemNotificacao,
+    rotuloSituacaoParcela,
+} from '@/utils/notificacoes';
 
 interface NotificacaoModalProps {
     canal: Canal | null;
@@ -30,10 +43,15 @@ export default function NotificacaoModal({
     });
 
     const clientesFiltrados = useMemo(() => {
-    if (!segurados) return []; // Guard against undefined/null
-    
-    const termo = busca.trim().toLowerCase();
-    if (!termo) return segurados;
+        if (!segurados) {
+            return [];
+        } // Guard against undefined/null
+
+        const termo = busca.trim().toLowerCase();
+
+        if (!termo) {
+            return segurados;
+        }
 
         return segurados.filter(
             (segurado) =>
@@ -63,6 +81,83 @@ export default function NotificacaoModal({
         );
     };
 
+    // WhatsApp: cada cliente tem a própria mensagem (gerada a partir da
+    // parcela dele) e o próprio link wa.me — por isso o envio é por cliente,
+    // não em lote. Só guarda o texto quando o operador edita; até lá, usa o
+    // gerado (mensagemDoCliente).
+    const [mensagensEditadas, setMensagensEditadas] = useState<
+        Record<number, string>
+    >({});
+    const [enviosWhatsapp, setEnviosWhatsapp] = useState<
+        Record<number, 'enviando' | 'enviado'>
+    >({});
+
+    const clientesSelecionados = useMemo(
+        () =>
+            segurados.filter((segurado) => selecionados.includes(segurado.id)),
+        [segurados, selecionados],
+    );
+
+    const mensagemDoCliente = (cliente: Segurado) =>
+        mensagensEditadas[cliente.id] ??
+        montarMensagemNotificacao(
+            cliente.nome_completo,
+            cliente.parcela_cobranca,
+        );
+
+    // Abre o WhatsApp com a mensagem pronta (o envio de fato é manual, pelo
+    // próprio WhatsApp do operador) e registra no histórico. O window.open
+    // vem antes do post para continuar dentro do clique do usuário — senão
+    // o navegador bloqueia como pop-up.
+    const enviarWhatsapp = (cliente: Segurado) => {
+        if (!cliente.celular_whatsapp || tipo === '') {
+            return;
+        }
+
+        const mensagemFinal = mensagemDoCliente(cliente);
+
+        window.open(
+            gerarLinkWhatsapp(cliente.celular_whatsapp, mensagemFinal),
+            '_blank',
+            'noopener,noreferrer',
+        );
+
+        setEnviosWhatsapp((prev) => ({ ...prev, [cliente.id]: 'enviando' }));
+
+        router.post(
+            '/notificacoes',
+            {
+                segurado_ids: [cliente.id],
+                canal: 'whatsapp',
+                mensagem: mensagemFinal,
+                tipo_notificacao_id: tipo,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () =>
+                    setEnviosWhatsapp((prev) => ({
+                        ...prev,
+                        [cliente.id]: 'enviado',
+                    })),
+                onError: () => {
+                    toast.error(
+                        `Falha ao registrar o envio para ${cliente.nome_completo}.`,
+                    );
+                    setEnviosWhatsapp((prev) => {
+                        const atualizado = { ...prev };
+                        delete atualizado[cliente.id];
+
+                        return atualizado;
+                    });
+                },
+            },
+        );
+    };
+
+    const totalEnviadosWhatsapp = Object.values(enviosWhatsapp).filter(
+        (status) => status === 'enviado',
+    ).length;
+
     // O toast de sucesso não é mostrado aqui — o layout já mostra
     // automaticamente a partir da flash message do backend. Também fecha o
     // modal e limpa a seleção/mensagem: antes disso, o modal ficava aberto
@@ -87,7 +182,9 @@ export default function NotificacaoModal({
         });
     };
 
-    if (!canal) return null;
+    if (!canal) {
+        return null;
+    }
 
     return (
         <div
@@ -100,8 +197,14 @@ export default function NotificacaoModal({
             >
                 <div className="flex items-center justify-between border-b p-4">
                     <div className="flex items-center gap-3">
-                        <div className="rounded-lg bg-blue-500 p-2 text-white">
-                            <Mail size={20} />
+                        <div
+                            className={`rounded-lg p-2 text-white ${canal === 'email' ? 'bg-blue-500' : 'bg-emerald-500'}`}
+                        >
+                            {canal === 'email' ? (
+                                <Mail size={20} />
+                            ) : (
+                                <MessageCircle size={20} />
+                            )}
                         </div>
                         <div>
                             <p className="text-xs font-semibold text-emerald-600">
@@ -146,6 +249,7 @@ export default function NotificacaoModal({
                                 const marcado = selecionados.includes(
                                     cliente.id,
                                 );
+
                                 return (
                                     <button
                                         key={cliente.id}
@@ -178,9 +282,18 @@ export default function NotificacaoModal({
                                                     : cliente.celular_whatsapp}
                                             </p>
                                         </div>
-                                        {cliente.devedor && (
-                                            <span className="shrink-0 rounded-full border border-red-500/20 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-600">
-                                                Devedor
+                                        {cliente.parcela_cobranca && (
+                                            <span
+                                                className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold ${
+                                                    cliente.parcela_cobranca
+                                                        .situacao === 'atrasada'
+                                                        ? 'border-red-500/20 bg-red-500/10 text-red-600'
+                                                        : 'border-amber-500/20 bg-amber-500/10 text-amber-600'
+                                                }`}
+                                            >
+                                                {rotuloSituacaoParcela(
+                                                    cliente.parcela_cobranca,
+                                                )}
                                             </span>
                                         )}
                                     </button>
@@ -213,46 +326,169 @@ export default function NotificacaoModal({
                         </select>
                     </div>
 
-                    <div className="grid gap-2">
-                        <label className="text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase">
-                            Mensagem
-                        </label>
-                        <textarea
-                            value={mensagem}
-                            onChange={(e) => setMensagem(e.target.value)}
-                            rows={4}
-                            placeholder={
-                                canal === 'email'
-                                    ? 'Digite a mensagem que será enviada por e-mail...'
-                                    : 'Digite a mensagem que será enviada pelo WhatsApp...'
-                            }
-                            className="resize-none rounded-xl border border-border/70 bg-background px-3.5 py-3 text-sm focus:ring-2 focus:ring-emerald-500/30 focus:outline-none"
-                        />
-                    </div>
+                    {canal === 'email' ? (
+                        <div className="grid gap-2">
+                            <label className="text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase">
+                                Mensagem
+                            </label>
+                            <textarea
+                                value={mensagem}
+                                onChange={(e) => setMensagem(e.target.value)}
+                                rows={4}
+                                placeholder="Digite a mensagem que será enviada por e-mail..."
+                                className="resize-none rounded-xl border border-border/70 bg-background px-3.5 py-3 text-sm focus:ring-2 focus:ring-emerald-500/30 focus:outline-none"
+                            />
+                        </div>
+                    ) : (
+                        <div className="grid gap-2">
+                            <label className="text-[11px] font-bold tracking-[0.1em] text-muted-foreground uppercase">
+                                Mensagens
+                            </label>
+                            {clientesSelecionados.length === 0 && (
+                                <p className="rounded-xl border border-dashed border-border/70 px-3.5 py-4 text-center text-xs text-muted-foreground">
+                                    Selecione um cliente para gerar a mensagem
+                                    com os dados da parcela.
+                                </p>
+                            )}
+                            {clientesSelecionados.map((cliente) => {
+                                const parcela = cliente.parcela_cobranca;
+                                const status = enviosWhatsapp[cliente.id];
+                                const semWhatsapp = !cliente.celular_whatsapp;
+
+                                return (
+                                    <div
+                                        key={cliente.id}
+                                        className="rounded-xl border border-border/70 p-3.5"
+                                    >
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="min-w-0">
+                                                <p className="truncate text-sm font-semibold text-foreground">
+                                                    {cliente.nome_completo}
+                                                </p>
+                                                <p
+                                                    className={`truncate text-xs ${semWhatsapp ? 'text-red-600' : 'text-muted-foreground'}`}
+                                                >
+                                                    {cliente.celular_whatsapp ||
+                                                        'Sem WhatsApp cadastrado'}
+                                                </p>
+                                            </div>
+                                            <span
+                                                className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold ${
+                                                    !parcela
+                                                        ? 'border-border/70 bg-muted/40 text-muted-foreground'
+                                                        : parcela.situacao ===
+                                                            'atrasada'
+                                                          ? 'border-red-500/20 bg-red-500/10 text-red-600'
+                                                          : 'border-amber-500/20 bg-amber-500/10 text-amber-600'
+                                                }`}
+                                            >
+                                                {!parcela
+                                                    ? 'Mensagem genérica'
+                                                    : parcela.situacao ===
+                                                        'atrasada'
+                                                      ? 'Aviso de atraso'
+                                                      : 'Aviso de vencimento'}
+                                                {parcela &&
+                                                    ` · ${rotuloSituacaoParcela(parcela)}`}
+                                            </span>
+                                        </div>
+
+                                        <textarea
+                                            value={mensagemDoCliente(cliente)}
+                                            onChange={(e) =>
+                                                setMensagensEditadas(
+                                                    (prev) => ({
+                                                        ...prev,
+                                                        [cliente.id]:
+                                                            e.target.value,
+                                                    }),
+                                                )
+                                            }
+                                            rows={6}
+                                            className="mt-2.5 w-full resize-none rounded-lg border border-border/70 bg-background px-3 py-2 text-xs leading-relaxed focus:ring-2 focus:ring-emerald-500/30 focus:outline-none"
+                                        />
+
+                                        <div className="mt-2 flex justify-end">
+                                            <Button
+                                                type="button"
+                                                onClick={() =>
+                                                    enviarWhatsapp(cliente)
+                                                }
+                                                disabled={
+                                                    semWhatsapp ||
+                                                    tipo === '' ||
+                                                    mensagemDoCliente(
+                                                        cliente,
+                                                    ).trim() === '' ||
+                                                    status === 'enviando'
+                                                }
+                                                className={`h-9 rounded-lg px-4 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50 ${
+                                                    status === 'enviado'
+                                                        ? 'bg-emerald-700 hover:bg-emerald-800'
+                                                        : 'bg-emerald-500 hover:bg-emerald-600'
+                                                }`}
+                                            >
+                                                {status === 'enviado' ? (
+                                                    <Check className="mr-1.5 size-3.5" />
+                                                ) : (
+                                                    <ExternalLink className="mr-1.5 size-3.5" />
+                                                )}
+                                                {status === 'enviado'
+                                                    ? 'Enviado · abrir de novo'
+                                                    : 'Abrir no WhatsApp'}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            {clientesSelecionados.length > 0 && tipo === '' && (
+                                <p className="text-xs text-amber-600">
+                                    Selecione o tipo de notificação para liberar
+                                    o envio.
+                                </p>
+                            )}
+                        </div>
+                    )}
                 </div>
 
-                <div className="flex items-center justify-end gap-2 border-t border-border/70 px-5 py-4">
-                    <Button
-                        variant="outline"
-                        onClick={onClose}
-                        className="h-10 rounded-xl px-5 font-bold"
-                    >
-                        Cancelar
-                    </Button>
-                    <Button
-                        onClick={enviarNotificacao}
-                        disabled={
-                            selecionados.length === 0 ||
-                            mensagem.trim() === '' ||
-                            tipo === '' ||
-                            processing
-                        }
-                        className="h-10 rounded-xl bg-emerald-500 px-6 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                        <Send className="mr-2 size-4" />
-                        Enviar ({selecionados.length})
-                    </Button>
-                </div>
+                {canal === 'whatsapp' ? (
+                    <div className="flex items-center justify-between gap-2 border-t border-border/70 px-5 py-4">
+                        <span className="text-xs text-muted-foreground">
+                            {totalEnviadosWhatsapp} de{' '}
+                            {clientesSelecionados.length} enviado(s)
+                        </span>
+                        <Button
+                            variant="outline"
+                            onClick={onClose}
+                            className="h-10 rounded-xl px-5 font-bold"
+                        >
+                            Concluir
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="flex items-center justify-end gap-2 border-t border-border/70 px-5 py-4">
+                        <Button
+                            variant="outline"
+                            onClick={onClose}
+                            className="h-10 rounded-xl px-5 font-bold"
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            onClick={enviarNotificacao}
+                            disabled={
+                                selecionados.length === 0 ||
+                                mensagem.trim() === '' ||
+                                tipo === '' ||
+                                processing
+                            }
+                            className="h-10 rounded-xl bg-emerald-500 px-6 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            <Send className="mr-2 size-4" />
+                            Enviar ({selecionados.length})
+                        </Button>
+                    </div>
+                )}
             </div>
         </div>
     );

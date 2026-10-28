@@ -166,20 +166,47 @@ export const valorDigitadoParaNumero = (valor: string): number => {
     return digitos ? Number(digitos) / 100 : 0;
 };
 
+/**
+ * Número no formato internacional que o wa.me exige: só dígitos, com o
+ * código do país na frente. O cadastro do cliente não tem campo de DDI
+ * separado (só DDD + número, ex: "(11) 99999-9999") — assume Brasil (55),
+ * único país que o sistema atende hoje (CPF/CNPJ, Selic/IPCA etc.).
+ */
+export const numeroWhatsappInternacional = (celular: string): string => {
+    const digitos = (celular ?? '').replace(/\D/g, '');
+
+    if (!digitos) {
+        return '';
+    }
+
+    return digitos.startsWith('55') ? digitos : `55${digitos}`;
+};
+
+/**
+ * Link do wa.me que abre o WhatsApp (app ou web) já com a mensagem
+ * preenchida, pronta para o operador revisar e enviar manualmente — o
+ * sistema não tem integração de API do WhatsApp, então não existe envio
+ * automático de verdade.
+ */
+export const gerarLinkWhatsapp = (celular: string, mensagem: string): string =>
+    `https://wa.me/${numeroWhatsappInternacional(celular)}?text=${encodeURIComponent(mensagem)}`;
+
 {
     /*  USAR ESSES IMPORTS NOS MODAIS OU QUALQUER PAGINA QUE REQUERIR FORMATAÇÃO (CASO ADICIONE NOVA FUNÇÃO ADICIONE A MESMA AQUI)
-    
-    import { 
-    aplicarMascaraCEP, 
+
+    import {
+    aplicarMascaraCEP,
     formataCpfCnpj,
     formataCpf,
     formataCnpj,
-    formatarDataBR, 
+    formatarDataBR,
     formatarTelefone,
     formatarTelefoneFixo,
-    formatarLocalizacao 
+    formatarLocalizacao,
+    numeroWhatsappInternacional,
+    gerarLinkWhatsapp
 } from '@/utils/Masks';
 
-    
+
 */
 }
