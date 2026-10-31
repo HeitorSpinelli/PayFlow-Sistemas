@@ -191,9 +191,9 @@ export default function CreateSeguradoraRamoModal({
 
     return (
         <Dialog open={open} onOpenChange={fechar}>
-            <DialogContent className="!flex max-h-[92vh] max-w-3xl flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 shadow-2xl">
+            <DialogContent className="!flex max-h-[92vh] flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 shadow-2xl max-sm:max-h-[94dvh] max-lg:[&_input]:text-base max-lg:[&_textarea]:text-base">
                 {/* Header */}
-                <DialogHeader className="relative shrink-0 overflow-hidden border-b border-border/70 bg-gradient-to-br from-emerald-500/[0.12] via-background to-background px-6 py-6 pr-12 sm:px-8">
+                <DialogHeader className="relative shrink-0 overflow-hidden border-b border-border/70 bg-gradient-to-br from-emerald-500/[0.12] via-background to-background px-6 py-6 pr-12 sm:px-8 max-sm:px-4 max-sm:py-5 max-sm:pr-11 max-sm:text-left">
                     <div className="absolute -top-12 -right-10 h-36 w-36 rounded-full bg-emerald-500/10 blur-2xl" />
                     <div className="relative flex items-center gap-3">
                         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25">
@@ -218,7 +218,7 @@ export default function CreateSeguradoraRamoModal({
                 </DialogHeader>
 
                 {/* Body com Scroll */}
-                <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6 sm:px-8">
+                <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6 sm:px-8 max-sm:px-4 max-sm:py-5">
                     {/* Seção: Dados da Seguradora */}
                     <Section
                         icon={<Building2 className="h-4 w-4" />}
@@ -431,7 +431,7 @@ export default function CreateSeguradoraRamoModal({
                 </div>
 
                 {/* Footer / Botões */}
-                <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border/70 bg-muted/20 px-6 py-4 sm:px-8">
+                <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border/70 bg-muted/20 px-6 py-4 sm:px-8 max-sm:px-4 max-sm:py-3 max-sm:[&>*]:flex-1">
                     <Button
                         type="button"
                         variant="outline"

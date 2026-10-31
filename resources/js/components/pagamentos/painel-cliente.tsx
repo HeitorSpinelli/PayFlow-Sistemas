@@ -77,7 +77,10 @@ export default function PainelClientePagamentos({
 
     if (!cliente) {
         return (
-            <div className="flex h-full min-h-[320px] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border/70 bg-card/50 p-10 text-center lg:sticky lg:top-6">
+            <div
+                id="painel-cliente"
+                className="flex h-full scroll-mt-4 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border/70 bg-card/50 p-6 text-center lg:sticky lg:top-6 lg:min-h-[320px] lg:p-10"
+            >
                 <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
                     <UserRound className="size-6" />
                 </span>
@@ -95,7 +98,10 @@ export default function PainelClientePagamentos({
     }
 
     return (
-        <div className="flex max-h-[calc(100vh-14rem)] flex-col gap-5 rounded-2xl border border-border/70 bg-card p-5 shadow-sm sm:p-6 lg:sticky lg:top-6">
+        <div
+            id="painel-cliente"
+            className="flex scroll-mt-4 flex-col gap-5 rounded-2xl border border-border/70 bg-card p-4 shadow-sm sm:p-6 lg:sticky lg:top-6 lg:max-h-[calc(100vh-14rem)]"
+        >
             {/* Cabeçalho: avatar, nome e selo Inadimplente / Em dia */}
             <div className="flex items-center gap-5">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25">
@@ -145,6 +151,34 @@ export default function PainelClientePagamentos({
                     )?.id;
                     // Item do acordeão aberto = apólice guardada em apoliceAberta.
                     const isOpen = apoliceAberta === apolice.id;
+                    // Selo de status de uma parcela para a lista mobile — mesma
+                    // regra e cores da tabela abaixo.
+                    const seloDaParcela = (p: any) => {
+                        const paga = p.status_pagamento === 'paga';
+                        const atrasada = !paga && (p.dias_atraso ?? 0) > 0;
+                        const proximaAVencer =
+                            !paga &&
+                            !atrasada &&
+                            p.id === proximaParcelaPendenteId;
+
+                        return {
+                            paga,
+                            rotulo: paga
+                                ? 'Paga'
+                                : atrasada
+                                  ? 'Atrasado'
+                                  : proximaAVencer
+                                    ? 'A vencer'
+                                    : 'Em aberto',
+                            classe: paga
+                                ? 'bg-emerald-500/10 text-emerald-600'
+                                : atrasada
+                                  ? 'bg-red-500/10 text-red-600'
+                                  : proximaAVencer
+                                    ? 'bg-amber-500/10 text-amber-600'
+                                    : 'bg-muted text-muted-foreground',
+                        };
+                    };
 
                     return (
                         <Collapsible
@@ -186,104 +220,158 @@ export default function PainelClientePagamentos({
                                                 essa apólice.
                                             </p>
                                         ) : (
-                                            <div className="overflow-hidden rounded-lg border border-border/70">
-                                                <table className="w-full text-sm">
-                                                    <thead>
-                                                        <tr className="border-b border-border/70 bg-background/60 text-xs font-bold tracking-wider text-muted-foreground uppercase">
-                                                            <th className="px-3 py-2 text-left">
-                                                                Parcela
-                                                            </th>
-                                                            <th className="px-3 py-2 text-left">
-                                                                Valor
-                                                            </th>
-                                                            <th className="px-3 py-2 text-left">
-                                                                Data
-                                                            </th>
-                                                            <th className="px-3 py-2 text-left">
-                                                                Status
-                                                            </th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {parcelas.map(
-                                                            (p: any) => {
-                                                                // Status exibido no selo da parcela (cor: verde, vermelho, âmbar ou neutro).
-                                                                const paga =
-                                                                    p.status_pagamento ===
-                                                                    'paga';
-                                                                const atrasada =
-                                                                    !paga &&
-                                                                    (p.dias_atraso ??
-                                                                        0) > 0;
-                                                                const proximaAVencer =
-                                                                    !paga &&
-                                                                    !atrasada &&
-                                                                    p.id ===
-                                                                        proximaParcelaPendenteId;
-                                                                const statusLabel =
-                                                                    paga
-                                                                        ? 'Paga'
-                                                                        : atrasada
-                                                                          ? 'Atrasado'
-                                                                          : proximaAVencer
-                                                                            ? 'A vencer'
-                                                                            : 'Em aberto';
+                                            <>
+                                                {/* Lista de parcelas (mobile e tablet): as 4 colunas
+                                                da tabela não cabem numa tela estreita. */}
+                                                <div className="divide-y divide-border/70 overflow-hidden rounded-lg border border-border/70 lg:hidden">
+                                                    {parcelas.map((p: any) => {
+                                                        const selo =
+                                                            seloDaParcela(p);
 
-                                                                return (
-                                                                    <tr
-                                                                        key={
-                                                                            p.id
+                                                        return (
+                                                            <div
+                                                                key={p.id}
+                                                                className="flex items-center justify-between gap-3 px-3 py-2.5"
+                                                            >
+                                                                <div className="min-w-0">
+                                                                    <p className="text-sm font-medium text-foreground">
+                                                                        {
+                                                                            p.numero_parcela
                                                                         }
-                                                                        className="border-b border-border/70 last:border-b-0"
+                                                                        ª
+                                                                        parcela
+                                                                    </p>
+                                                                    <p className="text-xs text-muted-foreground">
+                                                                        {selo.paga
+                                                                            ? 'Pago em '
+                                                                            : 'Vence em '}
+                                                                        {formatarDataBR(
+                                                                            selo.paga
+                                                                                ? p.data_pagamento
+                                                                                : p.data_vencimento,
+                                                                        )}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="flex shrink-0 flex-col items-end gap-1">
+                                                                    <span className="text-sm font-semibold whitespace-nowrap text-foreground">
+                                                                        R${' '}
+                                                                        {formatarMoeda(
+                                                                            p.valor_parcela,
+                                                                        )}
+                                                                    </span>
+                                                                    <span
+                                                                        className={`inline-flex rounded-lg px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${selo.classe}`}
                                                                     >
-                                                                        <td className="px-3 py-2 text-foreground">
-                                                                            {
-                                                                                p.numero_parcela
+                                                                        {
+                                                                            selo.rotulo
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                                <div className="hidden overflow-hidden rounded-lg border border-border/70 lg:block">
+                                                    <table className="w-full text-sm">
+                                                        <thead>
+                                                            <tr className="border-b border-border/70 bg-background/60 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                                                                <th className="px-3 py-2 text-left">
+                                                                    Parcela
+                                                                </th>
+                                                                <th className="px-3 py-2 text-left">
+                                                                    Valor
+                                                                </th>
+                                                                <th className="px-3 py-2 text-left">
+                                                                    Data
+                                                                </th>
+                                                                <th className="px-3 py-2 text-left">
+                                                                    Status
+                                                                </th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {parcelas.map(
+                                                                (p: any) => {
+                                                                    // Status exibido no selo da parcela (cor: verde, vermelho, âmbar ou neutro).
+                                                                    const paga =
+                                                                        p.status_pagamento ===
+                                                                        'paga';
+                                                                    const atrasada =
+                                                                        !paga &&
+                                                                        (p.dias_atraso ??
+                                                                            0) >
+                                                                            0;
+                                                                    const proximaAVencer =
+                                                                        !paga &&
+                                                                        !atrasada &&
+                                                                        p.id ===
+                                                                            proximaParcelaPendenteId;
+                                                                    const statusLabel =
+                                                                        paga
+                                                                            ? 'Paga'
+                                                                            : atrasada
+                                                                              ? 'Atrasado'
+                                                                              : proximaAVencer
+                                                                                ? 'A vencer'
+                                                                                : 'Em aberto';
+
+                                                                    return (
+                                                                        <tr
+                                                                            key={
+                                                                                p.id
                                                                             }
-                                                                            ª
-                                                                        </td>
-                                                                        <td className="px-3 py-2 text-foreground">
-                                                                            R${' '}
-                                                                            {formatarMoeda(
-                                                                                p.valor_parcela,
-                                                                            )}
-                                                                        </td>
-                                                                        <td className="px-3 py-2 text-muted-foreground">
-                                                                            {formatarDataBR(
-                                                                                paga
-                                                                                    ? p.data_pagamento
-                                                                                    : p.data_vencimento,
-                                                                            )}
-                                                                        </td>
-                                                                        <td className="px-3 py-2">
-                                                                            <span
-                                                                                className={`inline-flex rounded-lg px-2 py-0.5 text-xs font-semibold capitalize ${
-                                                                                    paga
-                                                                                        ? 'bg-emerald-500/10 text-emerald-600'
-                                                                                        : atrasada
-                                                                                          ? 'bg-red-500/10 text-red-600'
-                                                                                          : proximaAVencer
-                                                                                            ? 'bg-amber-500/10 text-amber-600'
-                                                                                            : 'bg-muted text-muted-foreground'
-                                                                                }`}
-                                                                            >
+                                                                            className="border-b border-border/70 last:border-b-0"
+                                                                        >
+                                                                            <td className="px-3 py-2 text-foreground">
                                                                                 {
-                                                                                    statusLabel
+                                                                                    p.numero_parcela
                                                                                 }
-                                                                            </span>
-                                                                        </td>
-                                                                    </tr>
-                                                                );
-                                                            },
-                                                        )}
-                                                    </tbody>
-                                                </table>
-                                            </div>
+
+                                                                                ª
+                                                                            </td>
+                                                                            <td className="px-3 py-2 text-foreground">
+                                                                                R${' '}
+                                                                                {formatarMoeda(
+                                                                                    p.valor_parcela,
+                                                                                )}
+                                                                            </td>
+                                                                            <td className="px-3 py-2 text-muted-foreground">
+                                                                                {formatarDataBR(
+                                                                                    paga
+                                                                                        ? p.data_pagamento
+                                                                                        : p.data_vencimento,
+                                                                                )}
+                                                                            </td>
+                                                                            <td className="px-3 py-2">
+                                                                                <span
+                                                                                    className={`inline-flex rounded-lg px-2 py-0.5 text-xs font-semibold capitalize ${
+                                                                                        paga
+                                                                                            ? 'bg-emerald-500/10 text-emerald-600'
+                                                                                            : atrasada
+                                                                                              ? 'bg-red-500/10 text-red-600'
+                                                                                              : proximaAVencer
+                                                                                                ? 'bg-amber-500/10 text-amber-600'
+                                                                                                : 'bg-muted text-muted-foreground'
+                                                                                    }`}
+                                                                                >
+                                                                                    {
+                                                                                        statusLabel
+                                                                                    }
+                                                                                </span>
+                                                                            </td>
+                                                                        </tr>
+                                                                    );
+                                                                },
+                                                            )}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </>
                                         )}
 
                                         <a
                                             href={`/pagamentos/apolice/${apolice.id}/exportar`}
-                                            className="mt-3 inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50"
+                                            className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50 sm:h-9 sm:w-auto"
                                         >
                                             <Download className="size-3.5 text-muted-foreground/60" />
                                             Exportar parcelas desta apólice

@@ -204,7 +204,7 @@ export default function Seguradoras({ seguradoras = [] }: Props) {
                                             abrirDetalhes(seguradora)
                                         }
                                         size="sm"
-                                        className="h-8 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 font-semibold text-emerald-600 shadow-sm shadow-emerald-500/20 transition-all hover:bg-emerald-500/20 hover:text-emerald-700 active:scale-[0.98]"
+                                        className="h-10 w-full rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 font-semibold text-emerald-600 shadow-sm shadow-emerald-500/20 transition-all hover:bg-emerald-500/20 hover:text-emerald-700 active:scale-[0.98] sm:h-8 sm:w-auto"
                                     >
                                         Detalhes
                                     </Button>

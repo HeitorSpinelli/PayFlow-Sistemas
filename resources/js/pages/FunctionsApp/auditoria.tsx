@@ -152,7 +152,7 @@ const formatarDataHora = (iso: string) =>
     });
 
 const classeSelect =
-    'h-10 appearance-none rounded-xl border border-border/70 bg-background pr-8 pl-3 text-sm font-medium shadow-sm transition-all hover:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none';
+    'h-10 w-full appearance-none rounded-xl border border-border/70 bg-background pr-8 pl-3 text-sm font-medium shadow-sm transition-all hover:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none max-sm:pr-7 max-sm:pl-2.5 max-sm:text-[13px] sm:w-auto';
 
 /**
  * Tela Auditoria (/auditoria, só admin) — AuditoriaController::index.
@@ -216,7 +216,7 @@ export default function Auditoria({
         <>
             <Head title="Auditoria" />
 
-            <div className="flex flex-col gap-6 p-6 sm:p-8">
+            <div className="flex flex-col gap-5 px-4 py-5 sm:p-8 lg:gap-6">
                 {/* Cabeçalho */}
                 <div>
                     <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-[0.16em] text-emerald-600 uppercase">
@@ -237,7 +237,7 @@ export default function Auditoria({
                 <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
                     {/* Filtros */}
                     <div className="flex flex-col gap-3 border-b border-border/70 p-4 sm:p-5">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-3">
                             <div>
                                 <h3 className="text-sm font-bold">
                                     Registro de atividades
@@ -249,7 +249,7 @@ export default function Auditoria({
                             {temFiltro && (
                                 <button
                                     onClick={limparFiltros}
-                                    className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                                    className="inline-flex h-10 shrink-0 items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground sm:h-auto"
                                 >
                                     <X className="size-3.5" />
                                     Limpar filtros
@@ -257,8 +257,8 @@ export default function Auditoria({
                             )}
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-2.5">
-                            <div className="relative">
+                        <div className="grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap sm:items-center">
+                            <div className="relative col-span-2">
                                 <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/60" />
                                 <Input
                                     placeholder="Buscar registro..."
@@ -309,7 +309,7 @@ export default function Auditoria({
                                 <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
                             </div>
 
-                            <div className="relative">
+                            <div className="relative col-span-2">
                                 <select
                                     value={filtros.acao ?? ''}
                                     onChange={(e) =>
@@ -329,14 +329,14 @@ export default function Auditoria({
                                 <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
                             </div>
 
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <div className="col-span-2 flex items-center gap-1.5 text-xs text-muted-foreground">
                                 <input
                                     type="date"
                                     value={filtros.de ?? ''}
                                     onChange={(e) =>
                                         aplicarFiltros({ de: e.target.value })
                                     }
-                                    className="h-10 rounded-xl border border-border/70 bg-background px-3 text-sm text-foreground shadow-sm"
+                                    className="h-10 min-w-0 flex-1 rounded-xl border border-border/70 bg-background px-3 text-sm text-foreground shadow-sm sm:flex-initial"
                                 />
                                 até
                                 <input
@@ -345,14 +345,136 @@ export default function Auditoria({
                                     onChange={(e) =>
                                         aplicarFiltros({ ate: e.target.value })
                                     }
-                                    className="h-10 rounded-xl border border-border/70 bg-background px-3 text-sm text-foreground shadow-sm"
+                                    className="h-10 min-w-0 flex-1 rounded-xl border border-border/70 bg-background px-3 text-sm text-foreground shadow-sm sm:flex-initial"
                                 />
                             </div>
                         </div>
                     </div>
 
+                    {/* Mobile/tablet: lista de cards no lugar da tabela
+                        (que só aparece em lg+). Mesmo estado `expandido`. */}
+                    <div className="divide-y divide-border/70 lg:hidden">
+                        {registros.data.length === 0 ? (
+                            <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+                                Nenhuma atividade encontrada.
+                            </p>
+                        ) : (
+                            registros.data.map((r) => {
+                                const acao = ACOES[r.acao] ?? {
+                                    rotulo: r.acao,
+                                    classe: 'border-border bg-muted text-muted-foreground',
+                                };
+                                const campos = Object.entries(
+                                    r.alteracoes ?? {},
+                                );
+                                const aberto = expandido === r.id;
+
+                                return (
+                                    <div
+                                        key={r.id}
+                                        className={`flex flex-col gap-2 px-4 py-3.5 ${aberto ? 'bg-emerald-500/5' : ''}`}
+                                    >
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex min-w-0 items-center gap-2">
+                                                <span
+                                                    className={`inline-flex shrink-0 rounded-lg border px-2 py-0.5 text-[11px] font-semibold ${acao.classe}`}
+                                                >
+                                                    {acao.rotulo}
+                                                </span>
+                                                <span className="truncate text-xs text-muted-foreground">
+                                                    {r.modulo}
+                                                </span>
+                                            </div>
+                                            <span className="shrink-0 text-[11px] text-muted-foreground">
+                                                {formatarDataHora(r.data)}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm font-semibold break-words text-foreground">
+                                            {r.descricao}
+                                        </p>
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="text-xs text-muted-foreground">
+                                                por{' '}
+                                                {r.usuario ? (
+                                                    <span className="font-medium text-foreground">
+                                                        {r.usuario}
+                                                    </span>
+                                                ) : (
+                                                    <span className="italic">
+                                                        Sistema
+                                                    </span>
+                                                )}
+                                            </span>
+                                            {campos.length > 0 && (
+                                                <button
+                                                    onClick={() =>
+                                                        setExpandido(
+                                                            aberto
+                                                                ? null
+                                                                : r.id,
+                                                        )
+                                                    }
+                                                    className="-my-2 inline-flex h-10 items-center gap-1 text-xs font-semibold text-emerald-600"
+                                                >
+                                                    {campos.length} campo(s)
+                                                    <ChevronDown
+                                                        className={`size-4 transition-transform ${aberto ? 'rotate-180' : ''}`}
+                                                    />
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {aberto && (
+                                            <div className="flex flex-col divide-y divide-border/50 rounded-xl border border-border/70 bg-background">
+                                                {campos.map(
+                                                    ([campo, { de, para }]) => (
+                                                        <div
+                                                            key={campo}
+                                                            className="flex flex-col gap-0.5 px-3 py-2 text-xs"
+                                                        >
+                                                            <span className="font-semibold text-foreground">
+                                                                {rotuloCampo(
+                                                                    campo,
+                                                                )}
+                                                            </span>
+                                                            <span className="break-words">
+                                                                {r.acao !==
+                                                                    'criou' && (
+                                                                    <>
+                                                                        <span className="text-red-600/90 line-through decoration-red-500/40">
+                                                                            {formatarValor(
+                                                                                de,
+                                                                            )}
+                                                                        </span>
+                                                                        <span className="px-1.5 text-muted-foreground">
+                                                                            →
+                                                                        </span>
+                                                                    </>
+                                                                )}
+                                                                <span className="text-emerald-700 dark:text-emerald-400">
+                                                                    {formatarValor(
+                                                                        para,
+                                                                    )}
+                                                                </span>
+                                                            </span>
+                                                        </div>
+                                                    ),
+                                                )}
+                                                {r.ip && (
+                                                    <p className="px-3 py-2 text-[11px] text-muted-foreground">
+                                                        IP: {r.ip}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
+
                     {/* Tabela do log */}
-                    <div className="overflow-x-auto">
+                    <div className="hidden overflow-x-auto lg:block">
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-border/70 bg-muted/[0.18] text-muted-foreground">

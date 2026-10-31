@@ -218,90 +218,90 @@ export default function Notificacoes({
                     <div className="flex items-center gap-2">
                         <Button
                             variant="outline"
-                            className="h-11 rounded-xl px-5 font-bold"
+                            className="h-11 flex-1 rounded-xl px-5 font-bold sm:flex-initial"
                             onClick={() => setConfigAberto(true)}
                         >
                             <Settings className="mr-2 size-4" /> Configurar
                         </Button>
                         <Button
                             onClick={() => abrirModal('email')}
-                            className="h-11 rounded-xl bg-emerald-500 px-5 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
+                            className="h-11 flex-1 rounded-xl bg-emerald-500 px-5 font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98] sm:flex-initial"
                         >
                             <Send className="mr-2 size-4" /> Enviar Notificação
                         </Button>
                     </div>
                 </div>
 
-                {/* Cards de métricas */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+                {/* Cards de métricas (no celular: 3 lado a lado, sem ícone) */}
+                <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+                    <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-3 shadow-sm sm:p-5">
                         <div>
-                            <p className="text-xs font-semibold text-muted-foreground">
+                            <p className="text-[11px] font-semibold text-muted-foreground sm:text-xs">
                                 Total Hoje
                             </p>
-                            <p className="mt-1 text-2xl font-bold text-foreground">
+                            <p className="mt-1 text-xl font-bold text-foreground sm:text-2xl">
                                 {totalHoje}
                             </p>
                         </div>
-                        <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-border/70 text-muted-foreground">
+                        <span className="hidden h-11 w-11 items-center justify-center rounded-xl border border-border/70 text-muted-foreground sm:flex">
                             <Bell className="size-5" />
                         </span>
                     </div>
-                    <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+                    <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-3 shadow-sm sm:p-5">
                         <div>
-                            <p className="text-xs font-semibold text-muted-foreground">
+                            <p className="text-[11px] font-semibold text-muted-foreground sm:text-xs">
                                 Enviados
                             </p>
-                            <p className="mt-1 text-2xl font-bold text-emerald-600">
+                            <p className="mt-1 text-xl font-bold text-emerald-600 sm:text-2xl">
                                 {totalEnviados}
                             </p>
                         </div>
-                        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+                        <span className="hidden h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 sm:flex">
                             <CheckCircle2 className="size-5" />
                         </span>
                     </div>
-                    <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+                    <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-3 shadow-sm sm:p-5">
                         <div>
-                            <p className="text-xs font-semibold text-muted-foreground">
+                            <p className="text-[11px] font-semibold text-muted-foreground sm:text-xs">
                                 Falhas
                             </p>
-                            <p className="mt-1 text-2xl font-bold text-red-500">
+                            <p className="mt-1 text-xl font-bold text-red-500 sm:text-2xl">
                                 {totalFalhas}
                             </p>
                         </div>
-                        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/10 text-red-500">
+                        <span className="hidden h-11 w-11 items-center justify-center rounded-xl bg-red-500/10 text-red-500 sm:flex">
                             <XCircle className="size-5" />
                         </span>
                     </div>
                 </div>
 
-                {/* Cards de canal */}
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                {/* Cards de canal (no celular: lado a lado, compactos, sem descrição) */}
+                <div className="grid grid-cols-2 gap-3 sm:gap-5">
                     <button
                         onClick={() => abrirModal('email')}
                         className="group relative flex flex-col overflow-hidden rounded-3xl border border-border/70 bg-card p-1.5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-sky-500/40 hover:shadow-lg"
                     >
-                        <div className="relative flex h-36 items-center justify-center overflow-hidden rounded-[1.35rem] bg-neutral-950 sm:h-40">
+                        <div className="relative flex h-24 items-center justify-center overflow-hidden rounded-[1.35rem] bg-neutral-950 sm:h-40">
                             <div className="absolute inset-0 bg-gradient-to-b from-sky-400/25 via-sky-400/5 to-transparent" />
                             <div className="absolute h-32 w-32 rounded-full bg-gradient-to-br from-sky-300 to-sky-600 opacity-40 blur-3xl" />
-                            <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-sky-300 to-sky-600 shadow-2xl shadow-sky-500/40 transition-transform duration-300 group-hover:scale-105">
+                            <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-sky-300 to-sky-600 shadow-2xl shadow-sky-500/40 transition-transform duration-300 group-hover:scale-105 sm:h-20 sm:w-20">
                                 <Mail
-                                    className="size-9 text-white"
+                                    className="size-7 text-white sm:size-9"
                                     strokeWidth={2}
                                 />
                             </div>
                         </div>
-                        <div className="flex items-center justify-between gap-3 px-5 py-4">
+                        <div className="flex items-center justify-between gap-3 px-3 py-3 sm:px-5 sm:py-4">
                             <div>
                                 <p className="text-base font-bold text-foreground">
                                     E-mail
                                 </p>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="hidden text-xs text-muted-foreground sm:block">
                                     Envie cobranças e lembretes para um ou mais
                                     clientes
                                 </p>
                             </div>
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-500/10 text-sky-600 transition-transform group-hover:translate-x-0.5">
+                            <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-500/10 text-sky-600 transition-transform group-hover:translate-x-0.5 sm:flex">
                                 <ArrowRight className="size-4" />
                             </span>
                         </div>
@@ -310,27 +310,27 @@ export default function Notificacoes({
                         onClick={() => abrirModal('whatsapp')}
                         className="group relative flex flex-col overflow-hidden rounded-3xl border border-border/70 bg-card p-1.5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-emerald-500/40 hover:shadow-lg"
                     >
-                        <div className="relative flex h-36 items-center justify-center overflow-hidden rounded-[1.35rem] bg-neutral-950 sm:h-40">
+                        <div className="relative flex h-24 items-center justify-center overflow-hidden rounded-[1.35rem] bg-neutral-950 sm:h-40">
                             <div className="absolute inset-0 bg-gradient-to-b from-emerald-400/25 via-emerald-400/5 to-transparent" />
                             <div className="absolute h-32 w-32 rounded-full bg-gradient-to-br from-emerald-300 to-emerald-600 opacity-40 blur-3xl" />
-                            <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-emerald-300 to-emerald-600 shadow-2xl shadow-emerald-500/40 transition-transform duration-300 group-hover:scale-105">
+                            <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-300 to-emerald-600 shadow-2xl shadow-emerald-500/40 transition-transform duration-300 group-hover:scale-105 sm:h-20 sm:w-20">
                                 <MessageCircle
-                                    className="size-9 text-white"
+                                    className="size-7 text-white sm:size-9"
                                     strokeWidth={1.75}
                                 />
                             </div>
                         </div>
-                        <div className="flex items-center justify-between gap-3 px-5 py-4">
+                        <div className="flex items-center justify-between gap-3 px-3 py-3 sm:px-5 sm:py-4">
                             <div>
                                 <p className="text-base font-bold text-foreground">
                                     WhatsApp
                                 </p>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="hidden text-xs text-muted-foreground sm:block">
                                     Envie cobranças e lembretes para um ou mais
                                     clientes
                                 </p>
                             </div>
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 transition-transform group-hover:translate-x-0.5">
+                            <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 transition-transform group-hover:translate-x-0.5 sm:flex">
                                 <ArrowRight className="size-4" />
                             </span>
                         </div>
@@ -338,16 +338,16 @@ export default function Notificacoes({
                 </div>
 
                 {/* Abas */}
-                <div className="inline-flex w-fit gap-1 rounded-xl border border-border/70 bg-card p-1">
+                <div className="flex w-full gap-1 rounded-xl border border-border/70 bg-card p-1 sm:inline-flex sm:w-fit">
                     <button
                         onClick={() => setAba('historico')}
-                        className={`rounded-lg px-4 py-2 text-sm font-bold transition-colors ${aba === 'historico' ? 'bg-emerald-500 text-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
+                        className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-bold transition-colors sm:flex-initial sm:py-2 ${aba === 'historico' ? 'bg-emerald-500 text-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
                     >
                         Histórico
                     </button>
                     <button
                         onClick={() => setAba('automacoes')}
-                        className={`rounded-lg px-4 py-2 text-sm font-bold transition-colors ${aba === 'automacoes' ? 'bg-emerald-500 text-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
+                        className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-bold transition-colors sm:flex-initial sm:py-2 ${aba === 'automacoes' ? 'bg-emerald-500 text-white shadow' : 'text-muted-foreground hover:text-foreground'}`}
                     >
                         Automações
                     </button>
@@ -357,7 +357,7 @@ export default function Notificacoes({
                 {aba === 'historico' ? (
                     <div className="rounded-2xl border border-border/70 bg-card shadow-sm">
                         {/* Cabeçalho com filtros e busca */}
-                        <div className="flex flex-col gap-4 border-b border-border/70 p-5">
+                        <div className="flex flex-col gap-4 border-b border-border/70 p-4 sm:p-5">
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <h2 className="text-base font-bold tracking-tight text-foreground">
@@ -370,7 +370,7 @@ export default function Notificacoes({
                                 </div>
                                 <div className="flex flex-wrap items-center gap-2">
                                     {/* Busca */}
-                                    <div className="relative">
+                                    <div className="relative w-full sm:w-auto">
                                         <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                                         <input
                                             value={busca}
@@ -386,11 +386,11 @@ export default function Notificacoes({
                                                 })
                                             }
                                             placeholder="Buscar..."
-                                            className="h-10 rounded-xl border border-border/70 bg-background pr-3 pl-9 text-sm focus:ring-2 focus:ring-emerald-500/30 focus:outline-none"
+                                            className="h-10 w-full rounded-xl border border-border/70 bg-background pr-3 pl-9 text-sm focus:ring-2 focus:ring-emerald-500/30 focus:outline-none sm:w-auto"
                                         />
                                     </div>
                                     {/* Filtro Canal */}
-                                    <div className="relative">
+                                    <div className="relative flex-1 sm:flex-initial">
                                         <select
                                             value={filtroCanal}
                                             onChange={(e) => {
@@ -401,7 +401,7 @@ export default function Notificacoes({
                                                     busca,
                                                 });
                                             }}
-                                            className="h-10 appearance-none rounded-xl border border-border/70 bg-background pr-8 pl-3 text-sm font-semibold text-foreground focus:ring-2 focus:ring-emerald-500/30 focus:outline-none"
+                                            className="h-10 w-full appearance-none rounded-xl border border-border/70 bg-background pr-8 pl-3 text-sm font-semibold text-foreground focus:ring-2 focus:ring-emerald-500/30 focus:outline-none sm:w-auto"
                                         >
                                             <option value="">
                                                 Todos os canais
@@ -416,7 +416,7 @@ export default function Notificacoes({
                                         <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
                                     </div>
                                     {/* Filtro Status */}
-                                    <div className="relative">
+                                    <div className="relative flex-1 sm:flex-initial">
                                         <select
                                             value={filtroStatus}
                                             onChange={(e) => {
@@ -427,7 +427,7 @@ export default function Notificacoes({
                                                     busca,
                                                 });
                                             }}
-                                            className="h-10 appearance-none rounded-xl border border-border/70 bg-background pr-8 pl-3 text-sm font-semibold text-foreground focus:ring-2 focus:ring-emerald-500/30 focus:outline-none"
+                                            className="h-10 w-full appearance-none rounded-xl border border-border/70 bg-background pr-8 pl-3 text-sm font-semibold text-foreground focus:ring-2 focus:ring-emerald-500/30 focus:outline-none sm:w-auto"
                                         >
                                             <option value="">
                                                 Todos os status
@@ -448,7 +448,89 @@ export default function Notificacoes({
 
                         {/* Tabela */}
                         <div className="overflow-x-auto">
-                            <table className="w-full min-w-[720px] text-left text-sm">
+                            {/* Celular/tablet: uma notificação por card, com
+                                as mesmas colunas da tabela (que só aparece a
+                                partir de lg). */}
+                            <div className="divide-y divide-border/50 lg:hidden">
+                                {historicoData.map((item) => {
+                                    const statusKey =
+                                        item.status.toLowerCase() as StatusNotificacao;
+                                    const CanalIcon =
+                                        CANAL_CONFIG[item.canal as Canal]?.icon;
+
+                                    return (
+                                        <div
+                                            key={item.id}
+                                            className="flex flex-col gap-1.5 px-4 py-4"
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <p className="min-w-0 font-semibold break-words text-foreground">
+                                                    {item.tipo_notificacao
+                                                        ?.nome_notificacao ??
+                                                        '-'}
+                                                </p>
+                                                <span
+                                                    title={
+                                                        statusKey === 'falha' &&
+                                                        item.erro
+                                                            ? item.erro
+                                                            : undefined
+                                                    }
+                                                    className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${STATUS_CONFIG[statusKey]?.badge ?? ''}`}
+                                                >
+                                                    {STATUS_CONFIG[statusKey]
+                                                        ?.label ?? item.status}
+                                                </span>
+                                            </div>
+                                            <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+                                                <span>
+                                                    {item.segurado
+                                                        ?.nome_completo ?? '-'}
+                                                </span>
+                                                <span className="inline-flex items-center gap-1.5">
+                                                    {CanalIcon && (
+                                                        <CanalIcon className="size-3.5" />
+                                                    )}
+                                                    {CANAL_CONFIG[
+                                                        item.canal as Canal
+                                                    ]?.label ?? item.canal}
+                                                </span>
+                                            </p>
+                                            {item.mensagem && (
+                                                <p className="line-clamp-2 text-sm text-muted-foreground">
+                                                    {item.mensagem}
+                                                </p>
+                                            )}
+                                            <p className="text-xs text-muted-foreground/80">
+                                                {item.data_envio
+                                                    ? new Date(
+                                                          item.data_envio,
+                                                      ).toLocaleString(
+                                                          'pt-BR',
+                                                          {
+                                                              timeZone:
+                                                                  'America/Sao_Paulo',
+                                                          },
+                                                      )
+                                                    : '-'}
+                                            </p>
+                                            {statusKey === 'falha' &&
+                                                item.erro && (
+                                                    <p className="text-xs text-red-500">
+                                                        {item.erro}
+                                                    </p>
+                                                )}
+                                        </div>
+                                    );
+                                })}
+                                {historicoData.length === 0 && (
+                                    <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+                                        Nenhuma notificação encontrada.
+                                    </p>
+                                )}
+                            </div>
+
+                            <table className="hidden w-full min-w-[720px] text-left text-sm lg:table">
                                 <thead>
                                     <tr className="border-b border-border/70 text-[10px] font-bold tracking-[0.1em] text-muted-foreground uppercase">
                                         <th className="px-5 py-3">Tipo</th>
@@ -566,7 +648,7 @@ export default function Notificacoes({
                                                     1,
                                             })
                                         }
-                                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/70 text-muted-foreground hover:bg-muted disabled:opacity-40"
+                                        className="flex h-10 w-10 items-center justify-center rounded-lg border border-border/70 text-muted-foreground hover:bg-muted disabled:opacity-40 sm:h-8 sm:w-8"
                                     >
                                         <ChevronLeft className="size-4" />
                                     </button>
@@ -585,7 +667,7 @@ export default function Notificacoes({
                                                     1,
                                             })
                                         }
-                                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/70 text-muted-foreground hover:bg-muted disabled:opacity-40"
+                                        className="flex h-10 w-10 items-center justify-center rounded-lg border border-border/70 text-muted-foreground hover:bg-muted disabled:opacity-40 sm:h-8 sm:w-8"
                                     >
                                         <ChevronRight className="size-4" />
                                     </button>
@@ -609,7 +691,7 @@ export default function Notificacoes({
                             automacoes.map((automacao) => (
                                 <div
                                     key={automacao.id}
-                                    className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-5 shadow-sm"
+                                    className="flex flex-col items-start gap-4 rounded-2xl border border-border/70 bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:p-5"
                                 >
                                     <div className="flex items-start gap-3">
                                         <span
@@ -650,7 +732,7 @@ export default function Notificacoes({
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex w-full items-center justify-between gap-3 border-t border-border/50 pt-3 sm:w-auto sm:justify-start sm:border-t-0 sm:pt-0">
                                         <span className="text-xs font-semibold text-muted-foreground">
                                             {automacao.ativo
                                                 ? 'Ativado'

@@ -181,7 +181,7 @@ export default function ConfigNotificacaoModal({
         >
             <div
                 onClick={(e) => e.stopPropagation()}
-                className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xl"
+                className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xl max-lg:[&_input]:text-base max-lg:[&_select]:text-base max-lg:[&_textarea]:text-base"
             >
                 {/* Cabeçalho */}
                 <div className="flex items-center justify-between border-b border-border/70 px-5 py-4">

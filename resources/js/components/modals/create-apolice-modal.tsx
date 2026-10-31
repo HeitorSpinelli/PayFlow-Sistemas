@@ -586,9 +586,9 @@ export default function CreateApoliceModal({
                 setOpen(isOpen);
             }}
         >
-            <DialogContent className="!flex max-h-[92vh] flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 shadow-2xl sm:max-w-4xl">
+            <DialogContent className="!flex max-h-[92vh] flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 shadow-2xl sm:max-w-4xl max-sm:max-h-[94dvh] max-lg:[&_input]:text-base max-lg:[&_textarea]:text-base">
                 {/* Header */}
-                <DialogHeader className="relative shrink-0 overflow-hidden border-b border-border/70 bg-gradient-to-br from-emerald-500/[0.12] via-background to-background px-6 py-6 pr-12 sm:px-8">
+                <DialogHeader className="relative shrink-0 overflow-hidden border-b border-border/70 bg-gradient-to-br from-emerald-500/[0.12] via-background to-background px-6 py-6 pr-12 sm:px-8 max-sm:px-4 max-sm:py-5 max-sm:pr-11 max-sm:text-left">
                     <div className="absolute -top-12 -right-10 h-36 w-36 rounded-full bg-emerald-500/10 blur-2xl" />
                     <div className="relative flex items-center gap-3">
                         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25">
@@ -634,7 +634,7 @@ export default function CreateApoliceModal({
                 {/* Conteúdo com rolagem — um passo do wizard por vez */}
                 <div
                     ref={scrollContainerRef}
-                    className="flex-1 overflow-y-auto px-6 py-6 sm:px-8"
+                    className="flex-1 overflow-y-auto px-6 py-6 sm:px-8 max-sm:px-4 max-sm:py-5"
                 >
                     <div className="space-y-6">
                         {/* Passo 1: Dados da Apólice */}
@@ -667,7 +667,7 @@ export default function CreateApoliceModal({
                                                     150,
                                                 )
                                             }
-                                            className="h-11 rounded-xl border-border/80 bg-background"
+                                            className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                         />
 
                                         {/* Lista de resultados */}
@@ -733,7 +733,7 @@ export default function CreateApoliceModal({
                                                     e.target.value,
                                                 )
                                             }
-                                            className="h-11 rounded-xl border-border/80 bg-background"
+                                            className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                         />
                                         {errors.numero_apolice && (
                                             <span className="text-xs font-medium text-rose-500">
@@ -759,7 +759,7 @@ export default function CreateApoliceModal({
                                                     handleSeguradoraChange
                                                 }
                                             >
-                                                <SelectTrigger className="h-11 rounded-xl border-border/80 bg-background">
+                                                <SelectTrigger className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full">
                                                     <SelectValue placeholder="Selecione" />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -800,7 +800,7 @@ export default function CreateApoliceModal({
                                                 onValueChange={handleRamoChange}
                                                 disabled={!data.seguradora_id}
                                             >
-                                                <SelectTrigger className="h-11 rounded-xl border-border/80 bg-background">
+                                                <SelectTrigger className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full">
                                                     <SelectValue
                                                         placeholder={
                                                             data.seguradora_id
@@ -871,7 +871,7 @@ export default function CreateApoliceModal({
                                                             )
                                                         }
                                                     >
-                                                        <SelectTrigger className="h-11 rounded-xl border-border/80 bg-background">
+                                                        <SelectTrigger className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full">
                                                             <SelectValue placeholder="Selecione" />
                                                         </SelectTrigger>
                                                         <SelectContent>
@@ -920,7 +920,7 @@ export default function CreateApoliceModal({
                                                                 e.target.value.toUpperCase(),
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                     {err['veiculo.placa'] && (
                                                         <span className="text-xs font-medium text-rose-500">
@@ -951,7 +951,7 @@ export default function CreateApoliceModal({
                                                                 ),
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                     {err['veiculo.renavam'] && (
                                                         <span className="text-xs font-medium text-rose-500">
@@ -982,7 +982,7 @@ export default function CreateApoliceModal({
                                                                 e.target.value.toUpperCase(),
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                     {err['veiculo.chassi'] && (
                                                         <span className="text-xs font-medium text-rose-500">
@@ -1007,7 +1007,7 @@ export default function CreateApoliceModal({
                                                                 e.target.value,
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                     {err['veiculo.cor'] && (
                                                         <span className="text-xs font-medium text-rose-500">
@@ -1033,7 +1033,7 @@ export default function CreateApoliceModal({
                                                                 e.target.value,
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                     {err['veiculo.marca'] && (
                                                         <span className="text-xs font-medium text-rose-500">
@@ -1060,7 +1060,7 @@ export default function CreateApoliceModal({
                                                                 e.target.value,
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                     {err['veiculo.modelo'] && (
                                                         <span className="text-xs font-medium text-rose-500">
@@ -1092,7 +1092,7 @@ export default function CreateApoliceModal({
                                                                 e.target.value,
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background placeholder:italic"
+                                                        className="h-11 rounded-xl border-border/80 bg-background placeholder:italic max-sm:w-full"
                                                     />
                                                     {err[
                                                         'veiculo.ano_fabricacao'
@@ -1123,7 +1123,7 @@ export default function CreateApoliceModal({
                                                                 e.target.value,
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background placeholder:italic"
+                                                        className="h-11 rounded-xl border-border/80 bg-background placeholder:italic max-sm:w-full"
                                                     />
                                                     {err[
                                                         'veiculo.ano_modelo'
@@ -1153,7 +1153,7 @@ export default function CreateApoliceModal({
                                                             )
                                                         }
                                                     >
-                                                        <SelectTrigger className="h-11 rounded-xl border-border/80 bg-background">
+                                                        <SelectTrigger className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full">
                                                             <SelectValue placeholder="Selecione" />
                                                         </SelectTrigger>
                                                         <SelectContent>
@@ -1205,7 +1205,7 @@ export default function CreateApoliceModal({
                                                             )
                                                         }
                                                     >
-                                                        <SelectTrigger className="h-11 rounded-xl border-border/80 bg-background">
+                                                        <SelectTrigger className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full">
                                                             <SelectValue placeholder="Selecione" />
                                                         </SelectTrigger>
                                                         <SelectContent>
@@ -1246,7 +1246,7 @@ export default function CreateApoliceModal({
                                                                 ),
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                     {err[
                                                         'veiculo.cep_pernoite'
@@ -1302,7 +1302,7 @@ export default function CreateApoliceModal({
                                                                 e.target.value,
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                 </div>
                                                 <div className="space-y-2">
@@ -1324,7 +1324,7 @@ export default function CreateApoliceModal({
                                                                 ),
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                 </div>
                                             </div>
@@ -1357,7 +1357,7 @@ export default function CreateApoliceModal({
                                                             )
                                                         }
                                                     >
-                                                        <SelectTrigger className="h-11 rounded-xl border-border/80 bg-background">
+                                                        <SelectTrigger className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full">
                                                             <SelectValue placeholder="Selecione" />
                                                         </SelectTrigger>
                                                         <SelectContent>
@@ -1403,7 +1403,7 @@ export default function CreateApoliceModal({
                                                             )
                                                         }
                                                     >
-                                                        <SelectTrigger className="h-11 rounded-xl border-border/80 bg-background">
+                                                        <SelectTrigger className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full">
                                                             <SelectValue placeholder="Selecione" />
                                                         </SelectTrigger>
                                                         <SelectContent>
@@ -1448,7 +1448,7 @@ export default function CreateApoliceModal({
                                                             e.target.value,
                                                         )
                                                     }
-                                                    className="h-11 rounded-xl border-border/80 bg-background"
+                                                    className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                 />
                                                 {err[
                                                     'residencia.endereco_imovel'
@@ -1479,7 +1479,7 @@ export default function CreateApoliceModal({
                                                                 e.target.value,
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                     {err[
                                                         'residencia.numero'
@@ -1509,7 +1509,7 @@ export default function CreateApoliceModal({
                                                                 e.target.value,
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                 </div>
                                             </div>
@@ -1530,7 +1530,7 @@ export default function CreateApoliceModal({
                                                                 e.target.value,
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                     {err[
                                                         'residencia.bairro_imovel'
@@ -1559,7 +1559,7 @@ export default function CreateApoliceModal({
                                                                 e.target.value,
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                     {err[
                                                         'residencia.cidade_imovel'
@@ -1590,7 +1590,7 @@ export default function CreateApoliceModal({
                                                                 e.target.value.toUpperCase(),
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                     {err[
                                                         'residencia.estado_imovel'
@@ -1626,7 +1626,7 @@ export default function CreateApoliceModal({
                                                                 ),
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                     {err[
                                                         'residencia.cep_imovel'
@@ -1657,7 +1657,7 @@ export default function CreateApoliceModal({
                                                                 e.target.value,
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                     {err[
                                                         'residencia.area_construida_m2'
@@ -1688,7 +1688,7 @@ export default function CreateApoliceModal({
                                                                 e.target.value,
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background placeholder:italic"
+                                                        className="h-11 rounded-xl border-border/80 bg-background placeholder:italic max-sm:w-full"
                                                     />
                                                 </div>
                                             </div>
@@ -1708,7 +1708,7 @@ export default function CreateApoliceModal({
                                                         )
                                                     }
                                                 >
-                                                    <SelectTrigger className="h-11 rounded-xl border-border/80 bg-background">
+                                                    <SelectTrigger className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full">
                                                         <SelectValue placeholder="Selecione" />
                                                     </SelectTrigger>
                                                     <SelectContent>
@@ -1785,7 +1785,7 @@ export default function CreateApoliceModal({
                                                                 e.target.value,
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                     {err['vida.profissao'] && (
                                                         <span className="text-xs font-medium text-rose-500">
@@ -1830,7 +1830,7 @@ export default function CreateApoliceModal({
                                                                 ).toFixed(2),
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                     {err[
                                                         'vida.capital_segurado'
@@ -1971,7 +1971,7 @@ export default function CreateApoliceModal({
                                                                 e.target.value,
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                     {err[
                                                         'vida.qual_esporte'
@@ -2200,7 +2200,7 @@ export default function CreateApoliceModal({
                                                                 e.target.value,
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                     {err[
                                                         'empresarial.cnae_ou_atividade'
@@ -2230,7 +2230,7 @@ export default function CreateApoliceModal({
                                                                 e.target.value,
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                 </div>
                                             </div>
@@ -2270,7 +2270,7 @@ export default function CreateApoliceModal({
                                                                 ).toFixed(2),
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                 </div>
                                                 <div className="space-y-2">
@@ -2306,7 +2306,7 @@ export default function CreateApoliceModal({
                                                                 ).toFixed(2),
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                 </div>
                                             </div>
@@ -2368,7 +2368,7 @@ export default function CreateApoliceModal({
                                                             e.target.value,
                                                         )
                                                     }
-                                                    className="h-11 rounded-xl border-border/80 bg-background"
+                                                    className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                 />
                                             </div>
                                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
@@ -2384,7 +2384,7 @@ export default function CreateApoliceModal({
                                                             e.target.value,
                                                         )
                                                     }
-                                                    className="h-11 rounded-xl border-border/80 bg-background"
+                                                    className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                 />
                                                 <Input
                                                     placeholder="Bairro*"
@@ -2398,7 +2398,7 @@ export default function CreateApoliceModal({
                                                             e.target.value,
                                                         )
                                                     }
-                                                    className="h-11 rounded-xl border-border/80 bg-background"
+                                                    className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                 />
                                                 <Input
                                                     placeholder="Cidade*"
@@ -2412,7 +2412,7 @@ export default function CreateApoliceModal({
                                                             e.target.value,
                                                         )
                                                     }
-                                                    className="h-11 rounded-xl border-border/80 bg-background"
+                                                    className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                 />
                                                 <Input
                                                     placeholder="UF*"
@@ -2427,7 +2427,7 @@ export default function CreateApoliceModal({
                                                             e.target.value.toUpperCase(),
                                                         )
                                                     }
-                                                    className="h-11 rounded-xl border-border/80 bg-background"
+                                                    className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                 />
                                             </div>
                                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -2445,7 +2445,7 @@ export default function CreateApoliceModal({
                                                             ),
                                                         )
                                                     }
-                                                    className="h-11 rounded-xl border-border/80 bg-background"
+                                                    className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                 />
                                             </div>
                                         </div>
@@ -2478,7 +2478,7 @@ export default function CreateApoliceModal({
                                                             e.target.value,
                                                         )
                                                     }
-                                                    className="h-11 rounded-xl border-border/80 bg-background"
+                                                    className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                 />
                                                 {errors.inicio_vigencia && (
                                                     <span className="text-xs font-medium text-rose-500">
@@ -2499,7 +2499,7 @@ export default function CreateApoliceModal({
                                                             e.target.value,
                                                         )
                                                     }
-                                                    className="h-11 rounded-xl border-border/80 bg-background"
+                                                    className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                 />
                                                 {errors.fim_vigencia && (
                                                     <span className="text-xs font-medium text-rose-500">
@@ -2549,7 +2549,7 @@ export default function CreateApoliceModal({
                                                                 ).toFixed(2),
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                     {errors.valor_premio_total && (
                                                         <span className="text-xs font-medium text-rose-500">
@@ -2588,7 +2588,7 @@ export default function CreateApoliceModal({
                                                                 ).toFixed(2),
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                     {errors.valor_cobertura && (
                                                         <span className="text-xs font-medium text-rose-500">
@@ -2630,7 +2630,7 @@ export default function CreateApoliceModal({
                                                                 ),
                                                             )
                                                         }
-                                                        className="h-11 rounded-xl border-border/80 bg-background"
+                                                        className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full"
                                                     />
                                                     {errors.quantidade_parcelas && (
                                                         <span className="text-xs font-medium text-rose-500">
@@ -2655,7 +2655,7 @@ export default function CreateApoliceModal({
                                                             )
                                                         }
                                                     >
-                                                        <SelectTrigger className="h-11 rounded-xl border-border/80 bg-background">
+                                                        <SelectTrigger className="h-11 rounded-xl border-border/80 bg-background max-sm:w-full">
                                                             <SelectValue placeholder="Selecione" />
                                                         </SelectTrigger>
                                                         <SelectContent>
@@ -2716,13 +2716,13 @@ export default function CreateApoliceModal({
                 </div>
 
                 {/* Footer com Botões */}
-                <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-border/70 bg-background px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-                    <p className="text-xs text-muted-foreground">
+                <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-border/70 bg-background px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 max-sm:px-4 max-sm:py-3">
+                    <p className="text-xs text-muted-foreground max-sm:text-center">
                         Campos com{' '}
                         <span className="font-bold text-emerald-600">*</span>{' '}
                         são obrigatórios.
                     </p>
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 max-sm:[&>*]:flex-1">
                         <Button
                             variant="outline"
                             onClick={() => setOpen(false)}

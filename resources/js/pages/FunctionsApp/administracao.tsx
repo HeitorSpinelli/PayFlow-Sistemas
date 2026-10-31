@@ -251,24 +251,27 @@ export default function Administracao({
                 </div>
 
                 <Tabs defaultValue="users" className="w-full">
-                    <TabsList>
-                        <TabsTrigger value="users">
-                            <UsersIcon className="mr-1.5 size-4" />
-                            Usuários
-                        </TabsTrigger>
-                        <TabsTrigger value="clientes">
-                            <Trash2 className="mr-1.5 size-4" />
-                            Clientes Inativos
-                        </TabsTrigger>
-                        <TabsTrigger value="apolices">
-                            <ScrollText className="mr-1.5 size-4" />
-                            Apólices Inativas/Vencidas/Canceladas
-                        </TabsTrigger>
-                        <TabsTrigger value="sistema">
-                            <Settings2 className="mr-1.5 size-4" />
-                            Sistema
-                        </TabsTrigger>
-                    </TabsList>
+                    {/* No celular as abas não cabem: rolam para o lado. */}
+                    <div className="-mx-6 [scrollbar-width:none] overflow-x-auto px-6 sm:-mx-8 sm:px-8 lg:mx-0 lg:overflow-visible lg:px-0">
+                        <TabsList>
+                            <TabsTrigger value="users">
+                                <UsersIcon className="mr-1.5 size-4" />
+                                Usuários
+                            </TabsTrigger>
+                            <TabsTrigger value="clientes">
+                                <Trash2 className="mr-1.5 size-4" />
+                                Clientes Inativos
+                            </TabsTrigger>
+                            <TabsTrigger value="apolices">
+                                <ScrollText className="mr-1.5 size-4" />
+                                Apólices Inativas/Vencidas/Canceladas
+                            </TabsTrigger>
+                            <TabsTrigger value="sistema">
+                                <Settings2 className="mr-1.5 size-4" />
+                                Sistema
+                            </TabsTrigger>
+                        </TabsList>
+                    </div>
 
                     <TabsContent value="users">
                         <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
@@ -283,8 +286,8 @@ export default function Administracao({
                                         {totalUsuarios} usuário(s)
                                     </p>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="relative">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                                    <div className="relative w-full sm:w-auto">
                                         <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/60" />
                                         <Input
                                             placeholder="Buscar por nome ou email..."
@@ -296,7 +299,7 @@ export default function Administracao({
                                         />
                                     </div>
                                     <Button
-                                        className="h-10 shrink-0 rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-600"
+                                        className="h-10 w-full shrink-0 rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-600 sm:w-auto"
                                         onClick={() => setOpenNovoUsuario(true)}
                                     >
                                         <Plus className="mr-1.5 size-4" />
@@ -306,7 +309,80 @@ export default function Administracao({
                             </div>
 
                             {/* Tabela de Usuários */}
-                            <div className="overflow-x-auto">
+                            {/* Celular/tablet: um usuário por card (a tabela só aparece a partir de lg). */}
+                            <div className="divide-y divide-border/70 lg:hidden">
+                                {usuariosFiltrados.length === 0 ? (
+                                    <p className="p-10 text-center text-sm text-muted-foreground">
+                                        Nenhum usuário encontrado.
+                                    </p>
+                                ) : (
+                                    usuariosFiltrados.map((user) => {
+                                        const isAdmin = user.role === 'admin';
+
+                                        return (
+                                            <div
+                                                key={user.id}
+                                                className="flex items-center gap-3 px-4 py-3.5"
+                                            >
+                                                <span
+                                                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                                                        isAdmin
+                                                            ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/25'
+                                                            : 'bg-muted text-muted-foreground'
+                                                    }`}
+                                                >
+                                                    {user.name
+                                                        .substring(0, 2)
+                                                        .toUpperCase()}
+                                                </span>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="truncate font-semibold text-foreground">
+                                                            {user.name}
+                                                        </p>
+                                                        <span
+                                                            className={`inline-flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-semibold ${
+                                                                isAdmin
+                                                                    ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600'
+                                                                    : 'border-border/70 bg-muted/50 text-foreground'
+                                                            }`}
+                                                        >
+                                                            {isAdmin ? (
+                                                                <Shield className="size-3" />
+                                                            ) : (
+                                                                <UserRound className="size-3" />
+                                                            )}
+                                                            {isAdmin
+                                                                ? 'Admin'
+                                                                : 'User'}
+                                                        </span>
+                                                    </div>
+                                                    <p className="truncate text-xs text-muted-foreground">
+                                                        {user.email}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground/80">
+                                                        Membro desde{' '}
+                                                        {formatarData(
+                                                            user.created_at,
+                                                        )}
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    onClick={() =>
+                                                        abrirPerfil(user)
+                                                    }
+                                                    aria-label="Abrir perfil do usuário"
+                                                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                                >
+                                                    <MoreVertical className="size-4" />
+                                                </button>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
+
+                            <div className="hidden overflow-x-auto lg:block">
                                 <table className="w-full border-collapse text-left">
                                     <thead>
                                         <tr className="border-b border-border/70 bg-muted/30 text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
@@ -424,7 +500,59 @@ export default function Administracao({
                                 </p>
                             </div>
 
-                            <div className="overflow-x-auto">
+                            {/* Celular/tablet: cards (a tabela só aparece a partir de lg). */}
+                            <div className="divide-y divide-border/70 lg:hidden">
+                                {totalInativos === 0 ? (
+                                    <p className="p-10 text-center text-sm text-muted-foreground">
+                                        Nenhum cliente na lixeira.
+                                    </p>
+                                ) : (
+                                    inativos.map((segurado) => (
+                                        <div
+                                            key={segurado.id}
+                                            className="flex flex-col gap-3 px-4 py-4"
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
+                                                    <Trash2 className="size-4" />
+                                                </span>
+                                                <div className="min-w-0">
+                                                    <p className="font-semibold break-words text-foreground">
+                                                        {segurado.nome_completo}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {segurado.cpf_cnpj}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground/80">
+                                                        Excluído em{' '}
+                                                        {formatarData(
+                                                            segurado.deleted_at,
+                                                        )}{' '}
+                                                        (
+                                                        {diasDesde(
+                                                            segurado.deleted_at,
+                                                        )}
+                                                        )
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() =>
+                                                    restaurarSegurado(
+                                                        segurado.id,
+                                                    )
+                                                }
+                                                className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 text-sm font-semibold text-emerald-600 transition-colors hover:bg-emerald-500/20"
+                                            >
+                                                <RotateCcw className="size-4" />
+                                                Restaurar
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            <div className="hidden overflow-x-auto lg:block">
                                 <table className="w-full border-collapse text-left">
                                     <thead>
                                         <tr className="border-b border-border/70 bg-muted/30 text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
@@ -516,7 +644,58 @@ export default function Administracao({
                                         (Lei 15.040/2024, art. 21)
                                     </p>
                                 </div>
-                                <div className="overflow-x-auto">
+                                {/* Celular/tablet: cards (a tabela só aparece a partir de lg). */}
+                                <div className="divide-y divide-border/70 lg:hidden">
+                                    {apolicesSuspensas.length === 0 ? (
+                                        <p className="p-10 text-center text-sm text-muted-foreground">
+                                            Nenhuma apólice suspensa no momento.
+                                        </p>
+                                    ) : (
+                                        apolicesSuspensas.map((apolice) => (
+                                            <div
+                                                key={apolice.id}
+                                                className="flex flex-col gap-3 px-4 py-4"
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-amber-500">
+                                                        <Ban className="size-4" />
+                                                    </span>
+                                                    <div className="min-w-0">
+                                                        <p className="font-semibold break-all text-foreground">
+                                                            #
+                                                            {
+                                                                apolice.numero_apolice
+                                                            }
+                                                        </p>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            {apolice.cliente
+                                                                ?.nome_completo ??
+                                                                '—'}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground/80">
+                                                            Suspensa em{' '}
+                                                            {formatarData(
+                                                                apolice.suspensa_em,
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() =>
+                                                        ativarApolice(
+                                                            apolice.id,
+                                                        )
+                                                    }
+                                                    className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 text-sm font-semibold text-emerald-600 transition-colors hover:bg-emerald-500/20"
+                                                >
+                                                    <PlayCircle className="size-4" />
+                                                    Ativar
+                                                </button>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                                <div className="hidden overflow-x-auto lg:block">
                                     <table className="w-full border-collapse text-left">
                                         <thead>
                                             <tr className="border-b border-border/70 bg-muted/30 text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
@@ -604,7 +783,56 @@ export default function Administracao({
                                         com um novo ciclo de datas e parcelas
                                     </p>
                                 </div>
-                                <div className="overflow-x-auto">
+                                {/* Celular/tablet: cards (a tabela só aparece a partir de lg). */}
+                                <div className="divide-y divide-border/70 lg:hidden">
+                                    {apolicesVencidas.length === 0 ? (
+                                        <p className="p-10 text-center text-sm text-muted-foreground">
+                                            Nenhuma apólice vencida no momento.
+                                        </p>
+                                    ) : (
+                                        apolicesVencidas.map((apolice) => (
+                                            <div
+                                                key={apolice.id}
+                                                className="flex flex-col gap-3 px-4 py-4"
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-amber-500">
+                                                        <RefreshCw className="size-4" />
+                                                    </span>
+                                                    <div className="min-w-0">
+                                                        <p className="font-semibold break-all text-foreground">
+                                                            #
+                                                            {
+                                                                apolice.numero_apolice
+                                                            }
+                                                        </p>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            {apolice.cliente
+                                                                ?.nome_completo ??
+                                                                '—'}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground/80">
+                                                            Vencida em{' '}
+                                                            {formatarData(
+                                                                apolice.fim_vigencia,
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() =>
+                                                        abrirRenovacao(apolice)
+                                                    }
+                                                    className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 text-sm font-semibold text-emerald-600 transition-colors hover:bg-emerald-500/20"
+                                                >
+                                                    <RefreshCw className="size-4" />
+                                                    Renovar
+                                                </button>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                                <div className="hidden overflow-x-auto lg:block">
                                     <table className="w-full border-collapse text-left">
                                         <thead>
                                             <tr className="border-b border-border/70 bg-muted/30 text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
@@ -693,7 +921,72 @@ export default function Administracao({
                                         chegou a valer) — as demais podem voltar
                                     </p>
                                 </div>
-                                <div className="overflow-x-auto">
+                                {/* Celular/tablet: cards (a tabela só aparece a partir de lg). */}
+                                <div className="divide-y divide-border/70 lg:hidden">
+                                    {apolicesCanceladas.length === 0 ? (
+                                        <p className="p-10 text-center text-sm text-muted-foreground">
+                                            Nenhuma apólice cancelada.
+                                        </p>
+                                    ) : (
+                                        apolicesCanceladas.map((apolice) => (
+                                            <div
+                                                key={apolice.id}
+                                                className="flex flex-col gap-3 px-4 py-4"
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
+                                                        <Trash2 className="size-4" />
+                                                    </span>
+                                                    <div className="min-w-0">
+                                                        <p className="font-semibold break-all text-foreground">
+                                                            #
+                                                            {
+                                                                apolice.numero_apolice
+                                                            }
+                                                        </p>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            {apolice.cliente
+                                                                ?.nome_completo ??
+                                                                '—'}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground/80">
+                                                            Cancelada em{' '}
+                                                            {formatarData(
+                                                                apolice.deleted_at,
+                                                            )}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground/80">
+                                                            Motivo:{' '}
+                                                            {rotuloMotivoCancelamento(
+                                                                apolice.motivo_cancelamento,
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                {podeRestaurarApolice(
+                                                    apolice.motivo_cancelamento,
+                                                ) ? (
+                                                    <button
+                                                        onClick={() =>
+                                                            restaurarApolice(
+                                                                apolice.id,
+                                                            )
+                                                        }
+                                                        className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 text-sm font-semibold text-emerald-600 transition-colors hover:bg-emerald-500/20"
+                                                    >
+                                                        <RotateCcw className="size-4" />
+                                                        Restaurar
+                                                    </button>
+                                                ) : (
+                                                    <p className="text-center text-xs font-medium text-rose-500">
+                                                        Cancelamento definitivo
+                                                    </p>
+                                                )}
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                                <div className="hidden overflow-x-auto lg:block">
                                     <table className="w-full border-collapse text-left">
                                         <thead>
                                             <tr className="border-b border-border/70 bg-muted/30 text-[11px] font-bold tracking-wider text-muted-foreground uppercase">

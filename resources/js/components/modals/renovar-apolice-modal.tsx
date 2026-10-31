@@ -132,7 +132,7 @@ export default function RenovarApoliceModal({ open, setOpen, apolice }: Props) {
             open={open}
             onOpenChange={(v) => (v ? setOpen(true) : fechar())}
         >
-            <DialogContent className="sm:max-w-lg">
+            <DialogContent className="sm:max-w-lg max-sm:max-h-[94dvh] max-lg:[&_input]:text-base max-lg:[&_textarea]:text-base">
                 <DialogHeader>
                     <div className="flex items-center gap-3">
                         <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600">

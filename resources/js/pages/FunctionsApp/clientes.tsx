@@ -184,6 +184,16 @@ export default function Clientes({
         setSeguradoSelecionadoId(segurado.id);
     };
 
+    // No mobile o painel fica abaixo da lista: rola até ele para o operador
+    // perceber que o cliente abriu. Chamado só pelos cards (abaixo de lg).
+    const rolarAtePainel = () => {
+        setTimeout(() => {
+            document
+                .getElementById('painel-cliente')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
+    };
+
     // Botão "Confirmar exclusão" do diálogo: DELETE /clientes/{id}
     // (SeguradoController::destroy — soft delete do cliente e das apólices).
     // O toast de sucesso vem do flash; aqui só trata erro de rede/validação.
@@ -212,7 +222,7 @@ export default function Clientes({
         <>
             <Head title="Clientes" />
 
-            <div className="flex flex-col gap-6 p-6 sm:p-8">
+            <div className="flex flex-col gap-5 p-4 sm:gap-6 sm:p-8">
                 {/* 1. Header da Página */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -238,49 +248,49 @@ export default function Clientes({
                 </div>
 
                 {/* 2. Cards de Estatísticas — flat, sem glow/blur, só borda e cor */}
-                <div className="grid gap-4 sm:grid-cols-3">
-                    <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-5 transition-colors hover:border-emerald-500/30">
-                        <div className="flex flex-col gap-1">
-                            <span className="text-xs font-medium text-muted-foreground">
+                <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                    <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-3 transition-colors hover:border-emerald-500/30 sm:p-4 lg:p-5">
+                        <div className="flex min-w-0 flex-col gap-1">
+                            <span className="text-[11px]/tight font-medium text-muted-foreground sm:text-xs">
                                 Total de Clientes
                             </span>
-                            <span className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                            <span className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl lg:text-3xl">
                                 {totalGeral}
                             </span>
                         </div>
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+                        <div className="hidden h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 lg:flex">
                             <UserRound className="size-5" />
                         </div>
                     </div>
-                    <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-5 transition-colors hover:border-emerald-500/30">
-                        <div className="flex flex-col gap-1">
-                            <span className="text-xs font-medium text-muted-foreground">
+                    <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-3 transition-colors hover:border-emerald-500/30 sm:p-4 lg:p-5">
+                        <div className="flex min-w-0 flex-col gap-1">
+                            <span className="text-[11px]/tight font-medium text-muted-foreground sm:text-xs">
                                 Clientes Ativos
                             </span>
-                            <span className="text-2xl font-semibold tracking-tight text-emerald-600 sm:text-3xl">
+                            <span className="text-xl font-semibold tracking-tight text-emerald-600 sm:text-2xl lg:text-3xl">
                                 {totalAtivosSegurados}
                             </span>
                         </div>
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+                        <div className="hidden h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 lg:flex">
                             <ScrollText className="size-5" />
                         </div>
                     </div>
-                    <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-5 transition-colors hover:border-muted-foreground/30">
-                        <div className="flex flex-col gap-1">
-                            <span className="text-xs font-medium text-muted-foreground">
+                    <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-3 transition-colors hover:border-muted-foreground/30 sm:p-4 lg:p-5">
+                        <div className="flex min-w-0 flex-col gap-1">
+                            <span className="text-[11px]/tight font-medium text-muted-foreground sm:text-xs">
                                 Inativos
                             </span>
-                            <span className="text-2xl font-semibold tracking-tight text-muted-foreground sm:text-3xl">
+                            <span className="text-xl font-semibold tracking-tight text-muted-foreground sm:text-2xl lg:text-3xl">
                                 {totalInativosSegurados}
                             </span>
                         </div>
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+                        <div className="hidden h-11 w-11 items-center justify-center rounded-xl bg-muted text-muted-foreground lg:flex">
                             <ScrollText className="size-5" />
                         </div>
                     </div>
                 </div>
                 {/* 3. Lista de clientes + painel do cliente selecionado, lado a lado */}
-                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_460px] lg:items-start">
+                <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_460px] lg:items-start">
                     <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
                         {/* Toolbar */}
                         <div className="flex flex-col justify-between gap-4 border-b border-border/70 p-4 sm:p-5 lg:flex-row lg:items-center">
@@ -294,7 +304,7 @@ export default function Clientes({
                                 </p>
                             </div>
                             <div className="flex flex-wrap items-center gap-2.5">
-                                <div className="relative">
+                                <div className="relative w-full sm:w-auto">
                                     <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/60" />
                                     <Input
                                         placeholder="Buscar por nome, CPF..."
@@ -304,12 +314,12 @@ export default function Clientes({
                                     />
                                 </div>
                                 {/* Dropdown de filtro por status */}
-                                <div className="relative">
+                                <div className="relative flex-1 sm:flex-initial">
                                     <button
                                         onClick={() =>
                                             setFiltroAberto(!filtroAberto)
                                         }
-                                        className="inline-flex h-10 min-w-[120px] items-center justify-between gap-2 rounded-xl border border-border/70 bg-background px-3 text-sm font-medium transition-colors hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
+                                        className="inline-flex h-10 w-full min-w-[120px] items-center justify-between gap-2 rounded-xl border border-border/70 bg-background px-3 text-sm font-medium transition-colors hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none sm:w-auto"
                                     >
                                         <span className="flex items-center gap-2">
                                             <Filter className="size-4 text-muted-foreground/60" />
@@ -350,7 +360,7 @@ export default function Clientes({
                                 </div>
                                 <a
                                     href="/clientes/exportar"
-                                    className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border/70 bg-background px-4 text-sm font-medium transition-colors hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
+                                    className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-border/70 bg-background px-4 text-sm font-medium transition-colors hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none sm:flex-initial"
                                 >
                                     <Download className="size-4 text-muted-foreground/60" />
                                     Exportar
@@ -358,8 +368,114 @@ export default function Clientes({
                             </div>
                         </div>
 
+                        {/* Lista em cards (mobile e tablet): mesmas informações e ações da
+                            tabela, que só aparece a partir de lg. */}
+                        <div className="divide-y divide-border/70 lg:hidden">
+                            {!segurados?.data || segurados.data.length === 0 ? (
+                                <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+                                    Nenhum cliente encontrado.
+                                </p>
+                            ) : (
+                                segurados.data.map((segurado) => (
+                                    <div
+                                        key={segurado.id}
+                                        data-abre-painel
+                                        role="button"
+                                        tabIndex={0}
+                                        onClick={() => {
+                                            selecionarCliente(segurado);
+                                            rolarAtePainel();
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                selecionarCliente(segurado);
+                                                rolarAtePainel();
+                                            }
+                                        }}
+                                        className={`flex cursor-pointer items-start gap-3 px-4 py-3.5 transition-colors active:bg-muted/[0.18] ${
+                                            seguradoSelecionado?.id ===
+                                            segurado.id
+                                                ? 'bg-emerald-500/5'
+                                                : ''
+                                        }`}
+                                    >
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center gap-2">
+                                                <p className="truncate font-medium text-foreground">
+                                                    {segurado.nome_completo}
+                                                </p>
+                                                <span
+                                                    className={`inline-flex shrink-0 rounded-lg px-2 py-0.5 text-[11px] font-semibold capitalize ${
+                                                        segurado.status ===
+                                                        'Ativo'
+                                                            ? 'bg-emerald-500/10 text-emerald-500'
+                                                            : 'bg-muted text-muted-foreground'
+                                                    }`}
+                                                >
+                                                    {segurado.status}
+                                                </span>
+                                            </div>
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                <span className="font-mono">
+                                                    #
+                                                    {String(
+                                                        segurado.id,
+                                                    ).padStart(4, '0')}
+                                                </span>
+                                                {' · '}
+                                                {segurado.cpf_cnpj
+                                                    ? formataCpfCnpj(
+                                                          segurado.cpf_cnpj,
+                                                      )
+                                                    : '-'}
+                                            </p>
+                                            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                                {segurado.celular_whatsapp ||
+                                                    segurado.telefone ||
+                                                    '-'}
+                                                {' · '}
+                                                {segurado.cidade} -{' '}
+                                                {segurado.estado}
+                                            </p>
+                                        </div>
+                                        <div className="flex shrink-0 items-center gap-1.5">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                title="Imprimir ficha do segurado"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    window.open(
+                                                        `/clientes/${segurado.id}/ficha`,
+                                                        '_blank',
+                                                    );
+                                                }}
+                                                className="h-10 w-10 rounded-xl border-border/70 p-0 text-muted-foreground hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-600"
+                                            >
+                                                <Printer className="size-4" />
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                title="Excluir cliente"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSeguradoParaExcluir(
+                                                        segurado,
+                                                    );
+                                                }}
+                                                className="h-10 w-10 rounded-xl border-border/70 p-0 text-muted-foreground hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-500"
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
                         {/* Tabela de segurados */}
-                        <div className="overflow-x-auto">
+                        <div className="hidden overflow-x-auto lg:block">
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b border-border/70 text-muted-foreground">
@@ -505,13 +621,13 @@ export default function Clientes({
                                 resultados
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex w-full items-center gap-2 sm:w-auto">
                                 {/* Botão Anterior */}
                                 {segurados?.prev_page_url ? (
                                     <Link
                                         href={segurados.prev_page_url}
                                         preserveScroll
-                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium transition-colors hover:border-emerald-500/40 hover:bg-muted/50"
+                                        className="inline-flex h-10 flex-1 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium transition-colors hover:border-emerald-500/40 hover:bg-muted/50 sm:h-9 sm:flex-initial"
                                     >
                                         <ChevronLeft className="size-3.5" />
                                         Anterior
@@ -519,7 +635,7 @@ export default function Clientes({
                                 ) : (
                                     <button
                                         disabled
-                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                                        className="inline-flex h-10 flex-1 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 sm:h-9 sm:flex-initial"
                                     >
                                         <ChevronLeft className="size-3.5" />
                                         Anterior
@@ -531,7 +647,7 @@ export default function Clientes({
                                     <Link
                                         href={segurados.next_page_url}
                                         preserveScroll
-                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium transition-colors hover:border-emerald-500/40 hover:bg-muted/50"
+                                        className="inline-flex h-10 flex-1 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium transition-colors hover:border-emerald-500/40 hover:bg-muted/50 sm:h-9 sm:flex-initial"
                                     >
                                         Próxima
                                         <ChevronRight className="size-3.5" />
@@ -539,7 +655,7 @@ export default function Clientes({
                                 ) : (
                                     <button
                                         disabled
-                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                                        className="inline-flex h-10 flex-1 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 sm:h-9 sm:flex-initial"
                                     >
                                         Próxima
                                         <ChevronRight className="size-3.5" />

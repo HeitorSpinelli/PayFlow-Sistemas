@@ -188,7 +188,9 @@ export default function DininhoWidget() {
             <button
                 onClick={alternarChat}
                 aria-label={aberto ? 'Fechar Dininho' : 'Abrir Dininho'}
-                className="group fixed right-6 bottom-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 text-2xl shadow-lg shadow-emerald-500/30 transition-all hover:scale-105 hover:bg-emerald-600 active:scale-95"
+                // Mobile/tablet: botão menor e mais no canto, para cobrir
+                // menos conteúdo; em lg+ volta ao tamanho/posição original.
+                className="group fixed right-4 bottom-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500 text-xl shadow-lg shadow-emerald-500/30 transition-all hover:scale-105 hover:bg-emerald-600 active:scale-95 lg:right-6 lg:bottom-6 lg:h-14 lg:w-14 lg:text-2xl"
             >
                 <div className="pointer-events-none absolute inset-0 -z-10 rounded-full bg-emerald-500/30 blur-xl transition-opacity group-hover:opacity-80" />
 
@@ -213,7 +215,9 @@ export default function DininhoWidget() {
 
             {/* Janela de chat */}
             <div
-                className={`fixed right-6 bottom-24 z-50 flex h-[520px] w-80 flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-2xl shadow-black/20 transition-all duration-200 ${
+                // Mobile: janela ocupa a largura (com margem) e nunca passa
+                // da altura da tela; em lg+ volta ao card 320×520 original.
+                className={`fixed right-3 bottom-20 left-3 z-50 flex h-[min(520px,calc(100dvh-6.5rem))] flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-2xl shadow-black/20 transition-all duration-200 sm:left-auto sm:w-80 lg:right-6 lg:bottom-24 lg:h-[520px] ${
                     aberto
                         ? 'translate-y-0 scale-100 opacity-100'
                         : 'pointer-events-none translate-y-3 scale-95 opacity-0'

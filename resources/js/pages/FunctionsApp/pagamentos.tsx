@@ -100,7 +100,6 @@ export default function Pagamentos({
     // exclusão aberto.
     const [pagamentoParaExcluir, setPagamentoParaExcluir] = useState<any>(null);
 
-
     // Lê os parâmetros atuais da URL para inicializar os estados corretamente
     const urlParams =
         typeof window !== 'undefined'
@@ -199,6 +198,16 @@ export default function Pagamentos({
         setApoliceIdInicialPainel(pagamento.apolice_id ?? null);
     };
 
+    // No mobile o painel fica abaixo da lista: rola até ele para o operador
+    // perceber que o cliente abriu. Chamado só pelos cards (abaixo de lg).
+    const rolarAtePainel = () => {
+        setTimeout(() => {
+            document
+                .getElementById('painel-cliente')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
+    };
+
     // Botão "Confirmar exclusão" do diálogo: DELETE /pagamentos/{id}
     // (pagamentoController::destroy — estorna o pagamento e reabre a parcela).
     const confirmarExclusao = () => {
@@ -220,7 +229,7 @@ export default function Pagamentos({
         <>
             <Head title="Pagamentos" />
 
-            <div className="flex flex-col gap-6 p-6 sm:p-8">
+            <div className="flex flex-col gap-5 p-4 sm:gap-6 sm:p-8">
                 {/* 1. Header da Página */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -246,45 +255,45 @@ export default function Pagamentos({
                 </div>
 
                 {/* 2. Cards de resumo financeiro */}
-                <div className="grid gap-4 sm:grid-cols-3">
-                    <div className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:border-emerald-500/30">
+                <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                    <div className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-border/70 bg-card p-3 shadow-sm transition-all duration-300 hover:border-emerald-500/30 sm:p-4 lg:p-5 lg:hover:scale-[1.02]">
                         <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl"></div>
-                        <div className="relative z-10 flex flex-col gap-1">
-                            <span className="text-xs font-medium text-muted-foreground">
+                        <div className="relative z-10 flex min-w-0 flex-col gap-1">
+                            <span className="text-[11px]/tight font-medium text-muted-foreground sm:text-xs">
                                 Total Recebido
                             </span>
-                            <span className="text-2xl font-bold tracking-tight text-emerald-500 sm:text-3xl">
+                            <span className="text-base font-bold tracking-tight text-emerald-500 sm:text-xl lg:text-3xl">
                                 R$ {formatarMoeda(totalRecebido)}
                             </span>
                         </div>
-                        <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+                        <div className="relative z-10 hidden h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.2)] lg:flex">
                             <DollarSign className="size-6" />
                         </div>
                     </div>
 
-                    <div className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:border-emerald-500/30">
+                    <div className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-border/70 bg-card p-3 shadow-sm transition-all duration-300 hover:border-emerald-500/30 sm:p-4 lg:p-5 lg:hover:scale-[1.02]">
                         <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl"></div>
-                        <div className="relative z-10 flex flex-col gap-1">
-                            <span className="text-xs font-medium text-muted-foreground">
+                        <div className="relative z-10 flex min-w-0 flex-col gap-1">
+                            <span className="text-[11px]/tight font-medium text-muted-foreground sm:text-xs">
                                 Pagamentos Confirmados
                             </span>
-                            <span className="text-2xl font-bold tracking-tight text-emerald-500 sm:text-3xl">
+                            <span className="text-base font-bold tracking-tight text-emerald-500 sm:text-xl lg:text-3xl">
                                 {totalConfirmados}
                             </span>
                         </div>
-                        <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+                        <div className="relative z-10 hidden h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.2)] lg:flex">
                             <CircleCheck className="size-6" />
                         </div>
                     </div>
 
-                    <div className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:border-red-500/30">
+                    <div className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-border/70 bg-card p-3 shadow-sm transition-all duration-300 hover:border-red-500/30 sm:p-4 lg:p-5 lg:hover:scale-[1.02]">
                         <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-red-500/10 blur-3xl"></div>
-                        <div className="relative z-10 flex flex-col gap-1">
-                            <span className="text-xs font-medium text-muted-foreground">
+                        <div className="relative z-10 flex min-w-0 flex-col gap-1">
+                            <span className="text-[11px]/tight font-medium text-muted-foreground sm:text-xs">
                                 Clientes com Pendência
                             </span>
                             <span
-                                className={`text-2xl font-bold tracking-tight sm:text-3xl ${
+                                className={`text-base font-bold tracking-tight sm:text-xl lg:text-3xl ${
                                     clientesComPendencia > 0
                                         ? 'text-red-500'
                                         : 'text-foreground'
@@ -293,14 +302,14 @@ export default function Pagamentos({
                                 {clientesComPendencia}
                             </span>
                         </div>
-                        <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-xl bg-red-500/10 text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.2)]">
+                        <div className="relative z-10 hidden h-12 w-12 items-center justify-center rounded-xl bg-red-500/10 text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.2)] lg:flex">
                             <AlertTriangle className="size-6" />
                         </div>
                     </div>
                 </div>
 
                 {/* 3. Lista de pagamentos + painel do cliente selecionado, lado a lado */}
-                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_460px] lg:items-start">
+                <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_460px] lg:items-start">
                     <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
                         {/* Toolbar */}
                         <div className="flex flex-col justify-between gap-4 border-b border-border/70 p-4 sm:p-5 lg:flex-row lg:items-center">
@@ -320,7 +329,7 @@ export default function Pagamentos({
                                 </p>
                             </div>
                             <div className="flex flex-wrap items-center gap-2.5">
-                                <div className="relative">
+                                <div className="relative w-full sm:w-auto">
                                     <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/60" />
                                     <Input
                                         placeholder="Buscar por cliente, apólice..."
@@ -332,12 +341,12 @@ export default function Pagamentos({
 
                                 {/* Dropdown de filtro por status */}
                                 {/* (na prática filtra por FORMA de pagamento: boleto, pix, cartão, débito) */}
-                                <div className="relative">
+                                <div className="relative flex-1 sm:flex-initial">
                                     <button
                                         onClick={() =>
                                             setFiltroAberto(!filtroAberto)
                                         }
-                                        className="inline-flex h-10 min-w-[120px] items-center justify-between gap-2 rounded-xl border border-border/70 bg-background px-3 text-sm font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
+                                        className="inline-flex h-10 w-full min-w-[120px] items-center justify-between gap-2 rounded-xl border border-border/70 bg-background px-3 text-sm font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none sm:w-auto"
                                     >
                                         <span className="flex items-center gap-2">
                                             <Filter className="size-4 text-muted-foreground/60" />
@@ -382,7 +391,7 @@ export default function Pagamentos({
                                     exportando o que via. */}
                                 <a
                                     href={`/pagamentos/exportar${typeof window !== 'undefined' ? window.location.search : ''}`}
-                                    className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border/70 bg-background px-4 text-sm font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
+                                    className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-border/70 bg-background px-4 text-sm font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none sm:flex-initial"
                                 >
                                     <Download className="size-4 text-muted-foreground/60" />
                                     Exportar
@@ -390,8 +399,114 @@ export default function Pagamentos({
                             </div>
                         </div>
 
+                        {/* Lista em cards (mobile e tablet): mesmas informações e ações da
+                            tabela, que só aparece a partir de lg. */}
+                        <div className="divide-y divide-border/70 lg:hidden">
+                            {!pagamentos?.data ||
+                            pagamentos.data.length === 0 ? (
+                                <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+                                    Nenhum pagamento encontrado.
+                                </p>
+                            ) : (
+                                pagamentos.data.map((p: any) => (
+                                    <div
+                                        key={p.id}
+                                        data-abre-painel
+                                        role="button"
+                                        tabIndex={0}
+                                        onClick={() => {
+                                            selecionarCliente(p);
+                                            rolarAtePainel();
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                selecionarCliente(p);
+                                                rolarAtePainel();
+                                            }
+                                        }}
+                                        className={`cursor-pointer px-4 py-3.5 transition-colors active:bg-muted/[0.18] ${
+                                            clienteSelecionado?.id ===
+                                            p.cliente_id
+                                                ? 'bg-emerald-500/5'
+                                                : ''
+                                        }`}
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <p className="truncate font-medium text-foreground">
+                                                    {p.cliente}
+                                                </p>
+                                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                                    {p.apolice} / {p.parcela}ª
+                                                </p>
+                                            </div>
+                                            <span className="shrink-0 text-sm font-semibold whitespace-nowrap text-foreground">
+                                                R$ {formatarMoeda(p.valor)}
+                                            </span>
+                                        </div>
+                                        <div className="mt-2 flex items-center justify-between gap-3">
+                                            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                                                <span className="inline-flex rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-600 capitalize">
+                                                    {p.status}
+                                                </span>
+                                                <span>
+                                                    {formatarDataBR(
+                                                        p.data_pagamento,
+                                                    )}
+                                                </span>
+                                                <span className="capitalize">
+                                                    · {p.forma_pagamento}
+                                                </span>
+                                                <span>
+                                                    ·{' '}
+                                                    {p.registrado_por ?? (
+                                                        <span className="italic">
+                                                            Sistema
+                                                        </span>
+                                                    )}
+                                                </span>
+                                            </div>
+                                            <div className="flex shrink-0 items-center gap-1">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    title="Imprimir cupom da parcela"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        window.open(
+                                                            `/pagamentos/${p.id}/cupom`,
+                                                            '_blank',
+                                                        );
+                                                    }}
+                                                    className="h-10 w-10 rounded-lg p-0 text-muted-foreground hover:bg-emerald-500/10 hover:text-emerald-600"
+                                                >
+                                                    <Printer className="size-4" />
+                                                </Button>
+                                                {isAdmin && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        title="Excluir pagamento"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setPagamentoParaExcluir(
+                                                                p,
+                                                            );
+                                                        }}
+                                                        className="h-10 w-10 rounded-lg p-0 text-muted-foreground hover:bg-red-500/10 hover:text-red-500"
+                                                    >
+                                                        <Trash2 className="size-4" />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
                         {/* Tabela de Pagamentos */}
-                        <div className="overflow-x-auto">
+                        <div className="hidden overflow-x-auto lg:block">
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b border-border/70 bg-muted/[0.18] font-medium text-muted-foreground">
@@ -547,12 +662,12 @@ export default function Pagamentos({
                                 resultados
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex w-full items-center gap-2 sm:w-auto">
                                 {pagamentos?.prev_page_url ? (
                                     <Link
                                         href={pagamentos.prev_page_url}
                                         preserveScroll
-                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50"
+                                        className="inline-flex h-10 flex-1 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50 sm:h-9 sm:flex-initial"
                                     >
                                         <ChevronLeft className="size-3.5" />
                                         Anterior
@@ -560,7 +675,7 @@ export default function Pagamentos({
                                 ) : (
                                     <button
                                         disabled
-                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40"
+                                        className="inline-flex h-10 flex-1 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40 sm:h-9 sm:flex-initial"
                                     >
                                         <ChevronLeft className="size-3.5" />
                                         Anterior
@@ -571,7 +686,7 @@ export default function Pagamentos({
                                     <Link
                                         href={pagamentos.next_page_url}
                                         preserveScroll
-                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50"
+                                        className="inline-flex h-10 flex-1 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50 sm:h-9 sm:flex-initial"
                                     >
                                         Próxima
                                         <ChevronRight className="size-3.5" />
@@ -579,7 +694,7 @@ export default function Pagamentos({
                                 ) : (
                                     <button
                                         disabled
-                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40"
+                                        className="inline-flex h-10 flex-1 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3.5 text-xs font-medium shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-40 sm:h-9 sm:flex-initial"
                                     >
                                         Próxima
                                         <ChevronRight className="size-3.5" />

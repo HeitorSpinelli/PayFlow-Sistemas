@@ -42,9 +42,7 @@ interface PageProps {
     totalInativas?: number;
 }
 
-import { 
-    formatarMoeda
-} from '@/utils/Masks';
+import { formatarMoeda } from '@/utils/Masks';
 
 /**
  * Tela "Apólices" — URL /apolices.
@@ -219,43 +217,45 @@ export default function Apolices({
                 </div>
 
                 {/* 2. Cards de Estatísticas — flat, sem glow/blur, só borda e cor */}
-                <div className="grid gap-4 sm:grid-cols-3">
-                    <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-5 transition-colors hover:border-emerald-500/30">
-                        <div className="flex flex-col gap-1">
-                            <span className="text-xs font-medium text-muted-foreground">
+                {/* No celular os 3 cards ficam lado a lado, compactos e sem
+                    ícone; a partir de sm voltam ao layout original. */}
+                <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
+                    <div className="flex items-stretch justify-between rounded-2xl border border-border/70 bg-card p-3 transition-colors hover:border-emerald-500/30 sm:items-center sm:p-5">
+                        <div className="flex flex-col justify-between gap-1 sm:justify-start">
+                            <span className="text-[11px] font-medium text-muted-foreground sm:text-xs">
                                 Total de Clientes
                             </span>
-                            <span className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                            <span className="text-xl font-semibold tracking-tight text-foreground sm:text-3xl">
                                 {total}
                             </span>
                         </div>
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+                        <div className="hidden h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 sm:flex">
                             <UserRound className="size-5" />
                         </div>
                     </div>
-                    <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-5 transition-colors hover:border-emerald-500/30">
-                        <div className="flex flex-col gap-1">
-                            <span className="text-xs font-medium text-muted-foreground">
+                    <div className="flex items-stretch justify-between rounded-2xl border border-border/70 bg-card p-3 transition-colors hover:border-emerald-500/30 sm:items-center sm:p-5">
+                        <div className="flex flex-col justify-between gap-1 sm:justify-start">
+                            <span className="text-[11px] font-medium text-muted-foreground sm:text-xs">
                                 Clientes Ativos
                             </span>
-                            <span className="text-2xl font-semibold tracking-tight text-emerald-600 sm:text-3xl">
+                            <span className="text-xl font-semibold tracking-tight text-emerald-600 sm:text-3xl">
                                 {totalAtivas}
                             </span>
                         </div>
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+                        <div className="hidden h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 sm:flex">
                             <ScrollText className="size-5" />
                         </div>
                     </div>
-                    <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-5 transition-colors hover:border-rose-500/30">
-                        <div className="flex flex-col gap-1">
-                            <span className="text-xs font-medium text-muted-foreground">
+                    <div className="flex items-stretch justify-between rounded-2xl border border-border/70 bg-card p-3 transition-colors hover:border-rose-500/30 sm:items-center sm:p-5">
+                        <div className="flex flex-col justify-between gap-1 sm:justify-start">
+                            <span className="text-[11px] font-medium text-muted-foreground sm:text-xs">
                                 Inativos
                             </span>
-                            <span className="text-2xl font-semibold tracking-tight text-rose-500 sm:text-3xl">
+                            <span className="text-xl font-semibold tracking-tight text-rose-500 sm:text-3xl">
                                 {totalInativas}
                             </span>
                         </div>
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500">
+                        <div className="hidden h-11 w-11 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500 sm:flex">
                             <ScrollText className="size-5" />
                         </div>
                     </div>
@@ -273,7 +273,7 @@ export default function Apolices({
                             </p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2.5">
-                            <div className="relative">
+                            <div className="relative w-full sm:w-auto">
                                 <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/60" />
                                 <Input
                                     placeholder="Buscar por apólice, cliente, CPF..."
@@ -284,12 +284,12 @@ export default function Apolices({
                             </div>
 
                             {/* Dropdown de filtro por status */}
-                            <div className="relative">
+                            <div className="relative flex-1 sm:flex-initial">
                                 <button
                                     onClick={() =>
                                         setFiltroAberto(!filtroAberto)
                                     }
-                                    className="inline-flex h-10 min-w-[120px] items-center justify-between gap-2 rounded-xl border border-border/70 bg-background px-3 text-sm font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
+                                    className="inline-flex h-10 w-full min-w-[120px] items-center justify-between gap-2 rounded-xl border border-border/70 bg-background px-3 text-sm font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none sm:w-auto"
                                 >
                                     <span className="flex items-center gap-2">
                                         <Filter className="size-4 text-muted-foreground/60" />
@@ -326,7 +326,7 @@ export default function Apolices({
                             </div>
                             <a
                                 href="/apolices/exportar"
-                                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border/70 bg-background px-4 text-sm font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
+                                className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-border/70 bg-background px-4 text-sm font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted/50 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none sm:flex-initial"
                             >
                                 <Download className="size-4 text-muted-foreground/60" />
                                 Exportar
@@ -336,7 +336,102 @@ export default function Apolices({
 
                     {/* Tabela de Apólices */}
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                        {/* Celular/tablet: uma apólice por card, com as
+                            mesmas informações e o mesmo botão de perfil da
+                            tabela (que só aparece a partir de lg). */}
+                        <div className="divide-y divide-border/70 lg:hidden">
+                            {apolicesFiltradas.length === 0 ? (
+                                <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+                                    Nenhuma apólice encontrada.
+                                </p>
+                            ) : (
+                                apolicesFiltradas.map((apolice: any) => (
+                                    <div
+                                        key={apolice.id}
+                                        className="flex flex-col gap-3 px-4 py-4"
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <p className="truncate font-semibold text-foreground">
+                                                    {apolice.nome_completo}
+                                                </p>
+                                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                                    <span className="font-mono">
+                                                        #
+                                                        {String(
+                                                            apolice.id,
+                                                        ).padStart(4, '0')}
+                                                    </span>{' '}
+                                                    · {apolice.numero_apolice}
+                                                </p>
+                                            </div>
+                                            <div className="flex shrink-0 items-center gap-2">
+                                                <span
+                                                    className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-semibold capitalize ${getStatusBadgeStyle(
+                                                        apolice.status_vigencia,
+                                                    )}`}
+                                                >
+                                                    {apolice.status_vigencia}
+                                                </span>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    aria-label="Abrir perfil da apólice"
+                                                    onClick={() =>
+                                                        abrirPerfil(apolice)
+                                                    }
+                                                    className="h-10 w-10 rounded-xl border-border/70 p-0 hover:border-emerald-500/40"
+                                                >
+                                                    <MoreHorizontal className="size-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground">
+                                            {apolice.nome_ramo} /{' '}
+                                            {apolice.nome_fantasia}
+                                        </p>
+                                        <dl className="grid grid-cols-3 gap-2 rounded-xl bg-muted/40 p-3 text-xs">
+                                            <div className="min-w-0">
+                                                <dt className="text-muted-foreground">
+                                                    Prêmio
+                                                </dt>
+                                                <dd className="mt-0.5 truncate font-semibold text-foreground">
+                                                    {formatarMoeda(
+                                                        apolice.valor_premio_total,
+                                                    )}
+                                                </dd>
+                                            </div>
+                                            <div className="min-w-0">
+                                                <dt className="text-muted-foreground">
+                                                    Parcelas
+                                                </dt>
+                                                <dd className="mt-0.5 font-semibold text-foreground">
+                                                    {
+                                                        apolice.quantidade_parcelas
+                                                    }
+                                                </dd>
+                                            </div>
+                                            <div className="min-w-0">
+                                                <dt className="text-muted-foreground">
+                                                    Vigência
+                                                </dt>
+                                                <dd className="mt-0.5 leading-tight font-semibold text-foreground">
+                                                    {formatarDataBR(
+                                                        apolice.inicio_vigencia,
+                                                    )}
+                                                    <br />
+                                                    {formatarDataBR(
+                                                        apolice.fim_vigencia,
+                                                    )}
+                                                </dd>
+                                            </div>
+                                        </dl>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        <table className="hidden w-full text-sm lg:table">
                             <thead>
                                 <tr className="border-b border-border/70 bg-muted/[0.18] font-medium text-muted-foreground">
                                     <th className="h-11 px-4 text-left text-xs font-bold tracking-wider uppercase">
@@ -446,8 +541,8 @@ export default function Apolices({
                         </table>
 
                         {/* 4. Paginação */}
-                        <div className="flex items-center justify-between border-t border-border/70 bg-muted/[0.18] px-4 py-4 sm:px-5">
-                            <div className="text-sm text-muted-foreground">
+                        <div className="flex flex-col gap-3 border-t border-border/70 bg-muted/[0.18] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:px-5">
+                            <div className="text-center text-sm text-muted-foreground sm:text-left">
                                 Mostrando{' '}
                                 <span className="font-medium text-foreground">
                                     {apolices?.from ?? 0}
@@ -462,12 +557,12 @@ export default function Apolices({
                                 </span>{' '}
                                 resultados
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex w-full items-center gap-2 sm:w-auto">
                                 {apolices?.prev_page_url ? (
                                     <Link
                                         href={apolices.prev_page_url}
                                         preserveScroll
-                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted"
+                                        className="inline-flex h-10 flex-1 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted sm:h-9 sm:flex-initial"
                                     >
                                         <ChevronLeft className="size-3" />
                                         Anterior
@@ -475,7 +570,7 @@ export default function Apolices({
                                 ) : (
                                     <button
                                         disabled
-                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3 text-xs font-medium shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-50"
+                                        className="inline-flex h-10 flex-1 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3 text-xs font-medium shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:flex-initial"
                                     >
                                         <ChevronLeft className="size-3" />
                                         Anterior
@@ -485,7 +580,7 @@ export default function Apolices({
                                     <Link
                                         href={apolices.next_page_url}
                                         preserveScroll
-                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted"
+                                        className="inline-flex h-10 flex-1 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3 text-xs font-medium shadow-sm transition-all hover:border-emerald-500/40 hover:bg-muted sm:h-9 sm:flex-initial"
                                     >
                                         Próxima
                                         <ChevronRight className="size-3" />
@@ -493,7 +588,7 @@ export default function Apolices({
                                 ) : (
                                     <button
                                         disabled
-                                        className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3 text-xs font-medium shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-50"
+                                        className="inline-flex h-10 flex-1 items-center justify-center gap-1 rounded-xl border border-border/70 bg-background px-3 text-xs font-medium shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:flex-initial"
                                     >
                                         Próxima
                                         <ChevronRight className="size-3" />

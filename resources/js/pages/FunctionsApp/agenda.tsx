@@ -43,8 +43,18 @@ interface Props {
 /* ------------------------------------------------------------------ */
 
 const NOMES_MES = [
-    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+    'Janeiro',
+    'Fevereiro',
+    'Março',
+    'Abril',
+    'Maio',
+    'Junho',
+    'Julho',
+    'Agosto',
+    'Setembro',
+    'Outubro',
+    'Novembro',
+    'Dezembro',
 ];
 
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -119,7 +129,9 @@ export default function Agenda({ cobrancas }: Props) {
 
     const hoje = new Date();
     // Primeiro dia do mês exibido no calendário (as setas mudam este estado).
-    const [dataAtual, setDataAtual] = useState(new Date(hoje.getFullYear(), hoje.getMonth(), 1));
+    const [dataAtual, setDataAtual] = useState(
+        new Date(hoje.getFullYear(), hoje.getMonth(), 1),
+    );
     // Dia clicado ('YYYY-MM-DD'); não-nulo = modal de detalhe do dia aberto.
     const [diaSelecionado, setDiaSelecionado] = useState<string | null>(null);
 
@@ -149,7 +161,11 @@ export default function Agenda({ cobrancas }: Props) {
             const dia = diasMesAnterior - i;
             const mesRef = mes === 0 ? 11 : mes - 1;
             const anoRef = mes === 0 ? ano - 1 : ano;
-            lista.push({ dia, mesAtual: false, key: toKey(anoRef, mesRef, dia) });
+            lista.push({
+                dia,
+                mesAtual: false,
+                key: toKey(anoRef, mesRef, dia),
+            });
         }
         for (let dia = 1; dia <= totalDiasMes; dia++) {
             lista.push({ dia, mesAtual: true, key: toKey(ano, mes, dia) });
@@ -158,7 +174,11 @@ export default function Agenda({ cobrancas }: Props) {
             const dia = lista.length - (primeiroDiaSemana + totalDiasMes) + 1;
             const mesRef = mes === 11 ? 0 : mes + 1;
             const anoRef = mes === 11 ? ano + 1 : ano;
-            lista.push({ dia, mesAtual: false, key: toKey(anoRef, mesRef, dia) });
+            lista.push({
+                dia,
+                mesAtual: false,
+                key: toKey(anoRef, mesRef, dia),
+            });
         }
         return lista;
     }, [ano, mes]);
@@ -198,7 +218,11 @@ export default function Agenda({ cobrancas }: Props) {
 
     // chaveHoje destaca o dia de hoje na grade; cobrancasDoDiaSelecionado
     // é a lista exibida no modal do dia.
-    const chaveHoje = toKey(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+    const chaveHoje = toKey(
+        hoje.getFullYear(),
+        hoje.getMonth(),
+        hoje.getDate(),
+    );
     const cobrancasDoDiaSelecionado = diaSelecionado
         ? (cobrancasPorDia.get(diaSelecionado) ?? [])
         : [];
@@ -207,7 +231,7 @@ export default function Agenda({ cobrancas }: Props) {
         <>
             <Head title="Agenda de Pagamentos" />
 
-            <div className="flex flex-col gap-6 p-6 sm:p-8">
+            <div className="flex flex-col gap-5 px-4 py-5 sm:p-8 lg:gap-6">
                 {/* Header da página */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -220,7 +244,8 @@ export default function Agenda({ cobrancas }: Props) {
                             Agenda de Pagamentos
                         </h1>
                         <p className="mt-1 text-sm text-muted-foreground">
-                            Acompanhe quem vai pagar, quem já pagou e quem está devendo
+                            Acompanhe quem vai pagar, quem já pagou e quem está
+                            devendo
                         </p>
                     </div>
                     <Button
@@ -234,9 +259,9 @@ export default function Agenda({ cobrancas }: Props) {
                 </div>
 
                 {/* Cards de resumo do mês */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card p-4 shadow-sm">
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600">
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-4">
+                    <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-3.5 py-3 shadow-sm sm:p-4">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 sm:h-11 sm:w-11">
                             <Clock className="size-5" />
                         </span>
                         <div className="min-w-0">
@@ -249,8 +274,8 @@ export default function Agenda({ cobrancas }: Props) {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card p-4 shadow-sm">
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-500/10 text-red-600">
+                    <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-3.5 py-3 shadow-sm sm:p-4">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-500/10 text-red-600 sm:h-11 sm:w-11">
                             <AlertCircle className="size-5" />
                         </span>
                         <div className="min-w-0">
@@ -263,8 +288,8 @@ export default function Agenda({ cobrancas }: Props) {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card p-4 shadow-sm">
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+                    <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-3.5 py-3 shadow-sm sm:p-4">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 sm:h-11 sm:w-11">
                             <CheckCircle2 className="size-5" />
                         </span>
                         <div className="min-w-0">
@@ -318,18 +343,24 @@ export default function Agenda({ cobrancas }: Props) {
                     {/* Grade de dias */}
                     <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
                         {celulas.map((celula, idx) => {
-                            const cobrancasDoDia = cobrancasPorDia.get(celula.key) ?? [];
-                            const temAtraso = cobrancasDoDia.some((c) => c.status === 'atrasado');
+                            const cobrancasDoDia =
+                                cobrancasPorDia.get(celula.key) ?? [];
+                            const temAtraso = cobrancasDoDia.some(
+                                (c) => c.status === 'atrasado',
+                            );
                             const ehHoje = celula.key === chaveHoje;
                             const visiveis = cobrancasDoDia.slice(0, 2);
-                            const restante = cobrancasDoDia.length - visiveis.length;
+                            const restante =
+                                cobrancasDoDia.length - visiveis.length;
 
                             return (
                                 <button
                                     key={`${celula.key}-${idx}`}
                                     disabled={cobrancasDoDia.length === 0}
-                                    onClick={() => setDiaSelecionado(celula.key)}
-                                    className={`flex min-h-[84px] flex-col items-start gap-1 rounded-xl border p-1.5 text-left transition-all sm:min-h-[104px] sm:p-2 ${
+                                    onClick={() =>
+                                        setDiaSelecionado(celula.key)
+                                    }
+                                    className={`flex min-h-[58px] flex-col items-center gap-1 rounded-lg border p-1 text-left transition-all sm:min-h-[104px] sm:items-start sm:rounded-xl sm:p-2 ${
                                         celula.mesAtual
                                             ? 'border-border/70 bg-background'
                                             : 'border-transparent bg-muted/30 opacity-50'
@@ -355,25 +386,33 @@ export default function Agenda({ cobrancas }: Props) {
                                         {visiveis.map((c) => (
                                             <span
                                                 key={c.id}
-                                                className={`flex items-center gap-1 truncate rounded-md px-1.5 py-0.5 text-[10px] font-semibold sm:text-[11px] ${STATUS_CONFIG[c.status].badge}`}
+                                                className={`flex items-center justify-center gap-1 truncate rounded-md px-1 py-1 text-[10px] font-semibold sm:justify-start sm:px-1.5 sm:py-0.5 sm:text-[11px] ${STATUS_CONFIG[c.status].badge}`}
                                                 title={`${c.cliente_nome}${labelParcela(c) ? ` — ${labelParcela(c)}` : ''} — ${STATUS_CONFIG[c.status].label}`}
                                             >
                                                 <span
                                                     className={`size-1.5 shrink-0 rounded-full ${STATUS_CONFIG[c.status].dot}`}
                                                 />
-                                                <span className="truncate">
-                                                    {c.cliente_nome.split(' ')[0]}
+                                                <span className="hidden truncate sm:inline">
+                                                    {
+                                                        c.cliente_nome.split(
+                                                            ' ',
+                                                        )[0]
+                                                    }
                                                 </span>
                                                 {c.numero_parcela && (
-                                                    <span className="shrink-0 text-xs font-extrabold sm:text-sm">
+                                                    <span className="hidden shrink-0 text-xs font-extrabold sm:inline sm:text-sm">
                                                         · {c.numero_parcela}ª
                                                     </span>
                                                 )}
                                             </span>
                                         ))}
                                         {restante > 0 && (
-                                            <span className="pl-1 text-[10px] font-bold text-muted-foreground">
-                                                +{restante} mais
+                                            <span className="text-center text-[10px] font-bold text-muted-foreground sm:pl-1 sm:text-left">
+                                                +{restante}
+                                                <span className="hidden sm:inline">
+                                                    {' '}
+                                                    mais
+                                                </span>
                                             </span>
                                         )}
                                     </div>
@@ -390,8 +429,8 @@ export default function Agenda({ cobrancas }: Props) {
                         Pago
                     </span>
                     <span className="flex items-center gap-1.5">
-                        <span className="size-2.5 rounded-full bg-amber-500" />
-                        A vencer
+                        <span className="size-2.5 rounded-full bg-amber-500" />A
+                        vencer
                     </span>
                     <span className="flex items-center gap-1.5">
                         <span className="size-2.5 rounded-full bg-red-500" />
@@ -417,7 +456,9 @@ export default function Agenda({ cobrancas }: Props) {
                                 </p>
                                 <h3 className="text-base font-bold text-foreground">
                                     {(() => {
-                                        const [y, m, d] = diaSelecionado.split('-').map(Number);
+                                        const [y, m, d] = diaSelecionado
+                                            .split('-')
+                                            .map(Number);
                                         return `${d} de ${NOMES_MES[m - 1]} de ${y}`;
                                     })()}
                                 </h3>

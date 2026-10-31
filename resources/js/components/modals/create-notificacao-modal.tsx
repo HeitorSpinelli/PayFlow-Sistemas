@@ -126,7 +126,7 @@ export default function NotificacaoModal({
         >
             <div
                 onClick={(e) => e.stopPropagation()}
-                className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xl"
+                className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xl max-lg:[&_input]:text-base max-lg:[&_select]:text-base max-lg:[&_textarea]:text-base"
             >
                 {/* Cabeçalho: título conforme o canal + botão X para fechar */}
                 <div className="flex items-center justify-between border-b p-4">
@@ -265,7 +265,7 @@ export default function NotificacaoModal({
                 </div>
 
                 {/* Rodapé: Cancelar / Enviar (desabilitado sem cliente, tipo ou mensagem) */}
-                <div className="flex items-center justify-end gap-2 border-t border-border/70 px-5 py-4">
+                <div className="flex items-center justify-end gap-2 border-t border-border/70 px-5 py-4 max-sm:[&>*]:flex-1">
                     <Button
                         variant="outline"
                         onClick={onClose}

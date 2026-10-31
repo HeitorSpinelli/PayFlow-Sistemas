@@ -66,6 +66,9 @@ export default function AppSidebarLayout({
             <AppContent variant="sidebar" className="overflow-x-hidden">
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
                 {children}
+                {/* Mobile/tablet: espaço no fim da página para o botão
+                    flutuante do Dininho não cobrir o último conteúdo. */}
+                <div aria-hidden className="h-16 shrink-0 lg:hidden" />
             </AppContent>
             <DininhoWidget />
         </AppShell>

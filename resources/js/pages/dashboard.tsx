@@ -193,10 +193,10 @@ function TrendBarChart({
     emptyMessage,
 }: TrendBarChartProps) {
     return (
-        <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card p-6 shadow-sm">
+        <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-sm lg:p-6">
             <div className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-emerald-500/10 blur-2xl" />
 
-            <div className="relative mb-5 flex items-start justify-between gap-2">
+            <div className="relative mb-4 flex items-start justify-between gap-2 lg:mb-5">
                 <div>
                     <h2 className="text-sm font-bold tracking-tight text-foreground">
                         {title}
@@ -332,11 +332,11 @@ export default function Dashboard({
         <>
             <Head title="Dashboard" />
 
-            <div className="flex flex-col gap-6 p-6 sm:p-8">
+            <div className="flex flex-col gap-5 px-4 py-5 sm:p-8 lg:gap-6">
                 {/* Saudação */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <p className="mb-5 flex items-center gap-1.5 text-[10px] font-bold tracking-[0.16em] text-emerald-600 uppercase">
+                        <p className="mb-3 flex items-center gap-1.5 text-[10px] font-bold tracking-[0.16em] text-emerald-600 uppercase lg:mb-5">
                             <Sparkles className="size-5" />
                             {dataHoje}
                         </p>
@@ -349,10 +349,10 @@ export default function Dashboard({
                     </div>
                 </div>
                 {/* Corpo: gráficos + vencimentos | pizza + ações rápidas + notificações */}
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.7fr_1fr]">
-                    <div className="flex flex-col gap-6">
+                <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.7fr_1fr] lg:gap-6">
+                    <div className="flex flex-col gap-5 lg:gap-6">
                         {/* Receita e Clientes ativos lado a lado */}
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:gap-6">
                             <TrendBarChart
                                 title="Receita mensal"
                                 subtitle="Últimos 6 meses"
@@ -384,9 +384,9 @@ export default function Dashboard({
                         </div>
 
                         {/* Vencimentos próximos */}
-                        <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-sm">
-                            <div className="mb-4 flex items-center justify-between">
-                                <div>
+                        <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm lg:p-6">
+                            <div className="mb-4 flex items-center justify-between gap-3">
+                                <div className="min-w-0">
                                     <h2 className="text-base font-bold tracking-tight text-foreground">
                                         Vencimentos próximos
                                     </h2>
@@ -395,7 +395,7 @@ export default function Dashboard({
                                         atraso
                                     </p>
                                 </div>
-                                <div className="flex items-center gap-3">
+                                <div className="flex shrink-0 items-center gap-3">
                                     {clientesDevedores > 0 && (
                                         <span className="rounded-full border border-red-500/20 bg-red-500/10 px-2.5 py-1 text-xs font-bold text-red-600">
                                             {clientesDevedores} devedor(es)
@@ -403,7 +403,7 @@ export default function Dashboard({
                                     )}
                                     <Link
                                         href="/agenda"
-                                        className="flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700"
+                                        className="flex items-center gap-1 py-2 text-xs font-bold whitespace-nowrap text-emerald-600 hover:text-emerald-700 lg:py-0"
                                     >
                                         Ver agenda
                                         <ChevronRight className="size-3.5" />
@@ -433,8 +433,8 @@ export default function Dashboard({
                                                     : `vence em ${item.dias} dia(s)`}
                                             </p>
                                         </div>
-                                        <div className="flex shrink-0 items-center gap-3">
-                                            <span className="text-sm font-bold text-foreground">
+                                        <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-3">
+                                            <span className="text-sm font-bold whitespace-nowrap text-foreground">
                                                 R$ {formatarMoeda(item.valor)}
                                             </span>
                                             <span
@@ -454,9 +454,9 @@ export default function Dashboard({
                     </div>
 
                     {/* Coluna lateral */}
-                    <div className="flex flex-col gap-6">
+                    <div className="flex flex-col gap-5 lg:gap-6">
                         {/* Distribuição por tipo de seguro (pizza) */}
-                        <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-sm">
+                        <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm lg:p-6">
                             <h2 className="mb-1 text-base font-bold tracking-tight text-foreground">
                                 Tipos de seguro
                             </h2>
@@ -470,7 +470,7 @@ export default function Dashboard({
                                 </p>
                             ) : (
                                 <>
-                                    <div className="h-52">
+                                    <div className="h-44 sm:h-52">
                                         <ResponsiveContainer
                                             width="100%"
                                             height="100%"
@@ -558,7 +558,7 @@ export default function Dashboard({
                         </div>
 
                         {/* Ações rápidas */}
-                        <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-sm">
+                        <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm lg:p-6">
                             <h2 className="mb-4 text-base font-bold tracking-tight text-foreground">
                                 Ações rápidas
                             </h2>
@@ -585,7 +585,7 @@ export default function Dashboard({
                         </div>
 
                         {/* Notificações recentes */}
-                        <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-sm">
+                        <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm lg:p-6">
                             <div className="mb-4 flex items-center justify-between">
                                 <h2 className="flex items-center gap-2 text-base font-bold tracking-tight text-foreground">
                                     <Bell className="size-4 text-emerald-600" />

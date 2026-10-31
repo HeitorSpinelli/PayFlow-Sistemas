@@ -319,7 +319,7 @@ export default function ImportarDados() {
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.6fr_1fr]">
                     {/* Zona de importação central */}
-                    <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-card p-8 shadow-sm sm:p-12">
+                    <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-card p-4 shadow-sm sm:p-12">
                         {/* glow decorativo de fundo */}
                         <div className="pointer-events-none absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
 
@@ -343,7 +343,7 @@ export default function ImportarDados() {
                                 role="button"
                                 tabIndex={0}
                                 onKeyDown={handleKeyDown}
-                                className={`relative z-10 flex cursor-pointer flex-col items-center justify-center gap-5 rounded-2xl border-2 border-dashed px-6 py-16 text-center transition-all ${
+                                className={`relative z-10 flex cursor-pointer flex-col items-center justify-center gap-5 rounded-2xl border-2 border-dashed px-4 py-10 text-center transition-all sm:px-6 sm:py-16 ${
                                     arrastando
                                         ? 'scale-[1.01] border-emerald-500 bg-emerald-500/5'
                                         : 'border-border hover:border-emerald-500/50 hover:bg-emerald-500/[0.03]'
@@ -389,7 +389,7 @@ export default function ImportarDados() {
                                 )}
                             </div>
                         ) : (
-                            <div className="relative z-10 flex flex-col items-center gap-5 rounded-2xl border-2 border-emerald-500/30 bg-emerald-500/[0.04] px-6 py-14 text-center">
+                            <div className="relative z-10 flex flex-col items-center gap-5 rounded-2xl border-2 border-emerald-500/30 bg-emerald-500/[0.04] px-4 py-10 text-center sm:px-6 sm:py-14">
                                 <span className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-500/30">
                                     <CircleCheck className="size-9" />
                                 </span>
@@ -565,7 +565,7 @@ export default function ImportarDados() {
                 </div>
 
                 {/* Tutorial passo a passo */}
-                <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-sm sm:p-8">
+                <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm sm:p-8">
                     <div className="mb-6">
                         <p className="text-[10px] font-bold tracking-[0.16em] text-emerald-600 uppercase">
                             Como funciona

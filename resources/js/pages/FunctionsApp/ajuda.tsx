@@ -1,9 +1,26 @@
 import { Head, usePage } from '@inertiajs/react';
-import { BookOpen, ChevronDown, ChevronRight, Download, FileText, GraduationCap } from 'lucide-react';
+import {
+    BookOpen,
+    ChevronDown,
+    ChevronRight,
+    Download,
+    FileText,
+    GraduationCap,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 /* ------------------------------------------------------------------ */
@@ -124,13 +141,23 @@ function ManualAccordion() {
                 const isOpen = aberta === secao.id;
 
                 return (
-                    <Collapsible key={secao.id} open={isOpen} onOpenChange={(open) => setAberta(open ? secao.id : null)}>
+                    <Collapsible
+                        key={secao.id}
+                        open={isOpen}
+                        onOpenChange={(open) =>
+                            setAberta(open ? secao.id : null)
+                        }
+                    >
                         <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
                             <CollapsibleTrigger asChild>
                                 <button className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left sm:px-5">
                                     <div>
-                                        <p className="text-sm font-bold text-foreground sm:text-base">{secao.titulo}</p>
-                                        <p className="mt-0.5 text-xs text-muted-foreground">{secao.resumo}</p>
+                                        <p className="text-sm font-bold text-foreground sm:text-base">
+                                            {secao.titulo}
+                                        </p>
+                                        <p className="mt-0.5 text-xs text-muted-foreground">
+                                            {secao.resumo}
+                                        </p>
                                     </div>
                                     <ChevronDown
                                         className={`size-4 shrink-0 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`}
@@ -140,7 +167,10 @@ function ManualAccordion() {
                             <CollapsibleContent>
                                 <div className="space-y-2 border-t border-border/70 px-4 py-4 sm:px-5">
                                     {secao.conteudo.map((paragrafo, idx) => (
-                                        <p key={idx} className="text-sm leading-relaxed text-muted-foreground">
+                                        <p
+                                            key={idx}
+                                            className="text-sm leading-relaxed text-muted-foreground"
+                                        >
                                             {paragrafo}
                                         </p>
                                     ))}
@@ -174,25 +204,35 @@ export default function Ajuda() {
         <>
             <Head title="Ajuda" />
 
-            <div className="flex flex-col gap-6 p-6 sm:p-8">
+            <div className="flex flex-col gap-5 px-4 py-5 sm:p-8 lg:gap-6">
                 <div>
                     <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-[0.16em] text-emerald-600 uppercase">
                         <span>Suporte</span>
                         <ChevronRight className="h-3 w-3" />
                         <span>Ajuda</span>
                     </div>
-                    <h1 className="text-xl font-bold tracking-tight sm:text-2xl">Central de Ajuda</h1>
-                    <p className="mt-1 text-sm text-muted-foreground">Manual do usuário e documentação do projeto.</p>
+                    <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+                        Central de Ajuda
+                    </h1>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        Manual do usuário e documentação do projeto.
+                    </p>
                 </div>
 
                 {isAdmin ? (
                     <Tabs defaultValue="manual">
-                        <TabsList>
-                            <TabsTrigger value="manual">
+                        <TabsList className="max-sm:w-full">
+                            <TabsTrigger
+                                value="manual"
+                                className="max-sm:flex-1 max-sm:px-2 max-sm:text-xs"
+                            >
                                 <BookOpen className="mr-1.5 size-4" />
                                 Manual do Usuário
                             </TabsTrigger>
-                            <TabsTrigger value="tcc">
+                            <TabsTrigger
+                                value="tcc"
+                                className="max-sm:flex-1 max-sm:px-2 max-sm:text-xs"
+                            >
                                 <GraduationCap className="mr-1.5 size-4" />
                                 Documentação do TCC
                             </TabsTrigger>
@@ -210,8 +250,10 @@ export default function Ajuda() {
                                         Documentação do TCC — PayFlow
                                     </CardTitle>
                                     <CardDescription>
-                                        Trabalho de Conclusão de Curso que descreve o sistema, sua motivação,
-                                        requisitos e desenvolvimento. Visível apenas para administradores.
+                                        Trabalho de Conclusão de Curso que
+                                        descreve o sistema, sua motivação,
+                                        requisitos e desenvolvimento. Visível
+                                        apenas para administradores.
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>

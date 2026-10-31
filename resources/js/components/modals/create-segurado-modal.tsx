@@ -167,8 +167,8 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="!flex max-h-[92vh] flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 sm:max-w-3xl">
-                <DialogHeader className="shrink-0 border-b border-border/70 px-6 py-6 pr-12 sm:px-8">
+            <DialogContent className="!flex max-h-[92vh] flex-col gap-0 overflow-hidden rounded-2xl border-border/70 p-0 sm:max-w-3xl max-sm:max-h-[94dvh] max-lg:[&_input]:text-base max-lg:[&_textarea]:text-base">
+                <DialogHeader className="shrink-0 border-b border-border/70 px-6 py-6 pr-12 sm:px-8 max-sm:px-4 max-sm:py-5 max-sm:pr-11 max-sm:text-left">
                     <div className="flex items-center gap-3">
                         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
                             <UserRound className="h-5 w-5" />
@@ -194,7 +194,7 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                     </p>
                 </DialogHeader>
 
-                <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5 sm:px-8">
+                <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5 sm:px-8 max-sm:px-4 max-sm:py-5">
                     {/* Dados principais + Contato lado a lado a partir de telas médias */}
                     <div className="grid gap-4 md:grid-cols-2">
                         <Section
@@ -582,15 +582,15 @@ export default function CreateSeguradoModal({ open, setOpen }: any) {
                 </div>
 
                 {/* Rodapé: aviso de obrigatórios + Cancelar / Salvar */}
-                <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-border/70 bg-background px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-                    <p className="text-xs text-muted-foreground">
+                <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-border/70 bg-background px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 max-sm:px-4 max-sm:py-3">
+                    <p className="text-xs text-muted-foreground max-sm:text-center">
                         Campos com{' '}
                         <span className="font-semibold text-emerald-600">
                             *
                         </span>{' '}
                         são obrigatórios.
                     </p>
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 max-sm:[&>*]:flex-1">
                         <Button
                             variant="outline"
                             onClick={() => setOpen(false)}

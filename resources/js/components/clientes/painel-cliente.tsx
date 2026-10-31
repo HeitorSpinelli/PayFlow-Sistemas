@@ -151,7 +151,10 @@ export default function PainelCliente({
 
     if (!segurado) {
         return (
-            <div className="flex h-full min-h-[320px] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border/70 bg-card/50 p-10 text-center lg:sticky lg:top-6">
+            <div
+                id="painel-cliente"
+                className="flex h-full scroll-mt-4 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border/70 bg-card/50 p-6 text-center lg:sticky lg:top-6 lg:min-h-[320px] lg:p-10"
+            >
                 <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
                     <UserRound className="size-6" />
                 </span>
@@ -169,7 +172,10 @@ export default function PainelCliente({
     }
 
     return (
-        <div className="flex max-h-[calc(100vh-14rem)] flex-col gap-5 overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm lg:sticky lg:top-6">
+        <div
+            id="painel-cliente"
+            className="flex scroll-mt-4 flex-col gap-5 overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm lg:sticky lg:top-6 lg:max-h-[calc(100vh-14rem)]"
+        >
             {/* Cabeçalho: avatar, nome e selo Ativo/Inativo */}
             <div className="shrink-0 border-b border-border/70 px-5 py-5 sm:px-6">
                 <div className="flex items-center gap-3">
@@ -528,7 +534,7 @@ export default function PainelCliente({
             </div>
 
             {/* Rodapé: Editar/Excluir (visualizar) ou Salvar/Cancelar (editar) */}
-            <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border/70 bg-background px-5 py-4 sm:px-6">
+            <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border/70 bg-background px-5 py-4 sm:px-6 [&>button]:h-10 [&>button]:flex-1 sm:[&>button]:h-9 sm:[&>button]:flex-initial">
                 {modo === 'visualizar' && (
                     <>
                         <Button
