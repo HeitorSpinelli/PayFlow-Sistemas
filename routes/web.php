@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\ApolicesController;
+use App\Http\Controllers\AuditoriaController;
 use App\Http\Controllers\AutomacoesController;
 use App\Http\Controllers\ConfiguracaoInicialController;
 use App\Http\Controllers\DashboardController;
@@ -153,6 +154,11 @@ Route::middleware(['auth', 'can:is-admin', 'throttle:web-actions'])->group(funct
             'Documentacao-TCC-PayFlow.docx'
         );
     })->name('ajuda.documentacao-tcc');
+
+    // Módulo: Auditoria
+    // Tela Auditoria (auditoria.tsx), aberta pelo menu do usuário: log de quem
+    // criou/editou/excluiu/estornou/restaurou o quê. Filtros pela query string.
+    Route::get('/auditoria', [AuditoriaController::class, 'index'])->name('auditoria');
 
     // Módulo: Seguradoras
     // Tela Seguradoras (seguradoras.tsx): cards, modal de cadastro e modal de perfil.

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditavel;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,6 +18,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Apolice extends Model
 {
+    use Auditavel;
+
     protected $table = 'apolices';
 
     use SoftDeletes;
@@ -205,5 +208,44 @@ class Apolice extends Model
     public function dadosEmpresarial(): HasOne
     {
         return $this->hasOne(DadosEmpresarialApolice::class, 'apolice_id');
+    }
+
+    /* Log de auditoria (trait Auditavel) */
+
+    public function auditoriaModulo(): string
+    {
+        return 'Apólice';
+    }
+
+    /**
+     * "Apólice 123 — Maria". Na exclusão inclui o motivo, que o service grava
+     * logo antes do delete() (manual, renovada, atraso etc.).
+     */
+    public function auditoriaDescricao(): string
+    {
+        $cliente = $this->cliente()->withTrashed()->value('nome_completo');
+        $descricao = 'Apólice '.$this->numero_apolice.($cliente ? ' — '.$cliente : '');
+
+        if ($this->trashed() && $this->motivo_cancelamento) {
+            $motivo = match ($this->motivo_cancelamento) {
+                self::MOTIVO_CANCELAMENTO_MANUAL => 'exclusão manual',
+                self::MOTIVO_CANCELAMENTO_ATRASO_PRIMEIRA_PARCELA => 'atraso da 1ª parcela',
+                self::MOTIVO_CANCELAMENTO_SUSPENSAO_PROLONGADA => 'suspensão prolongada',
+                self::MOTIVO_CANCELAMENTO_RENOVADA => 'renovada',
+                default => $this->motivo_cancelamento,
+            };
+            $descricao .= ' (motivo: '.$motivo.')';
+        }
+
+        return $descricao;
+    }
+
+    /**
+     * motivo_cancelamento é gravado junto do delete()/restore() e já aparece
+     * na descrição da exclusão — registrar como edição separada só duplicaria.
+     */
+    public function auditoriaCamposIgnorados(): array
+    {
+        return ['motivo_cancelamento'];
     }
 }

@@ -1,5 +1,5 @@
 import { Link, router } from '@inertiajs/react';
-import { HelpCircle, LogOut, Settings } from 'lucide-react';
+import { HelpCircle, LogOut, Megaphone, Settings } from 'lucide-react';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -56,6 +56,21 @@ export function UserMenuContent({ user }: Props) {
                             Configurações
                         </Link>
                     </DropdownMenuItem>
+                    {/* Tela Auditoria (/auditoria): a rota exige
+                        can:is-admin, então o item só aparece para admin. */}
+                    {user.role === 'admin' && (
+                        <DropdownMenuItem asChild>
+                            <Link
+                                className="block w-full cursor-pointer"
+                                href="/auditoria"
+                                prefetch
+                                onClick={cleanup}
+                            >
+                                <Megaphone className="mr-2" />
+                                Auditoria
+                            </Link>
+                        </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem asChild>
                         <a
                             className="block w-full cursor-pointer"

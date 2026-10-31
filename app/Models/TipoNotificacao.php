@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditavel;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class TipoNotificacao extends Model
 {
+    use Auditavel;
+
 
     protected $table = 'tipos_notificacao';
 
@@ -17,4 +20,16 @@ class TipoNotificacao extends Model
         'nome_notificacao',
         'ativo',
     ];
+
+    /* Log de auditoria (trait Auditavel) */
+
+    public function auditoriaModulo(): string
+    {
+        return 'Tipo de notificação';
+    }
+
+    public function auditoriaDescricao(): string
+    {
+        return (string) $this->nome_notificacao;
+    }
 }

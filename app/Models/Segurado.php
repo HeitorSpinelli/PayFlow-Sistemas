@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditavel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -12,6 +13,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Segurado extends Model
 {
+    use Auditavel;
+
     protected $table = 'segurados';
 
     use SoftDeletes;
@@ -103,4 +106,16 @@ class Segurado extends Model
     }
 
     protected $appends = ['status'];
+
+    /* Log de auditoria (trait Auditavel) */
+
+    public function auditoriaModulo(): string
+    {
+        return 'Cliente';
+    }
+
+    public function auditoriaDescricao(): string
+    {
+        return (string) $this->nome_completo;
+    }
 }

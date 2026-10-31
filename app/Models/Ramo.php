@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditavel;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Ramo extends Model
 {
+    use Auditavel;
+
     // Ramos de cada contrato de seguro, como automóvel, residencial, vida, saúde, etc.
     protected $table = 'ramos';
 
@@ -37,5 +40,19 @@ class Ramo extends Model
     public function seguradora()
     {
         return $this->belongsTo(Seguradora::class, 'seguradora_id');
+    }
+
+    /* Log de auditoria (trait Auditavel) */
+
+    public function auditoriaModulo(): string
+    {
+        return 'Ramo';
+    }
+
+    public function auditoriaDescricao(): string
+    {
+        $seguradora = $this->seguradora()->value('nome_fantasia');
+
+        return $this->nome_ramo.($seguradora ? ' — '.$seguradora : '');
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditavel;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Apolice;
 use App\Models\User;
@@ -15,6 +16,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Pagamento extends Model
 {
+    use Auditavel;
+
     use SoftDeletes;
 
     protected $fillable = [
@@ -79,5 +82,35 @@ class Pagamento extends Model
         $query->when($filters['forma_pagamento'] ?? null, function ($q, $forma) {
             $q->where('forma_pagamento', $forma);
         });
+    }
+
+    /* Log de auditoria (trait Auditavel) */
+
+    public function auditoriaModulo(): string
+    {
+        return 'Pagamento';
+    }
+
+    public function auditoriaDescricao(): string
+    {
+        $apolice = $this->apolice()->withTrashed()->value('numero_apolice');
+
+        return $this->parcela.'ª parcela — apólice '.($apolice ?? '?').' — R$ '.number_format((float) $this->valor, 2, ',', '.');
+    }
+
+    /**
+     * Excluir um pagamento é estornar: reabre a parcela (PagamentoService::destroy).
+     */
+    public function auditoriaAcaoExclusao(): string
+    {
+        return \App\Models\Auditoria::ACAO_ESTORNOU;
+    }
+
+    /**
+     * Quem registrou/estornou já é o "Usuário" da própria linha do log.
+     */
+    public function auditoriaCamposIgnorados(): array
+    {
+        return ['registrado_por', 'estornado_por'];
     }
 }

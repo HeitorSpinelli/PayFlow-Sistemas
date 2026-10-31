@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditavel;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Seguradora extends Model
 {
+    use Auditavel;
+
     // Seguradoras parceiras, como Porto Seguro, Bradesco Seguros, SulAmérica, etc.
     protected $table = 'seguradoras';
 
@@ -28,5 +31,17 @@ class Seguradora extends Model
     {
 
         return $this->hasMany(Ramo::class, 'seguradora_id');
+    }
+
+    /* Log de auditoria (trait Auditavel) */
+
+    public function auditoriaModulo(): string
+    {
+        return 'Seguradora';
+    }
+
+    public function auditoriaDescricao(): string
+    {
+        return (string) $this->nome_fantasia;
     }
 }
