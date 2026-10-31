@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreNotificacaoRequest;
 use App\Models\Automacao;
 use App\Models\Notificacoes;
-use App\Models\Segurado;
 use App\Models\TipoNotificacao;
 use App\Services\Notificacao\NotificacaoService;
 use Illuminate\Http\Request;
@@ -60,9 +59,11 @@ class NotificacoesController extends Controller
             'totalPendentes' => fn () => Notificacoes::where('status', 'Pendente')->count(),
             'totalFalhas' => fn () => Notificacoes::where('status', 'Falha')->count(),
             'tipos' => fn () => TipoNotificacao::all(),
-            // with('apolices'): Segurado::getStatusAttribute() reaproveita essa
-            // relação já carregada em vez de rodar uma query EXISTS por cliente.
-            'segurados' => fn () => Segurado::with('apolices')->get(),
+            // seguradosParaNotificar() (em vez de só with('apolices')->get()):
+            // embute em cada segurado a parcela em aberto mais relevante, para
+            // o modal de WhatsApp montar a mensagem com dados reais (valor,
+            // vencimento, atraso) — ver NotificacaoService::resumoParcelaCobranca().
+            'segurados' => fn () => $this->notificacoes->seguradosParaNotificar(),
             'notificacoes' => fn () => $this->historico($request),
             'automacoes' => fn () => Automacao::with('tipoNotificacao')->get(),
         ]);
