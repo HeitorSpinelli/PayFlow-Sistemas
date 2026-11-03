@@ -16,7 +16,14 @@ return [
     */
 
     'ssr' => [
-        'enabled' => true,
+        // Desligado por padrão: o projeto não tem entrada de SSR
+        // (resources/js/ssr.tsx) nem bundle gerado. Com 'true', o
+        // inertia-laravel 3.x pede ao Vite (/__inertia_ssr) para renderizar
+        // cada página no servidor e algumas telas travavam até estourar os
+        // 30s do PHP — derrubando o `php artisan serve`, que atende uma
+        // requisição por vez. Para usar SSR no futuro: criar o ssr.tsx e
+        // definir INERTIA_SSR_ENABLED=true no .env.
+        'enabled' => (bool) env('INERTIA_SSR_ENABLED', false),
         'url' => 'http://127.0.0.1:13714',
         // 'bundle' => base_path('bootstrap/ssr/ssr.mjs'),
 
