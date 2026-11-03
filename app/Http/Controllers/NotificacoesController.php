@@ -33,11 +33,24 @@ class NotificacoesController extends Controller
     public function store(StoreNotificacaoRequest $request)
     {
         try {
-            $this->notificacoes->criarEEnviar($request->validated());
-            return redirect()->back()->with('success', 'notificação enviado com sucesso');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao enviar notificação: ' . $e->getMessage());
+            $resultado = $this->notificacoes->criarEEnviar($request->validated());
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Erro ao enviar notificação: '.$e->getMessage());
         }
+
+        // O toast tem que bater com o que aconteceu: antes dizia "enviado com
+        // sucesso" mesmo quando o e-mail falhava.
+        if ($resultado['falhas'] === 0) {
+            return redirect()->back()->with('success', $resultado['enviados'] === 1
+                ? 'Notificação enviada com sucesso.'
+                : "{$resultado['enviados']} notificações enviadas com sucesso.");
+        }
+
+        if ($resultado['enviados'] === 0) {
+            return redirect()->back()->with('error', 'Não foi possível enviar: '.$resultado['erro']);
+        }
+
+        return redirect()->back()->with('error', "{$resultado['enviados']} enviada(s), {$resultado['falhas']} com falha: {$resultado['erro']}");
     }
 
     /**
@@ -84,7 +97,10 @@ class NotificacoesController extends Controller
      */
     private function historico(Request $request)
     {
-        return Notificacoes::with(['tipoNotificacao', 'segurado'])
+        // segurado.apolices: Segurado tem o atributo 'status' sempre anexado,
+        // que sem as apólices carregadas roda um EXISTS por linha (N+1) —
+        // 8 consultas extras de ~67ms cada no Supabase só nesta tabela.
+        return Notificacoes::with(['tipoNotificacao', 'segurado.apolices'])
             ->when($request->filled('canal'), fn ($q) => $q->where('canal', $request->canal))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->status))
             ->when($request->filled('busca'), function ($q) use ($request) {

@@ -32,8 +32,12 @@ class NotificacaoService
      * frontend, e aqui só fica o histórico. O status final (Enviado/Falha, com
      * o motivo) aparece no "Histórico de Notificações" e nos cards da tela.
      */
-    public function criarEEnviar(array $data): void
+    public function criarEEnviar(array $data): array
     {
+        // Devolvido para quem chamou poder dizer a verdade na tela: antes o
+        // controller mostrava "enviado com sucesso" mesmo com todos falhando.
+        $resultado = ['enviados' => 0, 'falhas' => 0, 'erro' => null];
+
         foreach ($data['segurado_ids'] as $seguradoId) {
             $segurado = Segurado::findOrFail($seguradoId);
 
@@ -68,15 +72,43 @@ class NotificacaoService
                     'status' => 'Enviado',
                     'data_envio' => now(),
                 ]);
-            } catch (\Exception $e) {
+                $resultado['enviados']++;
+            } catch (\Throwable $e) {
+                // \Throwable, não \Exception: falhas do mailer podem vir como
+                // \Error (ex.: "Class Resend not found" quando o pacote não
+                // está instalado). Com \Exception elas escapavam daqui, a tela
+                // recebia um 500 e a notificação ficava "Pendente" para sempre.
                 Log::error('Falha ao enviar notificação para segurado #'.$seguradoId.': '.$e->getMessage());
                 // Antes só o log guardava o motivo — quem via a tela via
                 // "Falha" sem nenhuma pista de por quê (achado em teste
                 // exploratório). Guardar aqui também deixa o motivo visível
                 // sem precisar acessar o servidor.
-                $notificacao->update(['status' => 'Falha', 'erro' => $e->getMessage()]);
+                $motivo = $this->motivoLegivel($e);
+                $notificacao->update(['status' => 'Falha', 'erro' => $motivo]);
+                $resultado['falhas']++;
+                $resultado['erro'] ??= $motivo;
             }
         }
+
+        return $resultado;
+    }
+
+    /**
+     * Traduz os erros mais comuns do envio de e-mail para algo que o operador
+     * consiga resolver; o texto original continua no log do servidor.
+     */
+    private function motivoLegivel(\Throwable $e): string
+    {
+        $mensagem = $e->getMessage();
+
+        return match (true) {
+            str_contains($mensagem, 'Class "Resend" not found') => 'Envio de e-mail não configurado neste servidor: o pacote do Resend não está instalado (rode composer install).',
+            str_contains($mensagem, 'only send testing emails') => 'O remetente de teste do Resend (onboarding@resend.dev) só entrega para o e-mail dono da conta Resend. Verifique um domínio no Resend e use um remetente desse domínio em MAIL_FROM_ADDRESS.',
+            str_contains($mensagem, 'domain is not verified') => 'O domínio do remetente (MAIL_FROM_ADDRESS) não está verificado no Resend.',
+            str_contains($mensagem, 'API key is invalid') || str_contains($mensagem, 'Missing API key') => 'Chave do Resend (RESEND_API_KEY) ausente ou inválida.',
+            str_contains($mensagem, 'Invalid `to` field') => 'E-mail do cliente inválido ou não aceito pelo Resend.',
+            default => mb_substr($mensagem, 0, 500),
+        };
     }
 
     /**
