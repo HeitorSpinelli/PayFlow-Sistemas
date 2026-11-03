@@ -107,6 +107,7 @@ const CAMPOS: Record<string, string> = {
     nome_notificacao: 'Nome',
     name: 'Nome',
     password: 'Senha',
+    avatar_atualizado_em: 'Foto de perfil (alterada em)',
     role: 'Perfil',
     intervalo_dias: 'Intervalo (dias)',
     tipo_condicao: 'Condição',

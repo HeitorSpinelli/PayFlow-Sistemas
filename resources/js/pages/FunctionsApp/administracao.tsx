@@ -32,6 +32,27 @@ interface User {
     email: string;
     role: string;
     created_at?: string;
+    // URL da foto de perfil (User::getAvatarAttribute) ou null.
+    avatar?: string | null;
+}
+
+// Foto por cima das iniciais: se a imagem não carregar, ela some e as
+// iniciais (que continuam por baixo) aparecem.
+function FotoOuIniciais({ user }: { user: User }) {
+    return (
+        <>
+            {user.name.substring(0, 2).toUpperCase()}
+            {user.avatar && (
+                <img
+                    src={user.avatar}
+                    alt={`Foto de ${user.name}`}
+                    loading="lazy"
+                    onError={(e) => (e.currentTarget.style.display = 'none')}
+                    className="absolute inset-0 h-full w-full object-cover"
+                />
+            )}
+        </>
+    );
 }
 
 interface SeguradoInativo {
@@ -325,15 +346,15 @@ export default function Administracao({
                                                 className="flex items-center gap-3 px-4 py-3.5"
                                             >
                                                 <span
-                                                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                                                    className={`relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full text-xs font-bold ${
                                                         isAdmin
                                                             ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/25'
                                                             : 'bg-muted text-muted-foreground'
                                                     }`}
                                                 >
-                                                    {user.name
-                                                        .substring(0, 2)
-                                                        .toUpperCase()}
+                                                    <FotoOuIniciais
+                                                        user={user}
+                                                    />
                                                 </span>
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex items-center gap-2">
@@ -420,18 +441,15 @@ export default function Administracao({
                                                     >
                                                         <td className="flex items-center gap-3 p-4 pl-6">
                                                             <span
-                                                                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                                                                className={`relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full text-xs font-bold ${
                                                                     isAdmin
                                                                         ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/25'
                                                                         : 'bg-muted text-muted-foreground'
                                                                 }`}
                                                             >
-                                                                {user.name
-                                                                    .substring(
-                                                                        0,
-                                                                        2,
-                                                                    )
-                                                                    .toUpperCase()}
+                                                                <FotoOuIniciais
+                                                                    user={user}
+                                                                />
                                                             </span>
                                                             <div className="min-w-0">
                                                                 <p className="truncate leading-none font-semibold text-foreground">

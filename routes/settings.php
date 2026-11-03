@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\AvatarController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Support\Facades\Route;
@@ -9,6 +10,11 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
+
+    // Foto de perfil (card do Perfil; aparece também no menu lateral).
+    Route::post('settings/profile/avatar', [AvatarController::class, 'update'])->middleware('throttle:10,1')->name('profile.avatar.update');
+    Route::delete('settings/profile/avatar', [AvatarController::class, 'destroy'])->name('profile.avatar.destroy');
+    Route::get('settings/profile/avatar/{user}', [AvatarController::class, 'show'])->whereNumber('user')->name('profile.avatar.show');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

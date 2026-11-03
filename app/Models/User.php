@@ -18,13 +18,35 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * Configuração Inicial ou pelo comando usuarios:criar-admin.
  */
 #[Fillable(['name', 'email', 'password', 'role'])]
-#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
+#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'avatar_atualizado_em'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
     use Auditavel;
 
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
+
+    // URL pronta da foto de perfil; o front já lê auth.user.avatar no menu
+    // lateral, no menu do usuário e no card do Perfil.
+    protected $appends = ['avatar'];
+
+    /**
+     * URL da foto (GET /settings/profile/avatar/{id}) ou null sem foto — aí o
+     * Avatar mostra as iniciais. Usa só avatar_atualizado_em (já vem no SELECT
+     * do usuário), sem consultar fotos_usuarios; o ?v= muda a cada troca de
+     * foto, para o navegador não reaproveitar a imagem antiga do cache. A foto
+     * em si some junto com o usuário pelo ON DELETE CASCADE.
+     */
+    public function getAvatarAttribute(): ?string
+    {
+        $versao = $this->attributes['avatar_atualizado_em'] ?? null;
+
+        if (! $versao) {
+            return null;
+        }
+
+        return route('profile.avatar.show', ['user' => $this->id, 'v' => substr(md5((string) $versao), 0, 8)], false);
+    }
 
     /**
      * Get the attributes that should be cast.

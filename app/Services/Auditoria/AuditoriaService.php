@@ -3,6 +3,7 @@
 namespace App\Services\Auditoria;
 
 use App\Models\Auditoria;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
 
@@ -64,8 +65,16 @@ class AuditoriaService
             $alteracoes = $this->valoresIniciais($model, $ignorados);
         }
 
+        $autor = auth()->id();
+
+        // Usuário excluindo a própria conta ainda logado: apontar user_id para
+        // a linha que acabou de ser apagada viola a FK e desfazia a exclusão.
+        if ($acao === Auditoria::ACAO_EXCLUIU && $model instanceof User && $model->getKey() === $autor) {
+            $autor = null;
+        }
+
         Auditoria::create([
-            'user_id' => auth()->id(),
+            'user_id' => $autor,
             'acao' => $acao,
             'modulo' => $model->auditoriaModulo(),
             'auditavel_type' => $model->getMorphClass(),
