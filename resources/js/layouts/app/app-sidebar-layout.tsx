@@ -63,7 +63,11 @@ export default function AppSidebarLayout({
     return (
         <AppShell variant="sidebar">
             <AppSidebar />
-            <AppContent variant="sidebar" className="overflow-x-hidden">
+            {/* overflow-x-clip e não hidden: os dois cortam o que vaza para os
+                lados, mas hidden transforma o <main> num contêiner de rolagem
+                que nunca rola — e aí nada lá dentro consegue ficar "sticky"
+                (ex.: a barra de ação da prévia na tela Importar). */}
+            <AppContent variant="sidebar" className="overflow-x-clip">
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
                 {children}
                 {/* Mobile/tablet: espaço no fim da página para o botão
