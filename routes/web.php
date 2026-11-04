@@ -125,16 +125,18 @@ Route::middleware(['auth', 'verified', 'throttle:web-actions'])->group(function 
     Route::get('/agenda', [AgendaController::class, 'index'])->name('agenda');
 
     // Páginas Estáticas
-    // Tela: importar.tsx. importResumo é o resumo da última importação (flash).
-    Route::get('/importar', fn () => inertia('FunctionsApp/importar', [
-        'importResumo' => session('importResumo'),
-    ]))->name('importar');
-
     // Tela: ajuda.tsx (menu do usuário > Ajuda).
     Route::get('/ajuda', fn () => inertia('FunctionsApp/ajuda'))->name('ajuda');
 
-    // Módulo: Importação
-    // Botão de enviar o CSV da tela Importar.
+    // Módulo: Importação (tela importar.tsx)
+    // GET: a tela (importResumo = resultado da última importação, via flash).
+    // modelo: CSV de exemplo gerado com as seguradoras/ramos cadastrados.
+    // verificar: prévia ao escolher o arquivo (não grava). POST: importa.
+    Route::get('/importar', [ImportacaoController::class, 'index'])->name('importar');
+    Route::get('/importar/modelo', [ImportacaoController::class, 'modelo'])->name('importar.modelo');
+    Route::post('/importar-dados/verificar', [ImportacaoController::class, 'verificar'])
+        ->middleware('throttle:importacao')
+        ->name('importar-dados.verificar');
     Route::post('/importar-dados', [ImportacaoController::class, 'store'])
         ->middleware('throttle:importacao')
         ->name('importar-dados.store');

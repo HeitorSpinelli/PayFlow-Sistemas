@@ -85,7 +85,9 @@ class AppServiceProvider extends ServiceProvider
         // Importação processa upload + parsing de arquivo em lote — mais
         // custoso por requisição, então o limite é bem mais apertado.
         RateLimiter::for('importacao', function (Request $request) {
-            return Limit::perMinute(10)->by($request->user()?->id ?: $request->ip());
+            // 20 e não 10: cada arquivo escolhido já faz uma verificação
+            // (prévia) antes da importação, então são duas chamadas por envio.
+            return Limit::perMinute(20)->by($request->user()?->id ?: $request->ip());
         });
     }
 }

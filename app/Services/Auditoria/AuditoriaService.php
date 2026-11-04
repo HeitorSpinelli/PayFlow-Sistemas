@@ -87,6 +87,33 @@ class AuditoriaService
     }
 
     /**
+     * Grava vários registros de uma vez — usado pela importação de planilha,
+     * que insere em lote pelo query builder (sem os eventos do Eloquent que
+     * acionam registrar()). Cada linha já vem com as colunas de auditorias;
+     * 'alteracoes' é convertido para JSON aqui.
+     *
+     * @param  array<int, array<string, mixed>>  $linhas
+     */
+    public function registrarEmLote(array $linhas): void
+    {
+        if ($linhas === [] || ! $this->tabelaExiste()) {
+            return;
+        }
+
+        $linhas = array_map(function (array $linha) {
+            $linha['alteracoes'] = empty($linha['alteracoes'])
+                ? null
+                : json_encode($linha['alteracoes'], JSON_UNESCAPED_UNICODE);
+
+            return $linha;
+        }, $linhas);
+
+        foreach (array_chunk($linhas, 300) as $lote) {
+            Auditoria::query()->insert($lote);
+        }
+    }
+
+    /**
      * Trava de segurança para quem atualizou o código mas ainda não rodou
      * `php artisan migrate`: sem a tabela, o insert do log falharia dentro da
      * mesma transação e derrubaria TODO cadastro/edição/pagamento do sistema.
