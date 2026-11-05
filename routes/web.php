@@ -12,6 +12,7 @@ use App\Http\Controllers\pagamentoController;
 use App\Http\Controllers\RamosController;
 use App\Http\Controllers\SeguradoController;
 use App\Http\Controllers\SeguradoraController;
+use App\Http\Controllers\TermosController;
 use App\Http\Controllers\TipoNotificacoesController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DininhoController;
@@ -127,6 +128,11 @@ Route::middleware(['auth', 'verified', 'throttle:web-actions'])->group(function 
     // Páginas Estáticas
     // Tela: ajuda.tsx (menu do usuário > Ajuda).
     Route::get('/ajuda', fn () => inertia('FunctionsApp/ajuda'))->name('ajuda');
+
+    // Termos de Uso, Privacidade e Confidencialidade: página para consulta
+    // (menu do usuário) e o aceite da janela do primeiro acesso.
+    Route::get('/termos', [TermosController::class, 'index'])->name('termos');
+    Route::post('/termos/aceitar', [TermosController::class, 'aceitar'])->name('termos.aceitar');
 
     // Módulo: Importação (tela importar.tsx)
     // GET: a tela (importResumo = resultado da última importação, via flash).

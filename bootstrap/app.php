@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\ExigirAceiteDosTermos;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SecurityHeaders;
@@ -25,6 +26,8 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
             SecurityHeaders::class,
+            // Bloqueia ações (POST/PUT/DELETE) de quem ainda não aceitou os termos.
+            ExigirAceiteDosTermos::class,
         ]);
 
         // Confia no proxy do Render — necessário pra Laravel saber que a

@@ -4,6 +4,7 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { AppSidebarHeader } from '@/components/app-sidebar-header';
 import type { AppLayoutProps } from '@/types';
 import DininhoWidget from '@/components/dininho/dininho-widget';
+import ModalTermos from '@/components/termos/modal-termos';
 import { usePage } from '@inertiajs/react';
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
@@ -75,6 +76,9 @@ export default function AppSidebarLayout({
                 <div aria-hidden className="h-16 shrink-0 lg:hidden" />
             </AppContent>
             <DininhoWidget />
+            {/* Aceite dos termos: aparece sozinho no primeiro acesso (ou
+                depois de uma atualização dos termos) e não fecha sem aceitar. */}
+            <ModalTermos />
         </AppShell>
     );
 }

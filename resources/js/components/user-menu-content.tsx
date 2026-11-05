@@ -1,5 +1,11 @@
 import { Link, router } from '@inertiajs/react';
-import { HelpCircle, LogOut, Megaphone, Settings } from 'lucide-react';
+import {
+    HelpCircle,
+    LogOut,
+    Megaphone,
+    ScrollText,
+    Settings,
+} from 'lucide-react';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -80,6 +86,18 @@ export function UserMenuContent({ user }: Props) {
                             <HelpCircle className="mr-2" />
                             Ajuda
                         </a>
+                    </DropdownMenuItem>
+                    {/* Termos de Uso, Privacidade e Confidencialidade (/termos). */}
+                    <DropdownMenuItem asChild>
+                        <Link
+                            className="block w-full cursor-pointer"
+                            href="/termos"
+                            prefetch
+                            onClick={cleanup}
+                        >
+                            <ScrollText className="mr-2" />
+                            Termos e privacidade
+                        </Link>
                     </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />

@@ -18,7 +18,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * Configuração Inicial ou pelo comando usuarios:criar-admin.
  */
 #[Fillable(['name', 'email', 'password', 'role'])]
-#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'avatar_atualizado_em'])]
+#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'avatar_atualizado_em', 'termos_aceitos_ip'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
     use Auditavel;

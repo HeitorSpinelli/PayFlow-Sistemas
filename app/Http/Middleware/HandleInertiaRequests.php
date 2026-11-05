@@ -49,6 +49,20 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+
+            // Janela de aceite dos termos (ModalTermos) e página /termos.
+            // pendente = ainda não aceitou a versão atual; atualizacao = já
+            // tinha aceitado uma versão anterior (o texto da janela muda).
+            'termos' => fn () => $request->user() ? [
+                'versao' => config('termos.versao'),
+                'vigenteDesde' => config('termos.vigente_desde'),
+                'responsavel' => config('termos.responsavel'),
+                'contato' => config('termos.email_contato'),
+                'pendente' => ExigirAceiteDosTermos::pendente($request->user()),
+                'atualizacao' => $request->user()->termos_versao !== null,
+                'aceitoEm' => $request->user()->termos_aceitos_em,
+                'versaoAceita' => $request->user()->termos_versao,
+            ] : null,
             
             'flash' => [
                 'success' => session('success'),
