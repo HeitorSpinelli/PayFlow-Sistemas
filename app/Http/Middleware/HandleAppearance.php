@@ -20,7 +20,12 @@ class HandleAppearance
      */
     public function handle(Request $request, Closure $next): Response
     {
-        View::share('appearance', $request->cookie('appearance') ?? 'system');
+        // O cookie não é criptografado (o front grava direto) e o valor vai
+        // para dentro de um <script> no app.blade.php: só aceita os 3 valores
+        // conhecidos, para nada vindo do cookie virar código na página.
+        $tema = $request->cookie('appearance');
+
+        View::share('appearance', in_array($tema, ['light', 'dark', 'system'], true) ? $tema : 'system');
 
         return $next($request);
     }

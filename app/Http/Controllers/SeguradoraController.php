@@ -44,7 +44,7 @@ class SeguradoraController extends Controller
 
             return redirect()->back()->with('success', 'Seguradora cadastrada com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao cadastrar seguradora: '.$e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e, 'Erro ao cadastrar seguradora'));
         }
     }
 
@@ -58,7 +58,7 @@ class SeguradoraController extends Controller
 
             return redirect()->back()->with('success', "Total de seguradoras: $count");
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao contabilizar seguradoras: '.$e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e, 'Erro ao contabilizar seguradoras'));
         }
     }
 
@@ -73,7 +73,7 @@ class SeguradoraController extends Controller
 
             return redirect()->back()->with('success', 'Seguradora atualizada com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e));
         }
     }
 
@@ -91,7 +91,7 @@ class SeguradoraController extends Controller
             // Sem prefixo aqui — deleteSeguradora() já lança uma mensagem
             // pronta pro usuário (inclusive quando é a violação de chave
             // estrangeira); prefixar de novo duplicava "excluir seguradora".
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e));
         }
     }
 }

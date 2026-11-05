@@ -45,7 +45,9 @@ Route::get('/', function () {
 // não é uma tela "escondida" sem link visível.
 // Tela: auth/configuracao-inicial.tsx (formulário do primeiro admin).
 Route::get('/configuracao-inicial', [ConfiguracaoInicialController::class, 'create'])->name('configuracao-inicial');
-Route::post('/configuracao-inicial', [ConfiguracaoInicialController::class, 'store']);
+// throttle: a rota é pública (só funciona enquanto não existe nenhum usuário),
+// então não pode aceitar tentativas sem limite.
+Route::post('/configuracao-inicial', [ConfiguracaoInicialController::class, 'store'])->middleware('throttle:6,1');
 
 /* ------------------------------------------------------------------ */
 /* Rotas Protegidas por Autenticação */
@@ -69,10 +71,14 @@ Route::middleware(['auth', 'verified', 'throttle:web-actions'])->group(function 
         Route::get('/', [SeguradoController::class, 'show'])->name('clientes');
         Route::post('/', [SeguradoController::class, 'store']);
         Route::put('/{id}', [SeguradoController::class, 'update'])->name('clientes.update');
-        Route::delete('/{id}', [SeguradoController::class, 'destroy'])->name('clientes.destroy');
+        // Excluir o cliente cancela todas as apólices dele (SeguradoService::
+        // destroy chama ApoliceService::destroy em cada uma) — o mesmo efeito
+        // de apolices.destroy, que já exige admin. Sem o gate aqui, qualquer
+        // atendente cancelava apólices pelo caminho do cliente.
+        Route::delete('/{id}', [SeguradoController::class, 'destroy'])->middleware('can:is-admin')->name('clientes.destroy');
         Route::get('/exportar', [SeguradoController::class, 'exportar']);
         Route::get('/{id}/ficha', [SeguradoController::class, 'ficha'])->whereNumber('id')->name('clientes.ficha');
-        Route::patch('/restaurar/{id}', [SeguradoController::class, 'restaurar'])->name('segurados.restore');
+        Route::patch('/restaurar/{id}', [SeguradoController::class, 'restaurar'])->middleware('can:is-admin')->name('segurados.restore');
     });
 
     // Módulo: Apólices

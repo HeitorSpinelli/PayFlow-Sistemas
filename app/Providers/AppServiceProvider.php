@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -57,6 +58,10 @@ class AppServiceProvider extends ServiceProvider
         DB::prohibitDestructiveCommands(
             app()->isProduction(),
         );
+
+        // Em produção todo link gerado (e-mails, redirects) sai em https,
+        // mesmo se algum proxy no caminho deixar de mandar X-Forwarded-Proto.
+        URL::forceHttps(app()->isProduction());
 
         Password::defaults(
             fn (): ?Password => app()->isProduction()

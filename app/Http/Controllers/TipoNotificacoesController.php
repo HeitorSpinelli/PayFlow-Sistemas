@@ -47,7 +47,7 @@ class TipoNotificacoesController extends Controller
             ]);
             return redirect()->back()->with('success', 'Tipo criado com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao criar tipo: ' . $e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e, 'Erro ao criar tipo'));
         }
     }
 
@@ -80,7 +80,7 @@ class TipoNotificacoesController extends Controller
                 return redirect()->back()->with('success', 'Status Alterado');
             }
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao alterar: ' . $e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e, 'Erro ao alterar'));
         }
     }
 }

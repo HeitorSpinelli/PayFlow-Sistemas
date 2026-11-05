@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Http\Responses\LinkRedefinicaoSemEnumeracao;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Laravel\Fortify\Contracts\FailedPasswordResetLinkRequestResponse;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 
@@ -21,7 +23,8 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // "Esqueci a senha" não revela se o e-mail tem conta (ver a classe).
+        $this->app->bind(FailedPasswordResetLinkRequestResponse::class, LinkRedefinicaoSemEnumeracao::class);
     }
 
     /**
@@ -89,10 +92,25 @@ class FortifyServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($request->session()->get('login.id'));
         });
 
+        // Três travas somadas: 5/min por e-mail+IP (adivinhar a senha de uma
+        // conta), 10/min por e-mail vindo de qualquer IP (ataque distribuído
+        // contra uma conta) e 30/min por IP em qualquer e-mail (testar uma
+        // senha comum em muitas contas — "password spraying").
         RateLimiter::for('login', function (Request $request) {
-            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
+            $email = Str::transliterate(Str::lower((string) $request->input(Fortify::username())));
 
-            return Limit::perMinute(5)->by($throttleKey);
+            return [
+                Limit::perMinute(5)->by($email.'|'.$request->ip()),
+                Limit::perMinute(10)->by('email:'.$email),
+                Limit::perMinute(30)->by('ip:'.$request->ip()),
+            ];
+        });
+
+        // Teto geral por IP para todas as rotas do Fortify (login, esqueci a
+        // senha, redefinir senha, desafio 2FA...). "Esqueci a senha" não tinha
+        // limite nenhum: dava para disparar e-mails de redefinição em massa.
+        RateLimiter::for('autenticacao', function (Request $request) {
+            return Limit::perMinute(60)->by($request->ip());
         });
     }
 }

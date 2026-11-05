@@ -31,7 +31,7 @@ class RamosController extends Controller
 
             return redirect()->back()->with('success', 'Ramo cadastrado com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e));
         }
     }
 
@@ -53,7 +53,7 @@ class RamosController extends Controller
 
             return redirect()->back()->with('success', 'Ramo atualizado com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e));
         }
     }
 
@@ -68,7 +68,7 @@ class RamosController extends Controller
 
             return redirect()->back()->with('success', 'Ramo excluído com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e));
         }
     }
 }

@@ -57,7 +57,7 @@ class AutomacoesController extends Controller
 
             return redirect()->back()->with('success', 'Automação criada com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao criar automação: '.$e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e, 'Erro ao criar automação'));
         }
     }
 
@@ -73,7 +73,7 @@ class AutomacoesController extends Controller
 
             return redirect()->back()->with('success', 'Automação atualizada!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao atualizar: '.$e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e, 'Erro ao atualizar'));
         }
     }
 
@@ -112,7 +112,7 @@ class AutomacoesController extends Controller
 
             return redirect()->back()->with('success', 'Automação excluída');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao excluir automação: '.$e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e, 'Erro ao excluir automação'));
         }
     }
 }

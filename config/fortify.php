@@ -101,7 +101,9 @@ return [
     |
     */
 
-    'middleware' => ['web'],
+    // throttle:autenticacao = teto de 60 req/min por IP em todas as rotas do
+    // Fortify (definido no FortifyServiceProvider).
+    'middleware' => ['web', 'throttle:autenticacao'],
 
     /*
     |--------------------------------------------------------------------------

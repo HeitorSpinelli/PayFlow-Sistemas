@@ -38,7 +38,7 @@ class SeguradoController extends Controller
 
             return redirect()->back()->with('success', 'Segurado cadastrado com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao cadastrar segurado: '.$e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e, 'Erro ao cadastrar segurado'));
         }
     }
 
@@ -84,7 +84,7 @@ class SeguradoController extends Controller
 
             return redirect()->back()->with('success', 'Segurado excluído com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao excluir segurado: '.$e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e, 'Erro ao excluir segurado'));
         }
     }
 
@@ -100,7 +100,7 @@ class SeguradoController extends Controller
 
             return redirect()->back()->with('success', 'Segurado atualizado com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao atualizar segurado: '.$e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e, 'Erro ao atualizar segurado'));
         }
     }
 

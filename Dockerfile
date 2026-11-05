@@ -27,6 +27,12 @@ RUN docker-php-ext-install \
 # Habilita mod_rewrite (obrigatório pro roteamento do Laravel funcionar)
 RUN a2enmod rewrite
 
+# Não anunciar versões: sem "X-Powered-By: PHP/8.5.x" e o Apache responde só
+# "Server: Apache" (sem versão/SO), também nas páginas de erro dele. Versão
+# exposta facilita achar exploit pronto para ela.
+RUN echo "expose_php = Off" > "$PHP_INI_DIR/conf.d/zz-seguranca.ini" \
+    && sed -ri -e 's/^ServerTokens .*/ServerTokens Prod/' -e 's/^ServerSignature .*/ServerSignature Off/' /etc/apache2/conf-available/security.conf
+
 # Aponta o DocumentRoot do Apache pra pasta /public (padrão Laravel)
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf

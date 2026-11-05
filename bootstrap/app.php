@@ -33,10 +33,15 @@ return Application::configure(basePath: dirname(__DIR__))
         // Confia no proxy do Render — necessário pra Laravel saber que a
         // requisição original chegou via HTTPS, mesmo o tráfego interno
         // sendo repassado como HTTP puro dentro da infraestrutura do Render.
+        //
+        // X-Forwarded-Host fica DE FORA de propósito: o Render roteia pelo
+        // Host original (que chega intacto), e confiar nesse cabeçalho deixava
+        // qualquer um mandar "X-Forwarded-Host: site-do-atacante" ao pedir a
+        // redefinição de senha de outra pessoa — o e-mail saía com o link
+        // apontando para o domínio do atacante, junto com o token.
         $middleware->trustProxies(
             at: '*',
             headers: Request::HEADER_X_FORWARDED_FOR |
-                Request::HEADER_X_FORWARDED_HOST |
                 Request::HEADER_X_FORWARDED_PORT |
                 Request::HEADER_X_FORWARDED_PROTO
         );

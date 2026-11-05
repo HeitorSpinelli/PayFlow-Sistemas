@@ -43,7 +43,7 @@ class ApolicesController extends Controller
 
             return redirect()->back()->with('success', 'Apólice cadastrada com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao cadastrar apólice: '.$e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e, 'Erro ao cadastrar apólice'));
         }
     }
 
@@ -73,7 +73,7 @@ class ApolicesController extends Controller
 
             return redirect()->back()->with('success', 'Apólice excluída com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao excluir apólice: '.$e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e, 'Erro ao excluir apólice'));
         }
     }
 
@@ -90,7 +90,7 @@ class ApolicesController extends Controller
 
             return redirect()->back()->with('success', 'Apólice atualizada com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao atualizar apólice: '.$e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e, 'Erro ao atualizar apólice'));
         }
     }
 
@@ -110,7 +110,7 @@ class ApolicesController extends Controller
 
             return redirect()->back()->with('success', 'Ramo da apólice atualizado com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao atualizar ramo da apólice: '.$e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e, 'Erro ao atualizar ramo da apólice'));
         }
     }
 
@@ -185,7 +185,7 @@ class ApolicesController extends Controller
 
             return redirect()->back()->with('success', "Apólice renovada com sucesso! Nova apólice #{$novaApolice->numero_apolice} criada.");
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao renovar apólice: '.$e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e, 'Erro ao renovar apólice'));
         }
     }
 
@@ -201,7 +201,7 @@ class ApolicesController extends Controller
 
             return redirect()->back()->with('success', 'Apólice restaurada com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e));
         }
     }
 

@@ -35,7 +35,7 @@ class NotificacoesController extends Controller
         try {
             $resultado = $this->notificacoes->criarEEnviar($request->validated());
         } catch (\Throwable $e) {
-            return redirect()->back()->with('error', 'Erro ao enviar notificação: '.$e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e, 'Erro ao enviar notificação'));
         }
 
         // O toast tem que bater com o que aconteceu: antes dizia "enviado com

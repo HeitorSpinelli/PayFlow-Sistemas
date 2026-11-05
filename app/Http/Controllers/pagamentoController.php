@@ -46,7 +46,7 @@ class pagamentoController extends Controller
 
             return redirect()->back()->with('success', 'Pagamento registrado com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao registrar pagamento: '.$e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e, 'Erro ao registrar pagamento'));
         }
     }
 
@@ -188,7 +188,7 @@ class pagamentoController extends Controller
 
             return redirect()->back()->with('success', 'Pagamento excluído com sucesso!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Erro ao excluir pagamento: '.$e->getMessage());
+            return redirect()->back()->with('error', $this->mensagemErro($e, 'Erro ao excluir pagamento'));
         }
     }
 

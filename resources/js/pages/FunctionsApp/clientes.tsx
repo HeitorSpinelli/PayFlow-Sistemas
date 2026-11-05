@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     Plus,
@@ -68,6 +68,14 @@ export default function Clientes({
     totalInativos = 0,
     totalAtivos = 0,
 }: PageProps) {
+    // A rota clientes.destroy exige `can:is-admin` (excluir o cliente cancela
+    // as apólices dele). Esconde a lixeira de quem não é admin, como em
+    // Pagamentos, em vez de deixar o clique terminar num 403.
+    const { auth } = usePage().props as unknown as {
+        auth: { user: { role: string } };
+    };
+    const isAdmin = auth?.user?.role === 'admin';
+
     // Abre/fecha o modal "Novo Cliente".
     const [openModal, setOpenModal] = useState(false);
     // Abre/fecha o dropdown do filtro de status (Todos/Ativos/Inativos).
@@ -454,20 +462,22 @@ export default function Clientes({
                                             >
                                                 <Printer className="size-4" />
                                             </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                title="Excluir cliente"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setSeguradoParaExcluir(
-                                                        segurado,
-                                                    );
-                                                }}
-                                                className="h-10 w-10 rounded-xl border-border/70 p-0 text-muted-foreground hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-500"
-                                            >
-                                                <Trash2 className="size-4" />
-                                            </Button>
+                                            {isAdmin && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    title="Excluir cliente"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSeguradoParaExcluir(
+                                                            segurado,
+                                                        );
+                                                    }}
+                                                    className="h-10 w-10 rounded-xl border-border/70 p-0 text-muted-foreground hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-500"
+                                                >
+                                                    <Trash2 className="size-4" />
+                                                </Button>
+                                            )}
                                         </div>
                                     </div>
                                 ))
@@ -582,19 +592,22 @@ export default function Clientes({
                                                     >
                                                         <Printer className="size-4" />
                                                     </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setSeguradoParaExcluir(
-                                                                segurado,
-                                                            );
-                                                        }}
-                                                        className="h-8 w-8 rounded-xl border-border/70 p-0 text-muted-foreground hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-500"
-                                                    >
-                                                        <Trash2 className="size-4" />
-                                                    </Button>
+                                                    {isAdmin && (
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            title="Excluir cliente"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setSeguradoParaExcluir(
+                                                                    segurado,
+                                                                );
+                                                            }}
+                                                            className="h-8 w-8 rounded-xl border-border/70 p-0 text-muted-foreground hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-500"
+                                                        >
+                                                            <Trash2 className="size-4" />
+                                                        </Button>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))

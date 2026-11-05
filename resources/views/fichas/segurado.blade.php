@@ -229,14 +229,18 @@
     </div>
 
     <div class="acoes">
-        <button class="btn-fechar" onclick="window.close()">Fechar</button>
-        <button class="btn-imprimir" onclick="window.print()">Imprimir</button>
+        <button class="btn-fechar" data-acao="fechar">Fechar</button>
+        <button class="btn-imprimir" data-acao="imprimir">Imprimir</button>
     </div>
 
-    <script>
+    {{-- nonce: a CSP (SecurityHeaders) só executa script com ele; por isso os
+         botões usam data-acao em vez de onclick inline. --}}
+    <script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
         // Espera a logo carregar antes de abrir o diálogo, senão ela sai em
         // branco na primeira impressão.
         window.addEventListener('load', function () { window.print(); });
+        document.querySelector('[data-acao=imprimir]').addEventListener('click', function () { window.print(); });
+        document.querySelector('[data-acao=fechar]').addEventListener('click', function () { window.close(); });
     </script>
 </body>
 
