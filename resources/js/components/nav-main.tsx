@@ -5,12 +5,17 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    useSidebar,
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { NavItem } from '@/types';
 
 export function NavMain({ items = [] }: { items: NavItem[] }) {
     const { isCurrentUrl } = useCurrentUrl();
+    // No celular o menu é uma gaveta por cima da tela; o layout não remonta
+    // entre páginas, então sem fechar aqui ela continuava aberta cobrindo a
+    // tela nova depois do clique.
+    const { isMobile, setOpenMobile } = useSidebar();
 
     return (
         <SidebarGroup className="px-2 py-7">
@@ -25,7 +30,12 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                             tooltip={{ children: item.title }}
                             className="py-5 text-zinc-800 dark:text-zinc-100 transition-colors hover:bg-[#00A460] hover:text-white dark:hover:text-white"
                         >
-                            <Link href={item.href} prefetch className="flex items-center gap-3">
+                            <Link
+                                href={item.href}
+                                prefetch
+                                onClick={() => isMobile && setOpenMobile(false)}
+                                className="flex items-center gap-3"
+                            >
                                 {item.icon && (
                                     <item.icon 
                                         className="!size-5 shrink-0" // O "!" garante que o tamanho seja aplicado
