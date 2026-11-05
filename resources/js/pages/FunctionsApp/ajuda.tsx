@@ -1,27 +1,11 @@
-import { Head, usePage } from '@inertiajs/react';
-import {
-    BookOpen,
-    ChevronDown,
-    ChevronRight,
-    Download,
-    FileText,
-    GraduationCap,
-} from 'lucide-react';
+import { Head } from '@inertiajs/react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
 import {
     Collapsible,
     CollapsibleContent,
     CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 /* ------------------------------------------------------------------ */
 /* Manual do usuário                                                  */
@@ -190,16 +174,9 @@ function ManualAccordion() {
 
 /**
  * Tela "Central de Ajuda" — URL /ajuda (closure em routes/web.php, sem props
- * próprias). Seções: cabeçalho e, abaixo:
- * - admin: abas "Manual do Usuário" e "Documentação do TCC" (botão que baixa
- *   o .docx via GET /ajuda/documentacao-tcc, rota só para admin);
- * - demais usuários: só o manual, sem abas.
+ * próprias). Seções: cabeçalho e o manual do usuário (acordeão por tela).
  */
 export default function Ajuda() {
-    // Papel do usuário logado (props compartilhadas): decide se mostra a aba do TCC.
-    const { auth } = usePage().props as any;
-    const isAdmin = auth?.user?.role === 'admin';
-
     return (
         <>
             <Head title="Ajuda" />
@@ -215,61 +192,11 @@ export default function Ajuda() {
                         Central de Ajuda
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        Manual do usuário e documentação do projeto.
+                        Manual do usuário: como usar cada tela do PayFlow.
                     </p>
                 </div>
 
-                {isAdmin ? (
-                    <Tabs defaultValue="manual">
-                        <TabsList className="max-sm:w-full">
-                            <TabsTrigger
-                                value="manual"
-                                className="max-sm:flex-1 max-sm:px-2 max-sm:text-xs"
-                            >
-                                <BookOpen className="mr-1.5 size-4" />
-                                Manual do Usuário
-                            </TabsTrigger>
-                            <TabsTrigger
-                                value="tcc"
-                                className="max-sm:flex-1 max-sm:px-2 max-sm:text-xs"
-                            >
-                                <GraduationCap className="mr-1.5 size-4" />
-                                Documentação do TCC
-                            </TabsTrigger>
-                        </TabsList>
-
-                        <TabsContent value="manual">
-                            <ManualAccordion />
-                        </TabsContent>
-
-                        <TabsContent value="tcc">
-                            <Card className="rounded-2xl border-border/70">
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2 text-base">
-                                        <FileText className="size-5 text-emerald-600" />
-                                        Documentação do TCC — PayFlow
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Trabalho de Conclusão de Curso que
-                                        descreve o sistema, sua motivação,
-                                        requisitos e desenvolvimento. Visível
-                                        apenas para administradores.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <a href="/ajuda/documentacao-tcc">
-                                        <Button className="rounded-xl bg-emerald-500 font-bold hover:bg-emerald-600">
-                                            <Download className="mr-2 size-4" />
-                                            Baixar documentação (.docx)
-                                        </Button>
-                                    </a>
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-                    </Tabs>
-                ) : (
-                    <ManualAccordion />
-                )}
+                <ManualAccordion />
             </div>
         </>
     );

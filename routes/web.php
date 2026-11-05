@@ -148,15 +148,6 @@ Route::middleware(['auth', 'verified', 'throttle:web-actions'])->group(function 
 
 Route::middleware(['auth', 'can:is-admin', 'throttle:web-actions'])->group(function () {
 
-    // Ajuda: Documentação do TCC (download restrito a administradores)
-    // Botão de download da documentação na tela Ajuda (só admin).
-    Route::get('/ajuda/documentacao-tcc', function () {
-        return response()->download(
-            storage_path('app/private/documentacao-tcc.docx'),
-            'Documentacao-TCC-PayFlow.docx'
-        );
-    })->name('ajuda.documentacao-tcc');
-
     // Módulo: Auditoria
     // Tela Auditoria (auditoria.tsx), aberta pelo menu do usuário: log de quem
     // criou/editou/excluiu/estornou/restaurou o quê. Filtros pela query string.
